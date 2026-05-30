@@ -1,0 +1,268 @@
+// src/routes/services.js
+import express from 'express';
+import crypto from 'node:crypto';
+import { Service } from '../models/Service.js';
+import { Category } from '../models/Category.js';
+import { Subcategory } from '../models/Subcategory.js';
+import { computeEffectiveRate } from '../lib/pricing.js';
+import { config } from '../config.js';
+
+export const servicesRouter = express.Router();
+
+// ───────── GLOBAL LOG ─────────
+const isGlobalLogEnabled = () => {
+  return config?.system?.globalLogEnabled === true;
+};
+
+const glog = {
+  log: (...args) => {
+    if (isGlobalLogEnabled()) console.log(...args);
+  },
+  info: (...args) => {
+    if (isGlobalLogEnabled()) console.info(...args);
+  },
+  warn: (...args) => {
+    if (isGlobalLogEnabled()) console.warn(...args);
+  },
+  error: (...args) => {
+    if (isGlobalLogEnabled()) console.error(...args);
+  },
+};
+
+// ---- speed helpers ----
+function pLimit(concurrency){
+  const q = [];
+  let active = 0;
+  const next = () => {
+    if (!q.length || active >= concurrency) return;
+    active++;
+    const {fn, resolve, reject} = q.shift();
+    Promise.resolve().then(fn).then(
+      (v)=>{active--; resolve(v); next();},
+      (e)=>{active--; reject(e); next();}
+    );
+  };
+  return (fn)=> new Promise((resolve,reject)=>{ q.push({fn,resolve,reject}); next(); });
+}
+
+// in-process page cache (per user) — catalog does not need to recompute every refresh
+const PAGE_CACHE = new Map(); // key -> {t,data}
+const CACHE_TTL = 10 * 60_000;
+function getCache(key){
+  const v = PAGE_CACHE.get(key);
+  if (!v) return null;
+  if (Date.now() - v.t > CACHE_TTL) { PAGE_CACHE.delete(key); return null; }
+  return v.data;
+}
+function setCache(key, data){
+  PAGE_CACHE.set(key, { t: Date.now(), data });
+}
+function weakEtag(value) {
+  return 'W/\"' + crypto.createHash('sha1').update(JSON.stringify(value || '')).digest('hex') + '\"';
+}
+function sendPrivateJsonWithEtag(req, res, payload, seconds = 600) {
+  const etag = weakEtag(payload);
+  res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', `private, max-age=${seconds}, stale-while-revalidate=${seconds}`);
+  res.setHeader('Vary', 'Cookie');
+  if (String(req.headers['if-none-match'] || '').split(',').map(v => v.trim()).includes(etag)) {
+    return res.status(304).end();
+  }
+  return res.json(payload);
+}
+
+/** เดา platform จากชื่อ (หรือ explicit platform บน category/subcategory ถ้ามี) */
+function inferPlatformFromNames({ explicit, catName = '', subName = '', title = '' }) {
+  if (explicit) return explicit;
+  const s = `${catName} ${subName} ${title}`.toLowerCase();
+  if (s.includes('tiktok')) return 'TikTok';
+  if (s.includes('facebook')) return 'Facebook';
+  if (s.includes('youtube')) return 'YouTube';
+  if (s.includes('instagram') || s.includes('ig')) return 'Instagram';
+  if (s.includes('thread')) return 'Threads';
+  if (s.includes('twitter') || s.includes(' x ')) return 'X (Twitter)';
+  if (s.includes('line')) return 'Line Official';
+  if (s.includes('telegram')) return 'Telegram';
+  if (s.includes('discord')) return 'Discord';
+  if (s.includes('twitch')) return 'Twitch';
+  if (s.includes('spotify')) return 'Spotify';
+  if (s.includes('kick')) return 'Kick';
+  if (s.includes('seo')) return 'SEO';
+  if (s.includes('traffic')) return 'Traffic';
+  if (s.includes('shopee')) return 'Shopee';
+  if (s.includes('th')) return 'Thailand';
+  if (s.includes('premium')) return 'AccountPremium';
+  return 'Other';
+}
+
+function normalizeCategoryTitle(platform, raw = '') {
+  let s = String(raw || '').trim();
+  if (platform) {
+    const p = platform.toLowerCase();
+    const low = s.toLowerCase();
+    if (low.startsWith(p)) {
+      s = s.slice(platform.length).trim();
+      s = s.replace(/^[-–—:>»►▸•\s]+/, '').trim();
+    }
+  }
+  s = s.replace(/\b(new|updated)\b.*$/i, '').trim();
+  return s || raw || 'ทั่วไป';
+}
+
+/** ฟังก์ชันหลักที่ดึง service ทั้งหมด (ใช้ร่วมกันได้หลาย route) */
+async function buildFlatServicesForUser(userId){
+  const cacheKey = `services:flat:${userId || 'guest'}`;
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
+
+  const rows = await Service.aggregate([
+    { $match: {} },
+    { $lookup: {
+        from: Category.collection.name,
+        localField: 'category',
+        foreignField: '_id',
+        as: 'cat'
+    }},
+    { $lookup: {
+        from: Subcategory.collection.name,
+        localField: 'subcategory',
+        foreignField: '_id',
+        as: 'sub'
+    }},
+    { $addFields: {
+        cat: { $first: '$cat' },
+        sub: { $first: '$sub' },
+        currency: { $ifNull: ['$currency', 'THB'] }
+    }},
+    { $unwind: {
+        path: '$details.services',
+        preserveNullAndEmptyArrays: false
+    }},
+    { $project: {
+        _id: 1,
+        name: 1,
+        category: 1,
+        subcategory: 1,
+        rate: 1,
+        step: 1,
+        type: 1,
+        average_delivery: 1,
+        currency: 1,
+        'cat.name': 1, 'cat.platform': 1,
+        'sub.name': 1, 'sub.platform': 1,
+        'details.id': 1, 'details.name': 1,
+        'details.services.id': 1,
+        'details.services.name': 1,
+        'details.services.description': 1,
+        'details.services.currency': 1,
+        'details.services.rate': 1,
+        'details.services.min': 1,
+        'details.services.max': 1,
+        'details.services.step': 1,
+        'details.services.dripfeed': 1,
+        'details.services.refill': 1,
+        'details.services.cancel': 1,
+        'details.services.average_delivery': 1,
+        'details.services.type': 1
+    }}
+  ]).allowDiskUse(true);
+
+  const limit = pLimit(8);
+
+  const flat = await Promise.all(rows.map(r => limit(async () => {
+    const catName = r?.cat?.name || '';
+    const subName = r?.sub?.name || '';
+    const explicitPlat = r?.cat?.platform || r?.sub?.platform || null;
+
+    const platform = inferPlatformFromNames({
+      explicit: explicitPlat,
+      catName,
+      subName,
+      title: r?.name || ''
+    });
+
+    const categoryTitle = normalizeCategoryTitle(platform, r?.name || '');
+    const providerCategoryId = r?.details?.id ?? null;
+    const providerCategoryName = r?.details?.name || r?.name || '';
+
+    const svc = r.details?.services || {};
+    const baseRate = Number(svc.rate ?? r.rate ?? 0);
+
+    let effectiveRate = baseRate;
+    try {
+      effectiveRate = await computeEffectiveRate({
+        service: r,
+        childId: svc.id,
+        userId,
+        baseRate
+      });
+    } catch {
+      // ใช้ baseRate ต่อ
+    }
+
+    return {
+      platform,
+      categoryName: categoryTitle,
+      providerCategoryId,
+      providerCategoryName,
+      _id: `${r._id}:${svc.id}`,
+      providerServiceId: svc.id,
+      name: svc.name || '',
+      description: svc.description || '',
+      baseRate,
+      rate: effectiveRate,
+      displayRate: effectiveRate,
+      currency: svc.currency || r.currency || 'THB',
+      min: svc.min ?? 0,
+      max: svc.max ?? 0,
+      step: svc.step ?? r.step ?? 1,
+      dripfeed: !!svc.dripfeed,
+      refill: !!svc.refill,
+      cancel: !!svc.cancel,
+      average_delivery: svc.average_delivery || r.average_delivery || '',
+      type: svc.type || r.type || 'Default',
+      sourceId: String(r._id)
+    };
+  })));
+
+  setCache(cacheKey, flat);
+  return flat;
+}
+
+// ----------------- ROUTES -----------------
+
+// 1) หน้า HTML หลัก: ส่งแต่ shell ไปก่อน (ไม่ query หนัก)
+servicesRouter.get('/', async (req, res) => {
+  try {
+    return res.render('catalog/services', {
+      title: 'บริการทั้งหมด',
+      servicesFlat: []   // ให้ front ไปโหลดเองทีหลัง
+    });
+  } catch (err) {
+    glog.error('GET /services error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// 2) API data: front-end เรียกทีหลัง เพื่อดึง services ทั้งหมดแบบ JSON
+servicesRouter.get('/data', async (req, res) => {
+  try {
+    const me = req.user || res.locals.me || req.session?.user || null;
+    const userId = me?._id ? String(me._id) : null;
+
+    const flat = await buildFlatServicesForUser(userId);
+
+    // defaultPlatform เลือก Discord ถ้ามี ไม่มีก็ null
+    const hasPremium = flat.some(s => s.platform === 'premium');
+    const defaultPlatform = hasPremium ? 'premium' : null;
+
+    return sendPrivateJsonWithEtag(req, res, {
+      ok: true,
+      defaultPlatform,
+      services: flat
+    }, 600);
+  } catch (err) {
+    glog.error('GET /services/data error:', err);
+    res.status(500).json({ ok:false, message:'Internal Server Error' });
+  }
+});

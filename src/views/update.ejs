@@ -1,0 +1,1174 @@
+<% const PAGE_TITLE = title || "อัปเดตบริการ"; %>
+
+<section class="upd-enterprise" aria-label="<%= PAGE_TITLE %>">
+  <div class="upd-bg" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+  </div>
+
+  <section class="upd-hero">
+    <div class="hero-copy">
+      <div class="hero-kicker"><span>✦</span> Services Update</div>
+      <h1><%= PAGE_TITLE %></h1>
+      <p>ติดตามความเปลี่ยนแปลงของบริการแบบวันต่อวัน เห็นสถานะเปิด–ปิด รายการใหม่ และการอัปเดตสำคัญ</p>
+    </div>
+
+    <div class="hero-actions">
+      <button id="btnRefresh" class="upd-btn upd-btn-primary" type="button">
+        <span class="btn-ico">↻</span>
+        <span>รีเฟรชข้อมูล</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="upd-metrics" aria-label="สรุปสถานะอัปเดต">
+    <article class="metric-card">
+      <span class="metric-ico">🛰️</span>
+      <div>
+        <strong id="metricTotal">0</strong>
+        <small>รายการอัปเดตล่าสุด</small>
+      </div>
+    </article>
+    <article class="metric-card">
+      <span class="metric-ico">✅</span>
+      <div>
+        <strong id="metricOpen">0</strong>
+        <small>เปิดใช้งาน</small>
+      </div>
+    </article>
+    <article class="metric-card">
+      <span class="metric-ico">⛔</span>
+      <div>
+        <strong id="metricClose">0</strong>
+        <small>ปิด/นำออก</small>
+      </div>
+    </article>
+    <article class="metric-card">
+      <span class="metric-ico">🆕</span>
+      <div>
+        <strong id="metricNew">0</strong>
+        <small>บริการใหม่</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="upd-card" id="updatesCard">
+    <div class="upd-card-head">
+      <div>
+        <div class="head-kicker">Latest service changes</div>
+        <h3 class="title">รายการอัปเดต (วันล่าสุด)</h3>
+      </div>
+      <div class="head-right">
+        <span class="live-dot"></span>
+        <span id="foot" class="muted">กำลังโหลด…</span>
+      </div>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="upd-desktop">
+      <div class="table-wrap">
+        <table class="upd-table zebra">
+          <thead>
+            <tr>
+              <th style="width:100px">ID</th>
+              <th>ชื่อบริการ / หมวดหมู่</th>
+              <th style="width:330px">สิ่งที่ได้รับการอัปเดต</th>
+              <th style="width:180px">วันที่</th>
+            </tr>
+          </thead>
+          <tbody id="updTbody"><!-- filled by JS --></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="upd-mobile" id="upCards"><!-- filled by JS --></div>
+  </section>
+</section>
+
+<style>
+/* =========================================================
+   UPDATE PAGE — Enterprise High-end Theme
+   ใช้ตัวแปรจาก layout.ejs: --page, --card, --text, --muted, --border, --accent
+========================================================= */
+.upd-enterprise{
+  --ue-page:var(--page,#080b12);
+  --ue-card:var(--card,#111827);
+  --ue-text:var(--text,#f8fafc);
+  --ue-muted:var(--muted,#94a3b8);
+  --ue-border:var(--border,rgba(255,255,255,.10));
+  --ue-accent:var(--accent,#e8bc53);
+  --ue-accent-2:#ffe28a;
+  --ue-soft:color-mix(in srgb,var(--ue-card) 82%,transparent);
+  --ue-soft-2:color-mix(in srgb,var(--ue-card) 66%,transparent);
+  --ue-shadow:rgba(0,0,0,.30);
+  --ue-success:#22c55e;
+  --ue-danger:#ef4444;
+  --ue-info:#60a5fa;
+  --ue-warning:#f59e0b;
+  position:relative;
+  isolation:isolate;
+  color:var(--ue-text);
+  display:grid;
+  gap:18px;
+  animation:ueFadeUp .5s ease both;
+}
+html[data-theme="light"] .upd-enterprise,
+html.light .upd-enterprise,
+body.light .upd-enterprise{
+  --ue-page:var(--page,#f6f7fb);
+  --ue-card:var(--card,#ffffff);
+  --ue-text:var(--text,#111827);
+  --ue-muted:var(--muted,#64748b);
+  --ue-border:var(--border,#e5e7eb);
+  --ue-soft:rgba(255,255,255,.78);
+  --ue-soft-2:rgba(255,255,255,.92);
+  --ue-shadow:rgba(15,23,42,.10);
+}
+.upd-bg{position:absolute;inset:-30px;z-index:-1;overflow:hidden;pointer-events:none;border-radius:34px;}
+.upd-bg .orb{position:absolute;border-radius:999px;filter:blur(6px);opacity:.42;animation:ueFloat 8s ease-in-out infinite;}
+.upd-bg .orb-a{width:270px;height:270px;right:4%;top:-70px;background:radial-gradient(circle,var(--ue-accent),transparent 68%);}
+.upd-bg .orb-b{width:210px;height:210px;left:-70px;top:190px;background:radial-gradient(circle,#60a5fa,transparent 70%);animation-delay:-2.2s;}
+.upd-bg .orb-c{width:160px;height:160px;right:18%;bottom:-80px;background:radial-gradient(circle,#22c55e,transparent 70%);animation-delay:-4s;}
+
+.upd-hero{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--ue-border);
+  border-radius:30px;
+  padding:28px;
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--ue-accent) 13%,transparent),transparent 36%),
+    linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018)),
+    color-mix(in srgb,var(--ue-card) 90%,transparent);
+  box-shadow:0 22px 55px var(--ue-shadow),inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+  backdrop-filter:blur(16px);
+}
+.upd-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 0 40%,rgba(255,255,255,.08),transparent 62%);transform:translateX(-120%);animation:ueShine 6s ease-in-out infinite;pointer-events:none;}
+.hero-copy{max-width:820px;position:relative;z-index:1;}
+.hero-kicker,.head-kicker{display:inline-flex;align-items:center;gap:8px;color:var(--ue-accent-2);font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;}
+.upd-hero h1{margin:0;font-size:clamp(26px,4vw,46px);line-height:1.05;font-weight:950;letter-spacing:-.04em;}
+.upd-hero p{margin:12px 0 0;color:var(--ue-muted);font-size:15px;line-height:1.75;max-width:760px;}
+.hero-actions{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;}
+.upd-btn{height:46px;border:1px solid var(--ue-border);border-radius:16px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;font-weight:900;transition:.2s ease;background:var(--ue-soft);color:var(--ue-text);}
+.upd-btn-primary{border:0;color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);box-shadow:0 14px 30px color-mix(in srgb,var(--ue-accent) 24%,transparent),inset 0 1px 0 rgba(255,255,255,.48);}
+.upd-btn:hover{transform:translateY(-2px);filter:saturate(1.05);}
+.upd-btn:disabled{opacity:.65;cursor:wait;transform:none;}
+.upd-btn:disabled .btn-ico{animation:ueSpin 1s linear infinite;}
+
+.upd-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+.metric-card{border:1px solid var(--ue-border);border-radius:22px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.014)),var(--ue-soft);box-shadow:0 16px 36px var(--ue-shadow),inset 0 1px 0 rgba(255,255,255,.06);display:flex;align-items:center;gap:14px;min-width:0;transition:.2s ease;}
+.metric-card:hover{transform:translateY(-2px);}
+.metric-ico{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--ue-accent) 18%,transparent);border:1px solid color-mix(in srgb,var(--ue-accent) 28%,transparent);font-size:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
+.metric-card strong{display:block;font-size:24px;line-height:1;font-weight:950;letter-spacing:-.03em;}
+.metric-card small{display:block;margin-top:5px;color:var(--ue-muted);font-size:12px;font-weight:800;}
+
+.upd-card{border:1px solid var(--ue-border);border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018)),color-mix(in srgb,var(--ue-card) 90%,transparent);box-shadow:0 22px 55px var(--ue-shadow),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;}
+.upd-card-head{padding:20px 22px;border-bottom:1px solid var(--ue-border);display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--ue-accent) 9%,transparent),transparent 52%);}
+.upd-card-head h3{margin:0;font-size:20px;font-weight:950;letter-spacing:-.02em;}
+.head-right{display:inline-flex;align-items:center;gap:9px;padding:9px 12px;border-radius:999px;background:var(--ue-soft);border:1px solid var(--ue-border);font-size:12px;font-weight:800;white-space:nowrap;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--ue-success);box-shadow:0 0 0 6px color-mix(in srgb,var(--ue-success) 18%,transparent);animation:uePulse 1.8s ease-in-out infinite;}
+.muted{color:var(--ue-muted)!important;}
+
+.table-wrap{max-height:calc(100vh - 290px);min-height:360px;overflow:auto;}
+.upd-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;}
+.upd-table thead th{text-align:left;font-weight:900;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ue-muted);padding:14px 16px;position:sticky;top:0;background:color-mix(in srgb,var(--ue-card) 94%,transparent);border-bottom:1px solid var(--ue-border);z-index:2;backdrop-filter:blur(10px);}
+.upd-table td{padding:15px 16px;border-bottom:1px solid color-mix(in srgb,var(--ue-border) 78%,transparent);vertical-align:top;transition:.16s ease;background:color-mix(in srgb,var(--ue-card) 78%,transparent);}
+.upd-table.zebra tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--ue-card) 88%,rgba(255,255,255,.04));}
+.upd-table.zebra tbody tr:hover td{background:color-mix(in srgb,var(--ue-accent) 8%,var(--ue-card));}
+.upd-table.zebra tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--ue-accent);}
+.id-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:900;color:color-mix(in srgb,var(--ue-text) 82%,var(--ue-muted));}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--ue-accent);margin-right:8px;box-shadow:0 0 14px color-mix(in srgb,var(--ue-accent) 48%,transparent);}
+.svc-ico{width:26px;height:26px;object-fit:contain;border-radius:9px;background:rgba(255,255,255,.06);padding:3px;border:1px solid var(--ue-border);}
+.name-badge{font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53);border-radius:999px;padding:4px 7px;margin-left:.5rem;white-space:nowrap;}
+.chip{display:inline-flex;align-items:center;gap:.35rem;padding:5px 9px;font-size:11px;border-radius:999px;background:color-mix(in srgb,var(--ue-info) 16%,transparent);border:1px solid color-mix(in srgb,var(--ue-info) 35%,transparent);color:color-mix(in srgb,var(--ue-info) 80%,var(--ue-text));font-weight:900;}
+.pill{display:inline-flex;align-items:center;gap:.42rem;padding:8px 11px;border-radius:999px;font-weight:950;border:1px solid transparent;white-space:nowrap;font-size:12px;}
+.pill.ok{background:color-mix(in srgb,var(--ue-success) 18%,transparent);color:color-mix(in srgb,var(--ue-success) 78%,var(--ue-text));border-color:color-mix(in srgb,var(--ue-success) 32%,transparent);}
+.pill.danger{background:color-mix(in srgb,var(--ue-danger) 16%,transparent);color:color-mix(in srgb,var(--ue-danger) 78%,var(--ue-text));border-color:color-mix(in srgb,var(--ue-danger) 32%,transparent);}
+.pill.info{background:color-mix(in srgb,var(--ue-info) 16%,transparent);color:color-mix(in srgb,var(--ue-info) 78%,var(--ue-text));border-color:color-mix(in srgb,var(--ue-info) 32%,transparent);}
+.pill.warn{background:color-mix(in srgb,var(--ue-warning) 18%,transparent);color:color-mix(in srgb,var(--ue-warning) 70%,var(--ue-text));border-color:color-mix(in srgb,var(--ue-warning) 35%,transparent);}
+.pill.neutral{background:color-mix(in srgb,#94a3b8 16%,transparent);color:var(--ue-text);border-color:color-mix(in srgb,#94a3b8 28%,transparent);}
+
+.upd-mobile{display:none;}
+.u-card{border:1px solid var(--ue-border);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.014)),var(--ue-soft);overflow:hidden;cursor:pointer;transition:.18s ease;box-shadow:0 12px 28px var(--ue-shadow);}
+.u-card:hover{transform:translateY(-2px);}
+.u-head{display:grid;grid-template-columns:1fr auto;gap:8px;padding:15px;border-bottom:1px dashed var(--ue-border);}
+.u-id{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:950;color:var(--ue-accent-2);}
+.u-name{font-weight:900;line-height:1.35;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.u-meta{color:var(--ue-muted);font-size:12px;margin-top:5px;font-weight:700;}
+.u-body{display:none;padding:14px 15px;}
+.u-card.open .u-body{display:block;animation:ueFadeUp .22s ease both;}
+.u-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:9px 0;border-bottom:1px dotted var(--ue-border);}
+.u-row:last-child{border-bottom:0;}
+.u-label{color:var(--ue-muted);font-weight:900;font-size:12px;}
+
+.table-wrap::-webkit-scrollbar,.upd-mobile::-webkit-scrollbar{width:8px;height:8px;}
+.table-wrap::-webkit-scrollbar-thumb,.upd-mobile::-webkit-scrollbar-thumb{border-radius:999px;background:color-mix(in srgb,var(--ue-accent) 45%,transparent);}
+.table-wrap::-webkit-scrollbar-track,.upd-mobile::-webkit-scrollbar-track{background:transparent;}
+
+@media (max-width:1050px){.upd-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.upd-hero{align-items:flex-start;flex-direction:column;}.hero-actions{width:100%;}.upd-btn{width:100%;}}
+@media (max-width:900px){.upd-desktop{display:none;}.upd-mobile{display:grid;gap:12px;padding:14px;}.table-wrap{min-height:0;}.upd-card-head{align-items:flex-start;flex-direction:column;}.head-right{width:100%;justify-content:center;}}
+@media (max-width:560px){.upd-enterprise{gap:14px;}.upd-hero{padding:22px;border-radius:24px;}.upd-metrics{grid-template-columns:1fr;}.metric-card{padding:14px;border-radius:20px;}.upd-card{border-radius:24px;}.upd-card-head{padding:18px;}.u-row{grid-template-columns:1fr;gap:4px;}.name-badge{margin-left:0;}}
+@media (prefers-reduced-motion:reduce){.upd-enterprise *,.upd-enterprise *::before,.upd-enterprise *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
+@keyframes ueFadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+@keyframes ueFloat{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-18px) scale(1.04);}}
+@keyframes ueShine{0%,55%{transform:translateX(-120%);}72%,100%{transform:translateX(120%);}}
+@keyframes uePulse{0%,100%{opacity:.7;transform:scale(.9);}50%{opacity:1;transform:scale(1.05);}}
+@keyframes ueSpin{to{transform:rotate(360deg);}}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+
+// --- 1) helper ปลอดภัย + ฟอร์แมตไทย ---
+const h = (s='') => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+const fmtDate = d => new Date(d).toLocaleDateString('th-TH', { year:'numeric', month:'2-digit', day:'2-digit' });
+const fmtTime = d => new Date(d).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+
+const GROUP_ICON_MAP = [
+  // อื่นๆ
+  {
+    icon: '/static/assets/services_icon/free.png',   // ตัวอย่างไฟล์ free
+    match: ['[free trial]', 'บริการทดลองฟรี']
+  },
+  {
+    icon: '/static/assets/services_icon/yearpro.png',
+    match: ['โปรโมชั่นประจำปี', 'promotion']
+  },
+  {
+    icon: '/static/assets/services_icon/bilibili.png',
+    match: ['BiliBili']
+  },
+  {
+    icon: '/static/assets/services_icon/canva.png',
+    match: ['canva']
+  },
+  {
+    icon: '/static/assets/services_icon/douyin.png', 
+    match: ['douyin']
+  },
+  {
+    icon: '/static/assets/services_icon/Line.png',
+    match: ['Line Official Account ', 'Line OpenChat', 'Line Voom ']
+  },
+  {
+    icon: '/static/assets/services_icon/chatgpt.png',
+    match: ['chatgpt']
+  },
+  {
+    icon: '/static/assets/services_icon/disney-amazon.png',
+    match: ['Disney+ 🔴 Amazon Prime 🔴 Youtube Premium']
+  },
+  {
+    icon: '/static/assets/services_icon/license-key.png',
+    match: ['✅License Key 🔑']
+  },
+  {
+    icon: '/static/assets/services_icon/camera.png',
+    match: ['✅ดาวน์โหลด ไฟล์ลิขสิทธิ์ 📷']
+  },
+  {
+    icon: '/static/assets/services_icon/zepeto.png',
+    match: ['Zepeto']
+  },
+  {
+    icon: '/static/assets/services_icon/lemon8.png',
+    match: ['Lemon8']
+  },
+  {
+    icon: '/static/assets/services_icon/capcut.png',
+    match: ['CapCut']
+  },
+  {
+    icon: '/static/assets/services_icon/joylada.png',
+    match: ['Joylada']
+  },
+  // Tiktok
+  {
+    icon: '/static/assets/services_icon/Tiktok-ALLTH.png',
+    match: ['TikTok 🎯 Thailand 🇹🇭 Services – รวมบริการประเทศไทย', '🇹🇭 TikTok']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok.png',
+    match: ['TikTok 🎯 All Services', 'TikTok 💔 Not Interested']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-views.png',
+    match: ['TikTok 👁️ Video Views']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-follow.png',
+    match: ['TikTok 👤 Followers']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-warn.png',
+    match: ['คำสั่งซื้อหนาแน่น ✅TikTok']
+  },
+  {
+    icon: '/static/assets/services_icon/br-tiktok.png',
+    match: ['🇧🇷 TikTok']
+  },
+  {
+    icon: '/static/assets/services_icon/us-tiktok.png',
+    match: ['🇺🇸 TikTok']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-likes.png',
+    match: ['TikTok ❤️️ Likes']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-save.png',
+    match: ['TikTok 💾 Saves']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-share.png',
+    match: ['TikTok 🔗 Shares']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-reposts.png',
+    match: ['TikTok 🔃 Reposts']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-comments.png',
+    match: ['TikTok 💬 Comments']
+  },
+  {
+    icon: '/static/assets/services_icon/tiktok-lives.png',
+    match: ['TikTok 🔴 Live Stream', 'TikTok ❤️️ Live Likes', 'TikTok 💬 Live Comments']
+  },
+  // Youtube
+  {
+    icon: '/static/assets/services_icon/yt-all.png',
+    match: ['YouTube รวมบริการ']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-views.png',
+    match: ['✅YouTube Views', '🆕YouTube Views', 'YouTube มาใหม่', 'YouTube Views', 'YouTube Video Views']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-ctr.png',
+    match: ['YouTube 🔎 CTR', 'YouTube Views 🔎 SEO Search']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-th.png',
+    match: ['🇹🇭 Youtube']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-hr.png',
+    match: ['Youtube ► เพิ่มชั่วโมง']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-awards.png',
+    match: ['Youtube Adword Views', 'YouTube Views 🤑 โฆษณา Google Adword', '✅YouTube Views 💎 Native 𝐀𝐝𝐰𝐨𝐫𝐝𝐬', 'Youtube | Short Views']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-makemoney.png',
+    match: ['YouTube Views ► 𝐌𝐨𝐧𝐞𝐭𝐢𝐳𝐚𝐛𝐥𝐞 / 𝐑𝐞𝐯𝐞𝐧𝐮𝐞 ► ดูโฆษณาในวิดีโอ ✅📅']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-shorts.png',
+    match: ['✅YouTube ► Shorts', 'YouTube Shorts']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-likes.png',
+    match: ['✅YouTube 👍']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-dislike.png',
+    match: ['✅YouTube 👎']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-comments.png',
+    match: ['✅Youtube 💬']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-sub.png',
+    match: ['✅Youtube Subscribers']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-shares.png',
+    match: ['✅YouTube ► แชร์']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-lives.png',
+    match: ['Youtube 🔴 Live', '✅Youtube 🔴 Like For Live Stream', '✅Youtube 🔴 Reaction For Live Stream']
+  },
+  {
+    icon: '/static/assets/services_icon/yt-partial.png',
+    match: ['🪚 YouTube Split']
+  },
+  // Threads & IG
+  {
+    icon: '/static/assets/services_icon/threads.png',
+    match: ['Threads']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-th.png',
+    match: ['🇹🇭 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-all.png',
+    match: [
+      'Instagram ► รวมบริการไอจี', 
+      '✅Instagram Service', 
+      'Instagram Business', 
+      'Instagram Impressions', 
+      'Instagram ► Engagement', 
+      'Instagram Content', 
+      'Instagram ► Channel Member', 
+      'Instagram ► บริการโซน เอเชีย'
+    ]
+  },
+  {
+    icon: '/static/assets/services_icon/ig-likes.png',
+    match: ['✅Instagram Likes', 'Instagram Comment Likes']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-autolike.png',
+    match: [
+      'Instagram Auto Likes', 
+      '✅Instagram รีโพสต์', 
+      'แบ่งยอดวิว 🪚 Instagram', 
+      'แบ่งยอดไลค์ บัญชีผู้หญิง🪚 Instagram', 
+      'แบ่งยอดเซฟ 🪚 Instagram', 
+      'แบ่งยอดแชร์ 🪚 Instagram'
+    ]
+  },
+  {
+    icon: '/static/assets/services_icon/ig-follows.png',
+    match: ['✅Instagram ผู้ติดตาม']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-views.png',
+    match: ['Instagram Views']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-comments.png',
+    match: ['✅Instagram ► คอมเม้นท์']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-story.png',
+    match: ['✅Instagram Story']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-shares.png',
+    match: ['Instagram ► Shares']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-reach.png',
+    match: ['Instagram ► Reach']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-save.png',
+    match: ['Instagram ► Saves']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-nft.png',
+    match: ['Instagram ► NFT']
+  },
+  {
+    icon: '/static/assets/services_icon/ig-lives.png',
+    match: ['✅Instagram 🔴 Live']
+  },
+  {
+    icon: '/static/assets/services_icon/bd-ig.png',
+    match: ['🇧🇩 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/pt-ig.png',
+    match: ['🇵🇹 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/br-ig.png',
+    match: ['🇧🇷 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/eg-ig.png',
+    match: ['🇪🇬 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/tr-ig.png',
+    match: ['🇹🇷 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/sa-ig.png',
+    match: ['🇸🇦 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/kr-ig.png',
+    match: ['🇰🇷 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/jp-ig.png',
+    match: ['🇯🇵 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/id-ig.png',
+    match: ['🇮🇩 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/vn-ig.png',
+    match: ['🇻🇳 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/ng-ig.png',
+    match: ['🇳🇬 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/in-ig.png',
+    match: ['🇮🇳 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/us-ig.png',
+    match: ['🇺🇸 Instagram']
+  },
+  {
+    icon: '/static/assets/services_icon/pk-ig.png',
+    match: ['🇵🇰 Instagram']
+  },
+  // Facebook
+  {
+    icon: '/static/assets/services_icon/th-fb.png',
+    match: ['🇹🇭 Facebook']
+  },
+  {
+    icon: '/static/assets/services_icon/fb.png',
+    match: ['✅Facebook Services', 'Facebook ► ซ่อนคอมเม้นท์', 'Facebook ► คอมเม้นท์', 'Facebook ► Saves', 'Facebook ► Shares', 'Facebook ► แชร์โพส', 'Facebook ► ตอบกลับคอมเม้นท์', 'Facebook ► เพิ่มเพื่อนบัญชีเฟสบุ๊ค', 'Facebook ► เพิ่มคนเข้ากลุ่ม', '🪚 Facebook Split']
+  },
+  {
+    icon: '/static/assets/services_icon/fb-follows.png',
+    match: ['Facebook ► ผู้ติดตามแฟนเพจ', 'Facebook ► ถูกใจแฟนเพจ']
+  },
+  {
+    icon: '/static/assets/services_icon/fb-likes.png',
+    match: ['Facebook ► ไลค์โพส SV1', 'Facebook ► ไลค์โพส คุณภาพสูง SV2', 'Facebook ► ไลค์โพส SV3', 'Facebook ► ออโต้ไลค์โพส', 'Facebook ► ไลค์โพส แบ่งไลค์', 'Facebook ► ไลค์คอมเม้นท์']
+  },
+  {
+    icon: '/static/assets/services_icon/fb-likeemoji.png',
+    match: ['Facebook ► ไลค์โพส อิโมติคอน', 'Facebook ► กดอิโมจิสตอรี่']
+  },
+  {
+    icon: '/static/assets/services_icon/fb-views.png',
+    match: ['Facebook ► วิววิดีโอ', 'Facebook 60K Minutes', 'Facebook 120K Minutes', 'Facebook 600K Minutes', 'Facebook ► ดูสตอรี่']
+  },
+  {
+    icon: '/static/assets/services_icon/fb-lives.png',
+    match: ['Facebook 🔴 Live', 'Facebook 🔴 Auto Live']
+  },
+  {
+    icon: '/static/assets/services_icon/br-fb.png',
+    match: ['🇧🇷 Facebook']
+  },
+  {
+    icon: '/static/assets/services_icon/pk-fb.png',
+    match: ['🇵🇰 Facebook']
+  },
+  // X [Twtiiter]
+  {
+    icon: '/static/assets/services_icon/th-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการประเทศไทย 🇹🇭']
+  },
+  {
+    icon: '/static/assets/services_icon/x.png',
+    match: [
+      'X.com | Twitter Verified Accounts Services',
+      'X.com | Twitter Services',
+      'X.com | Twitter 🐦',
+      'X.com | Twitter 👁️',
+      'X.com | Twitter 🔁',
+      'X.com | Twitter 💬',
+      'X.com | Twitter 📊',
+      'X.com | Twitter 📥',
+      'X.com | Twitter 🔴',
+      'X.com | Twitter 🎧'
+    ]
+  },
+  {
+    icon: '/static/assets/services_icon/x-likes.png',
+    match: ['X.com | Twitter Likes']
+  },
+  {
+    icon: '/static/assets/services_icon/x-re.png',
+    match: ['X.com | Twitter Retweet']
+  },
+  {
+    icon: '/static/assets/services_icon/br-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการบราซิล 🇧🇷 Brazil']
+  },
+  {
+    icon: '/static/assets/services_icon/fr-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการฝรั่งเศส 🇫🇷 France']
+  },
+  {
+    icon: '/static/assets/services_icon/de-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการเยอรมนี 🇩🇪 Germany']
+  },
+  {
+    icon: '/static/assets/services_icon/in-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการอินเดีย 🇮🇳 India']
+  },
+  {
+    icon: '/static/assets/services_icon/id-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการอินโดนีเซีย 🇮🇩 Indonesia']
+  },
+  {
+    icon: '/static/assets/services_icon/jp-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการญี่ปุ่น 🇯🇵 Japan']
+  },
+  {
+    icon: '/static/assets/services_icon/sa-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการซาอุดิอาระเบีย 🇸🇦 Saudi Arabia']
+  },
+  {
+    icon: '/static/assets/services_icon/tr-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการตุรกี 🇹🇷 Turkey']
+  },
+  {
+    icon: '/static/assets/services_icon/uk-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการสหราชอาณาจักร 🇬🇧 United Kingdom']
+  },
+  {
+    icon: '/static/assets/services_icon/arab-x.png',
+    match: ['X.com | Twitter Services ► รวมบริการประเทศอาหรับ Arabic Countries']
+  },
+  // Shopee
+  {
+    icon: '/static/assets/services_icon/shopee.png',
+    match: ['Shopee']
+  },
+  // Discord
+  {
+    icon: '/static/assets/services_icon/discord.png',
+    match: ['Discord']
+  },
+  // Meta
+  {
+    icon: '/static/assets/services_icon/meta.png',
+    match: ['Meta']
+  },
+  // New
+  {
+    icon: '/static/assets/services_icon/new.png',
+    match: ['new for']
+  },
+  // Opensea
+  {
+    icon: '/static/assets/services_icon/Opensea.png',
+    match: ['Opensea']
+  },
+  // Coingecko
+  {
+    icon: '/static/assets/services_icon/Coingecko.png',
+    match: ['Coingecko']
+  },
+  // Superrare
+  {
+    icon: '/static/assets/services_icon/Superrare.png',
+    match: ['Superrare']
+  },
+  // Crypto
+  {
+    icon: '/static/assets/services_icon/Crypto.webp',
+    match: ['Crypto']
+  },
+  // Rarible
+  {
+    icon: '/static/assets/services_icon/Rarible.png',
+    match: ['Rarible']
+  },
+  // Telegram
+  {
+    icon: '/static/assets/services_icon/telegram.png',
+    match: ['Telegram']
+  },
+  // Spotify
+  {
+    icon: '/static/assets/services_icon/spotify.png',
+    match: ['Spotify']
+  },
+  // Twitch
+  {
+    icon: '/static/assets/services_icon/twitch.png',
+    match: ['Twitch']
+  },
+  // Kick.com
+  {
+    icon: '/static/assets/services_icon/kick.png',
+    match: ['Kick.com']
+  },
+  // Whatsapp
+  {
+    icon: '/static/assets/services_icon/whatsapp.png',
+    match: ['Whatsapp']
+  },
+  // Soundcloud
+  {
+    icon: '/static/assets/services_icon/soundcloud.png',
+    match: ['SoundCloud']
+  },
+  // Kwai
+  {
+    icon: '/static/assets/services_icon/Kwai.png',
+    match: ['Kwai']
+  },
+  // LinkedIn
+  {
+    icon: '/static/assets/services_icon/LinkedIn.png',
+    match: ['LinkedIn']
+  },
+  // Dailymotion
+  {
+    icon: '/static/assets/services_icon/Dailymotion.png',
+    match: ['Dailymotion']
+  },
+  // Likee
+  {
+    icon: '/static/assets/services_icon/Likee.png',
+    match: ['Likee']
+  },
+  // Pinterest
+  {
+    icon: '/static/assets/services_icon/Pinterest.png',
+    match: ['Pinterest']
+  },
+  // Tumblr
+  {
+    icon: '/static/assets/services_icon/Tumblr.png',
+    match: ['Tumblr']
+  },
+  // Trovo
+  {
+    icon: '/static/assets/services_icon/Trovo.png',
+    match: ['Trovo']
+  },
+  // BlueSky
+  {
+    icon: '/static/assets/services_icon/BlueSky.png',
+    match: ['BlueSky']
+  },
+  // Vimeo
+  {
+    icon: '/static/assets/services_icon/Vimeo.png',
+    match: ['Vimeo']
+  },
+  // Sooplive
+  {
+    icon: '/static/assets/services_icon/Sooplive.png',
+    match: ['Sooplive']
+  },
+  // Naver TV
+  {
+    icon: '/static/assets/services_icon/Naver-TV.png',
+    match: ['Naver TV']
+  },
+  // Audiomack
+  {
+    icon: '/static/assets/services_icon/Audiomack.png',
+    match: ['Audiomack']
+  },
+  // Reddit
+  {
+    icon: '/static/assets/services_icon/Reddit.png',
+    match: ['Reddit']
+  },
+  // Deezer
+  {
+    icon: '/static/assets/services_icon/Deezer.png',
+    match: ['Deezer']
+  },
+  // Potato Chat
+  {
+    icon: '/static/assets/services_icon/Potato-Chat.png',
+    match: ['Potato Chat']
+  },
+  // Quora.Com
+  {
+    icon: '/static/assets/services_icon/Quora.png',
+    match: ['Quora.Com']
+  },
+  // Napster
+  {
+    icon: '/static/assets/services_icon/Napster.png',
+    match: ['Napster']
+  },
+  // Rumble
+  {
+    icon: '/static/assets/services_icon/Rumble.png',
+    match: ['Rumble']
+  },
+  // Rutube
+  {
+    icon: '/static/assets/services_icon/Rutube.png',
+    match: ['Rutube']
+  },
+  // DLive
+  {
+    icon: '/static/assets/services_icon/DLive.png',
+    match: ['DLive']
+  },
+  // Bigo
+  {
+    icon: '/static/assets/services_icon/Bigo.png',
+    match: ['BIGO.TV', 'Bigo Live']
+  },
+  // SnapChat
+  {
+    icon: '/static/assets/services_icon/SnapChat.png',
+    match: ['SnapChat']
+  },
+  // GitHub
+  {
+    icon: '/static/assets/services_icon/GitHub.png',
+    match: ['GitHub']
+  },
+  // Binance
+  {
+    icon: '/static/assets/services_icon/Binance.png',
+    match: ['Binance']
+  },
+  // IMDB
+  {
+    icon: '/static/assets/services_icon/IMDB.png',
+    match: ['IMDB']
+  },
+  // Mobile App Installs ► iOS / Android
+  {
+    icon: '/static/assets/services_icon/Mobile.png',
+    match: ['Mobile App Installs ► iOS / Android']
+  },
+  // Apple Music
+  {
+    icon: '/static/assets/services_icon/Apple-Music.png',
+    match: ['Apple Music']
+  },
+  // Google Map
+  {
+    icon: '/static/assets/services_icon/GoogleMap.png',
+    match: ['Google Map']
+  },
+  // Dexscreener
+  {
+    icon: '/static/assets/services_icon/Dexscreener.png',
+    match: ['Dexscreener']
+  },
+  // CoinMarketCap
+  {
+    icon: '/static/assets/services_icon/CoinMarketCap.png',
+    match: ['CoinMarketCap']
+  },
+  // PUBG
+  {
+    icon: '/static/assets/services_icon/PUBG.png',
+    match: ['PUBG']
+  },
+  // Free Fire
+  {
+    icon: '/static/assets/services_icon/FreeFire.png',
+    match: ['Free Fire']
+  },
+  // Steam
+  {
+    icon: '/static/assets/services_icon/Steam.png',
+    match: ['Steam']
+  },
+  // Spam
+  {
+    icon: '/static/assets/services_icon/Spam.png',
+    match: ['✅ส่งรายงาน ❌ Spam Report']
+  },
+  // Traffic - SEO
+  {
+    icon: '/static/assets/services_icon/MobileTraffic.png',
+    match: [
+      'Mobile Traffic', 
+      '🚀Website Traffic 🌐 𝐍𝐢𝐜𝐡𝐞 เว็บไซต์ที่เกี่ยวข้อง', 
+      '🚀Website Traffic ► Mobile Traffic 📱'
+    ]
+  },
+  {
+    icon: '/static/assets/services_icon/Traffic.png',
+    match: [
+      '🌐เพิ่มทราฟฟิคเข้าเว็บไซต์ 🚀 Website Traffic', 
+      '🚀Website 💎 Premium Traffic Packages', 
+      '🚀Website Traffic ►',
+      '🚀Website Traffic 🌐 𝐖𝐨𝐫𝐥𝐝𝐰𝐢𝐝𝐞 สุ่มทั่วโลก',
+      '✅🌐เพิ่มทราฟฟิคเข้าเว็บไซต์',
+      '🚀Website Traffic ► Choose GEO',
+      '✅🔴Premium Pop-Under Traffic'
+    ]
+  },
+  {
+    icon: '/static/assets/services_icon/GoogleSearch.png',
+    match: ['Google Search Console']
+  },
+  {
+    icon: '/static/assets/services_icon/premium-traffic.png',
+    match: ['🚀Website 💎 Premium Traffic']
+  },
+  {
+    icon: '/static/assets/services_icon/world-traffic.png',
+    match: ['✅🚀Website Traffic ► แหล่งอ้างอิง เลือกประเทศ']
+  },
+  {
+    icon: '/static/assets/services_icon/th-traffic.png',
+    match: ['Website Traffic 🇹🇭']
+  },
+  {
+    icon: '/static/assets/services_icon/backlinks.png',
+    match: ['🔗Backlinks & Website']
+  },
+  {
+    icon: '/static/assets/services_icon/SocialSignals.png',
+    match: ['📊Social Signals']
+  },
+  {
+    icon: '/static/assets/services_icon/seo-ranking.png',
+    match: ['✅📊SEO Package Ranking']
+  },
+  // เพิ่ม mapping อื่น ๆ ตามที่มีรูป
+];
+
+function detectIcon(serviceName = "") {
+  const name = serviceName.toLowerCase();
+
+  for (const g of GROUP_ICON_MAP) {
+    if (!g.match) continue;
+
+    for (const m of g.match) {
+      if (name.includes(m.toLowerCase())) {
+        return g.icon;
+      }
+    }
+  }
+
+  return null; // ไม่เจอ icon
+}
+
+// --- ป้ายสถานะ ---
+function buildPill(it){
+  const isCat = it.target === 'category';
+  const labelCat = isCat ? 'หมวดหมู่ - ' : '';
+
+  const before = it.oldStatus ? String(it.oldStatus).toUpperCase() : null;
+  const after  = it.newStatus ? String(it.newStatus).toUpperCase() : null;
+
+  const isOpen  = after === 'OPEN';
+  const isClose = after === 'CLOSE';
+
+  // --- เปิด / ปิดบริการ ---
+  if (
+    it.diff === 'open' ||
+    (it.diff === 'new' && isOpen) ||
+    (it.diff === 'state' && isOpen)
+  ) {
+    return `<span class="pill ok">${labelCat}✔ เปิดใช้งาน</span>`;
+  }
+
+  if (
+    it.diff === 'close' ||
+    (it.diff === 'new' && isClose) ||
+    (it.diff === 'state' && isClose)
+  ) {
+    return `<span class="pill danger">${labelCat}✖ ปิดการใช้งาน</span>`;
+  }
+
+  // --- ถูกนำออกจากระบบ ---
+  if (it.diff === 'removed') {
+    return `<span class="pill warn">${labelCat}นำออก</span>`;
+  }
+
+  // --- เพิ่มบริการใหม่ (แต่ไม่รู้สถานะชัดเจน) ---
+  if (it.diff === 'new') {
+    return `<span class="pill info">${labelCat}เพิ่มบริการใหม่</span>`;
+  }
+
+  // --- อัปเดตทั่วไป / มีการเปลี่ยนสถานะ ---
+  if (it.diff === 'updated') {
+    if (before && after && before !== after) {
+      const tone = (after === 'OPEN') ? 'ok'
+                 : (after === 'CLOSE') ? 'danger'
+                 : 'info';
+      return `<span class="pill ${tone}">${labelCat}${before} → ${after}</span>`;
+    }
+    return `<span class="pill info">${labelCat}อัปเดต</span>`;
+  }
+
+  // --- snapshot state เฉย ๆ ---
+  if (it.diff === 'state' && after) {
+    const tone = (after === 'OPEN') ? 'ok'
+               : (after === 'CLOSE') ? 'danger'
+               : 'neutral';
+    return `<span class="pill ${tone}">${labelCat}สถานะ: ${after}</span>`;
+  }
+
+  // fallback
+  return `<span class="pill info">${labelCat}${h(it.diff || 'อัปเดต')}</span>`;
+}
+
+function targetChip(it){ return `<span class="chip">${it.target === 'category' ? 'หมวดหมู่' : 'บริการ'}</span>`; }
+
+// --- 2) render table ---
+function renderTable(items){
+  const tbody = $('#updTbody');
+  const rows = items.map(it => {
+    const id   = it.target === 'service' ? (it.providerServiceId || '') : (it.serviceGroupId || '');
+    const name = it.target === 'service' ? (it.serviceName || '(ไม่ทราบชื่อ)') : (it.categoryName || '(ไม่ทราบหมวด)');
+    const pill = buildPill(it);
+    const chip = targetChip(it);
+    const platform = it.platform ? `<div class="u-meta">แพลตฟอร์ม ${h(it.platform)}</div>` : ``;
+    const icon = detectIcon(name);
+
+    return `
+      <tr tabindex="0">
+        <td class="id-mono"><span class="dot"></span>${h(id)}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:.5rem; flex-wrap:wrap">
+            
+            ${icon ? `<img src="${icon}" class="svc-ico">` : ``}
+
+            <div style="font-weight:400">
+              ${h(name)}
+              ${it.target==='service' ? `<span class="name-badge">UPDATED ${fmtDate(it.ts)}</span>` : ``}
+            </div>
+
+            ${chip}
+          </div>
+          ${platform}
+        </td>
+        <td>${pill}</td>
+        <td class="muted">${fmtDate(it.ts)}, ${fmtTime(it.ts)}</td>
+      </tr>
+    `;
+  }).join('');
+  tbody.innerHTML = rows || `<tr><td colspan="4" class="muted">ไม่มีรายการของวันล่าสุด</td></tr>`;
+}
+
+// Helpers
+function mapStatusTH(st) {
+  const s = String(st || '').toLowerCase();
+
+  switch (s) {
+    case 'open':
+      return 'เปิดใช้งาน';
+    case 'close':
+    case 'closed':
+      return 'ปิดใช้งาน';
+    case 'new':
+      return 'ใหม่';
+    case 'updating':
+      return 'กำลังอัปเดต';
+    case 'disabled':
+      return 'ปิดถาวร';
+    default:
+      return st ? st.toUpperCase() : '—';
+  }
+}
+
+// --- 3) render mobile ---
+function renderCards(items){
+  const root = $('#upCards');
+  root.innerHTML = items.map(it => {
+    const id   = it.target === 'service' ? (it.providerServiceId || '') : (it.serviceGroupId || '');
+    const name = it.target === 'service' ? (it.serviceName || '(ไม่ทราบชื่อ)') : (it.categoryName || '(ไม่ทราบหมวด)');
+    const pill = buildPill(it);
+    const chip = targetChip(it);
+    const platform = it.platform ? `<div class="u-meta">${h(it.platform)}</div>` : ``;
+    const icon = detectIcon(name);
+
+    return `
+      <div class="u-card" data-key="${h(it._id || '')}">
+        <div class="u-head">
+          <div>
+            <div class="u-id">#${h(id)}</div>
+              <div class="u-name">
+                ${icon ? `<img src="${icon}" class="svc-ico" style="margin-right:6px;">` : ``}
+                ${h(name)}
+                ${it.target==='service' ? `<span class="name-badge">UPDATED ${fmtDate(it.ts)}</span>` : ``}
+              </div>
+            ${platform}
+          </div>
+        </div>
+        <div class="u-body">
+          <div class="u-row"><div class="u-label">สิ่งที่อัปเดต</div><div>${pill}</div></div>
+          ${(it.oldStatus || it.newStatus) ? `
+          <div class="u-row"><div class="u-label">สถานะล่าสุด</div>
+            <div>${h(mapStatusTH(it.newStatus))}</div>
+          </div>` : ``}
+          <div class="u-row"><div class="u-label">วันที่</div><div>${fmtDate(it.ts)} ${fmtTime(it.ts)}</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  root.addEventListener('click', e => {
+    const card = e.target.closest('.u-card');
+    if (!card) return;
+    card.classList.toggle('open');
+  }, { passive:true });
+}
+
+
+function updateMetrics(items){
+  const total = items.length;
+  let open = 0, close = 0, news = 0;
+  for (const it of items) {
+    const diff = String(it.diff || '').toLowerCase();
+    const after = String(it.newStatus || '').toUpperCase();
+    if (diff === 'new') news++;
+    if (diff === 'open' || after === 'OPEN') open++;
+    if (diff === 'close' || diff === 'removed' || after === 'CLOSE') close++;
+  }
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v || 0).toLocaleString('th-TH'); };
+  set('metricTotal', total);
+  set('metricOpen', open);
+  set('metricClose', close);
+  set('metricNew', news);
+}
+
+// --- 4) load + ปุ่มรีเฟรชมีสถานะ ---
+async function loadLatest(){
+  const foot = $('#foot');
+  const btn  = $('#btnRefresh');
+  foot.textContent = 'กำลังโหลด…';
+  btn?.setAttribute('disabled','');
+  btn && (btn.textContent = 'กำลังรีเฟรช…');
+
+  try{
+    const res = await fetch('/api/changes?latest=1&limit=800', { cache:'force-cache', headers:{ 'accept':'application/json' } });
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+
+    updateMetrics(items);
+
+    // อัปหัวข้อ “วันล่าสุด” ถ้ามี
+    if (data?.latestDay) {
+      $('.title')?.setAttribute('title', `วันล่าสุด: ${data.latestDay}`);
+    }
+
+    renderTable(items);
+    renderCards(items);
+    foot.textContent = items.length ? '' : 'ไม่มีรายการของวันล่าสุด';
+  }catch(e){
+    foot.textContent = 'โหลดไม่สำเร็จ';
+  }finally{
+    btn?.removeAttribute('disabled');
+    btn && (btn.textContent = 'รีเฟรช');
+  }
+}
+
+// hooks
+$('#btnRefresh')?.addEventListener('click', loadLatest);
+window.addEventListener('services-synced', loadLatest);
+
+// boot
+loadLatest();
+</script>
+

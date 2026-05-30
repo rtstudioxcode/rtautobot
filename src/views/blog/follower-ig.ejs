@@ -1,0 +1,647 @@
+<%
+  const pageTitle = `${article.title} | บทความการตลาดออนไลน์ 2026 | RTSMM-TH`;
+  const pageDesc  = article.excerpt 
+    || 'เทคนิคปั้นไอจี ปั้นผู้ติดตาม Instagram ในปี 2026 ให้โตแบบมืออาชีพ ด้วย Reels, Stories และคอนเทนต์ที่มีคุณภาพ';
+  const canonicalPath = `/blog/${article.slug || article._id || ''}`;
+
+  // ใช้กับ layout.ejs -> <title>, meta description, OG, Twitter
+  title       = pageTitle;
+  description = pageDesc;
+  ogTitle     = pageTitle;
+  ogDesc      = pageDesc;
+  ogImage     = article.image;
+  // ogUrl ให้ layout ใช้ค่า req.originalUrl ต่อเอง
+%>
+
+<script type="application/ld+json">
+<%- safeJson({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": article.title,
+  "description": pageDesc,
+  "image": article.image,
+  "author": {
+    "@type": "Person",
+    "name": article.author
+  },
+  "datePublished": article.dateISO || article.date,
+  "dateModified": article.updatedAt || article.dateISO || article.date,
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rtsmm-th.com" + canonicalPath
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RTSSM-TH.COM",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rtsmm-th.com/static/logo/icon-logo.png"
+    }
+  }
+}, null, 2) %>
+</script>
+
+<style>
+/* =========================================================
+   IG Article — Enterprise High-end Theme
+   Scope เฉพาะหน้านี้ ไม่รบกวน style.css/global
+========================================================= */
+.ig-article-page{
+  --ig-page: var(--page, #080a10);
+  --ig-card: var(--card, #10131d);
+  --ig-text: var(--text, #f7f4ea);
+  --ig-muted: var(--muted, #aab0bd);
+  --ig-border: var(--border, rgba(255,255,255,.10));
+  --ig-accent: var(--accent, #e8bc53);
+  --ig-accent-2: #ffe28a;
+  --ig-soft: color-mix(in srgb, var(--ig-card) 82%, transparent);
+  --ig-shadow: rgba(0,0,0,.34);
+  --ig-green: #32d583;
+  --ig-red: #fb7185;
+  --ig-blue: #60a5fa;
+
+  max-width:1180px;
+  margin:0 auto;
+  padding:28px 16px 36px;
+  color:var(--ig-text);
+  position:relative;
+  isolation:isolate;
+}
+
+html[data-theme="light"] .ig-article-page,
+html.light .ig-article-page,
+body.light .ig-article-page,
+[data-theme="light"] .ig-article-page{
+  --ig-page: var(--page, #f6f7fb);
+  --ig-card: var(--card, #ffffff);
+  --ig-text: var(--text, #131722);
+  --ig-muted: var(--muted, #647084);
+  --ig-border: var(--border, rgba(15,23,42,.12));
+  --ig-soft: rgba(15,23,42,.035);
+  --ig-shadow: rgba(15,23,42,.12);
+}
+
+.ig-article-page *,
+.ig-article-page *::before,
+.ig-article-page *::after{ box-sizing:border-box; }
+
+.ig-bg-orb{
+  position:absolute;
+  border-radius:999px;
+  filter:blur(28px);
+  opacity:.46;
+  pointer-events:none;
+  z-index:-1;
+  animation:igFloat 8s ease-in-out infinite;
+}
+.ig-bg-orb.one{ width:280px;height:280px;right:4%;top:40px;background:color-mix(in srgb,var(--ig-accent) 28%,transparent); }
+.ig-bg-orb.two{ width:220px;height:220px;left:-40px;top:340px;background:rgba(96,165,250,.18);animation-delay:-3s; }
+
+@keyframes igFloat{
+  0%,100%{ transform:translate3d(0,0,0) scale(1); }
+  50%{ transform:translate3d(0,-14px,0) scale(1.045); }
+}
+@keyframes igRise{
+  from{ opacity:0; transform:translateY(16px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+@keyframes igShine{
+  from{ transform:translateX(-120%) rotate(14deg); }
+  to{ transform:translateX(160%) rotate(14deg); }
+}
+
+.ig-hero{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--ig-border);
+  border-radius:34px;
+  padding:30px;
+  background:
+    radial-gradient(circle at 18% 20%, color-mix(in srgb,var(--ig-accent) 22%,transparent), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
+    color-mix(in srgb,var(--ig-card) 92%,transparent);
+  box-shadow:0 24px 70px var(--ig-shadow), inset 0 1px 0 rgba(255,255,255,.075);
+  backdrop-filter:blur(18px);
+  animation:igRise .55s ease both;
+}
+.ig-hero::after{
+  content:"";
+  position:absolute;
+  width:42%;
+  height:160%;
+  left:-55%;
+  top:-30%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+  animation:igShine 6.8s ease-in-out infinite;
+  pointer-events:none;
+}
+
+.ig-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 12px;
+  border-radius:999px;
+  color:#17130a;
+  background:linear-gradient(135deg,#ffe28a,#e8bc53 58%,#bd8626);
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  box-shadow:0 12px 24px color-mix(in srgb,var(--ig-accent) 24%,transparent);
+}
+
+.ig-title{
+  margin:18px 0 10px;
+  max-width:880px;
+  font-size:clamp(32px,5vw,58px);
+  line-height:1.03;
+  font-weight:950;
+  letter-spacing:-.05em;
+  color:var(--ig-text);
+}
+.ig-desc{
+  margin:0;
+  max-width:760px;
+  font-size:clamp(15px,1.8vw,18px);
+  line-height:1.75;
+  color:var(--ig-muted);
+  font-weight:650;
+}
+
+.ig-meta-row{
+  margin-top:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.ig-meta-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 13px;
+  border-radius:16px;
+  background:var(--ig-soft);
+  border:1px solid var(--ig-border);
+  color:var(--ig-muted);
+  font-size:13px;
+  font-weight:800;
+}
+.ig-meta-pill strong{ color:var(--ig-text); }
+
+.ig-cover-wrap{
+  margin:22px 0 0;
+  border-radius:30px;
+  padding:10px;
+  border:1px solid var(--ig-border);
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.075);
+}
+.ig-cover{
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  margin:0;
+  aspect-ratio:16/8.2;
+  background:var(--ig-soft);
+}
+.ig-cover img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  transform:scale(1.01);
+  filter:saturate(1.04) contrast(1.02);
+}
+.ig-cover::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, transparent 45%, rgba(0,0,0,.48));
+  pointer-events:none;
+}
+
+.ig-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:22px;
+  align-items:start;
+  margin-top:22px;
+}
+
+.ig-article-card{
+  border:1px solid var(--ig-border);
+  border-radius:34px;
+  padding:34px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.048), rgba(255,255,255,.018)),
+    color-mix(in srgb,var(--ig-card) 94%,transparent);
+  box-shadow:0 22px 64px var(--ig-shadow), inset 0 1px 0 rgba(255,255,255,.065);
+  animation:igRise .62s ease both;
+}
+
+.ig-article{
+  color:var(--ig-text);
+  font-size:16px;
+  line-height:1.86;
+}
+.ig-article p{ margin:0 0 18px; color:color-mix(in srgb,var(--ig-text) 86%,var(--ig-muted)); }
+.ig-article h2,
+.ig-article h3{
+  color:var(--ig-text);
+  letter-spacing:-.028em;
+  line-height:1.22;
+}
+.ig-article h2{
+  margin:34px 0 16px;
+  font-size:clamp(23px,3.2vw,32px);
+  font-weight:950;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.ig-article h2::before{
+  content:"";
+  width:10px;
+  height:32px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#ffe28a,#e8bc53,#bd8626);
+  box-shadow:0 0 22px color-mix(in srgb,var(--ig-accent) 32%,transparent);
+  flex:0 0 auto;
+}
+.ig-article h3{
+  margin:26px 0 12px;
+  font-size:clamp(18px,2.2vw,23px);
+  font-weight:900;
+}
+.ig-article hr{
+  border:0;
+  height:1px;
+  margin:28px 0;
+  background:linear-gradient(90deg,transparent,var(--ig-border),color-mix(in srgb,var(--ig-accent) 45%,transparent),var(--ig-border),transparent);
+}
+.ig-article ul{
+  margin:12px 0 18px;
+  padding:0;
+  display:grid;
+  gap:12px;
+  list-style:none;
+}
+.ig-article li{
+  position:relative;
+  padding:14px 16px 14px 44px;
+  border-radius:20px;
+  background:var(--ig-soft);
+  border:1px solid color-mix(in srgb,var(--ig-border) 85%,transparent);
+  color:color-mix(in srgb,var(--ig-text) 88%,var(--ig-muted));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
+.ig-article li::before{
+  content:"✓";
+  position:absolute;
+  left:14px;
+  top:14px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  color:#17130a;
+  font-size:12px;
+  font-weight:950;
+  background:linear-gradient(135deg,#ffe28a,#e8bc53);
+}
+.ig-article strong{ color:var(--ig-text); font-weight:950; }
+
+.ig-cta{
+  margin-top:28px;
+  border:1px solid color-mix(in srgb,var(--ig-accent) 34%,var(--ig-border));
+  border-radius:28px;
+  padding:22px;
+  background:
+    radial-gradient(circle at 18% 20%, color-mix(in srgb,var(--ig-accent) 18%,transparent), transparent 44%),
+    linear-gradient(135deg, color-mix(in srgb,var(--ig-accent) 10%,var(--ig-card)), color-mix(in srgb,var(--ig-card) 94%,transparent));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+.ig-cta h3{ margin:0 0 6px; font-size:22px; font-weight:950; letter-spacing:-.03em; }
+.ig-cta p{ margin:0; color:var(--ig-muted); line-height:1.6; }
+.ig-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  min-height:46px;
+  padding:0 18px;
+  border-radius:16px;
+  color:#17130a;
+  text-decoration:none;
+  font-weight:650;
+  background:linear-gradient(135deg,#ffe28a,#e8bc53 58%,#bd8626);
+  box-shadow:0 14px 30px color-mix(in srgb,var(--ig-accent) 24%,transparent);
+  white-space:nowrap;
+  transition:transform .2s ease, filter .2s ease;
+}
+.ig-btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+
+.ig-sidebar{
+  position:sticky;
+  top:92px;
+  display:grid;
+  gap:14px;
+}
+.ig-side-card{
+  border:1px solid var(--ig-border);
+  border-radius:26px;
+  padding:18px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.014)),
+    color-mix(in srgb,var(--ig-card) 92%,transparent);
+  box-shadow:0 18px 48px var(--ig-shadow), inset 0 1px 0 rgba(255,255,255,.055);
+  animation:igRise .72s ease both;
+}
+.ig-side-card h4{ margin:0 0 12px; font-size:15px; font-weight:950; color:var(--ig-text); }
+.ig-toc{ display:grid; gap:8px; }
+.ig-toc a{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid transparent;
+  color:var(--ig-muted);
+  text-decoration:none;
+  font-size:13px;
+  font-weight:850;
+  background:transparent;
+  transition:.18s ease;
+}
+.ig-toc a::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--ig-accent); opacity:.72; }
+.ig-toc a:hover{ color:var(--ig-text); background:var(--ig-soft); border-color:var(--ig-border); transform:translateX(2px); }
+.ig-mini-stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ig-mini-stat{
+  padding:14px 12px;
+  border-radius:18px;
+  background:var(--ig-soft);
+  border:1px solid var(--ig-border);
+}
+.ig-mini-stat strong{ display:block; color:var(--ig-text); font-size:20px; font-weight:950; }
+.ig-mini-stat span{ display:block; margin-top:4px; color:var(--ig-muted); font-size:12px; font-weight:800; }
+
+.ig-footer.site-footer{
+  margin-top:28px;
+  border-radius:34px;
+  overflow:hidden;
+  border:1px solid var(--ig-border);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.016)),
+    color-mix(in srgb,var(--ig-card) 94%,transparent);
+  box-shadow:0 22px 64px var(--ig-shadow), inset 0 1px 0 rgba(255,255,255,.055);
+}
+.ig-footer .site-footer__topline{ height:3px; background:linear-gradient(90deg,#ffe28a,#e8bc53,#bd8626); }
+.ig-footer .site-footer__container{
+  display:grid;
+  grid-template-columns:1.35fr repeat(3,1fr);
+  gap:22px;
+  padding:28px;
+}
+.ig-footer .brand-logo{ max-width:180px; height:auto; object-fit:contain; }
+.ig-footer .brand-text{ margin:14px 0 0; color:var(--ig-muted); line-height:1.72; font-size:13px; }
+.ig-footer .footer-title{ margin:0 0 12px; color:var(--ig-text); font-size:14px; font-weight:950; }
+.ig-footer .footer-list{ list-style:none; margin:0; padding:0; display:grid; gap:9px; }
+.ig-footer a{ color:var(--ig-muted); text-decoration:none; font-size:13px; font-weight:800; transition:.18s ease; }
+.ig-footer a:hover{ color:var(--ig-accent-2); }
+
+@media (max-width:980px){
+  .ig-layout{ grid-template-columns:1fr; }
+  .ig-sidebar{ position:relative; top:auto; grid-template-columns:1fr 1fr; }
+  .ig-footer .site-footer__container{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width:680px){
+  .ig-article-page{ padding:18px 12px 28px; }
+  .ig-hero{ border-radius:26px; padding:20px; }
+  .ig-cover{ aspect-ratio:16/10.5; border-radius:20px; }
+  .ig-cover-wrap{ border-radius:24px; padding:7px; }
+  .ig-article-card{ border-radius:26px; padding:20px; }
+  .ig-article{ font-size:15px; line-height:1.78; }
+  .ig-article li{ padding:13px 13px 13px 40px; border-radius:17px; }
+  .ig-cta{ flex-direction:column; align-items:stretch; border-radius:22px; }
+  .ig-btn{ width:100%; }
+  .ig-sidebar{ grid-template-columns:1fr; }
+  .ig-footer .site-footer__container{ grid-template-columns:1fr; padding:22px; text-align:center; }
+  .ig-footer .brand-logo{ margin:auto; }
+}
+@media (prefers-reduced-motion: reduce){
+  .ig-article-page *, .ig-article-page *::before, .ig-article-page *::after{
+    animation:none!important;
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+}
+</style>
+
+<section class="ig-article-page page blog-detail container">
+  <span class="ig-bg-orb one"></span>
+  <span class="ig-bg-orb two"></span>
+
+  <header class="ig-hero">
+    <div class="ig-kicker"><span>✦</span> Instagram Growth Guide 2026</div>
+    <h1 class="ig-title"><%= article.title %></h1>
+    <p class="ig-desc">
+      คู่มือปั้นไอจีให้โตแบบมืออาชีพ เพิ่มผู้ติดตาม สร้างเอ็นเกจเมนต์ และต่อยอดยอดขายด้วยคอนเทนต์ที่ชัดเจน ทำตามได้จริง
+    </p>
+    <div class="ig-meta-row">
+      <span class="ig-meta-pill">🕒 <strong><%= article.date %></strong></span>
+      <span class="ig-meta-pill">👤 <strong><%= article.author %></strong></span>
+      <span class="ig-meta-pill">📈 Instagram Strategy</span>
+      <span class="ig-meta-pill">⚡ อัปเดต 2026</span>
+    </div>
+
+    <div class="ig-cover-wrap">
+      <figure class="ig-cover">
+        <img
+          src="/static/assets/thumbnails/blog2.gif"
+          alt="บทความ Instagram 2026: <%= article.title %>"
+          loading="lazy"
+        >
+      </figure>
+    </div>
+  </header>
+
+  <div class="ig-layout">
+    <article class="ig-article-card ig-article">
+      <p>
+        ปัจจุบันแพลตฟอร์มออนไลน์มีให้เลือกเพียบ แม้ช่วง 2–3 ปีที่ผ่านมา TikTok จะมาแรง
+        แต่การ “ปั้นไอจี” ก็ยังคุ้มค่าและทำได้ผล หากเข้าใจฟีเจอร์ของ Instagram และลงมือทำอย่างมีระบบ
+      </p>
+
+      <hr>
+
+      <h2 id="still-work">ปั้นไอจีในปี 2026 ยังเวิร์กอยู่ไหม?</h2>
+      <p>
+        ตอบเลยว่า “ยังเวิร์ก” เพราะ Instagram ปรับตัวต่อเนื่อง ไม่ได้มีแค่ภาพนิ่งอีกต่อไป
+        เครื่องมือสร้างคอนเทนต์ครบกว่าเดิม เหมาะทั้งการสร้างแบรนด์ การขาย และการทำคอนเทนต์สายเล่าเรื่อง
+      </p>
+
+      <h3>ฟีเจอร์ที่ทำให้ IG น่าเล่นกว่าเดิม</h3>
+      <ul>
+        <li>
+          <strong>Reels — วิดีโอสั้น เข้าถึงไว</strong><br>
+          ทำคลิปสั้นได้ในแอปเดียว ใส่เพลง/เสียงเทรนด์ ตัดต่อเร็ว โอกาสเข้าถึงผู้ชมใหม่สูง เหมาะมากสำหรับดันผู้ติดตาม
+        </li>
+        <li>
+          <strong>IG Stories — พื้นที่ส่วนตัว สื่อสารบ่อย</strong><br>
+          โพสต์เรื่องสั้น ๆ อยู่ 24 ชม. ใช้โพลล์/สติ๊กเกอร์ Q&amp;A/ลิงก์ ช่วยคุยกับผู้ติดตามแบบใกล้ชิด เพิ่มความสัมพันธ์และการจดจำแบรนด์
+        </li>
+      </ul>
+
+      <hr>
+
+      <h2 id="why-ig">ทำไมคนยัง “ปั้นไอจี” กันอยู่?</h2>
+      <ul>
+        <li><strong>สร้างแบรนด์ได้จริง</strong> — เหมาะมากกับสินค้าที่ต้องการภาพลักษณ์ทันสมัย ดูพรีเมียม และทำโฆษณาต่อยอดได้</li>
+        <li><strong>เวทีโชว์คอนเทนต์สร้างสรรค์</strong> — ทั้งภาพนิ่ง, Reels, Stories, Carousel ทำให้เล่าเรื่องได้หลายรูปแบบ</li>
+        <li><strong>โอกาสโตแบบออร์แกนิก</strong> — ทำ Reels โดน ๆ ครั้งเดียว อาจพาโปรไฟล์โตแบบก้าวกระโดด</li>
+      </ul>
+
+      <hr>
+
+      <h2 id="growth-tips">เทคนิค “ปั้นผู้ติดตาม” ให้โตเร็วในปี 2026</h2>
+      <ul>
+        <li>
+          <strong>นิยามตัวตนให้ชัด</strong> — เลือกธีม/แนวที่อยากเล่า เช่น แมว, ฟิตเนส, รีวิวคาเฟ่ ฯลฯ
+          ตัวตนชัดทำให้ดึงดูดคนที่สนใจเหมือนกัน
+        </li>
+        <li>
+          <strong>โพสต์สม่ำเสมอ</strong> — ต่อเนื่อง (อย่างน้อย 3–5 โพสต์/สัปดาห์) คุณภาพสำคัญกว่าปริมาณ แต่ห้ามหายยาว
+        </li>
+        <li>
+          <strong>แฮชแท็กแบบมีสติ</strong> — ใช้ให้ตรงโพสต์ คละคำกว้าง+เฉพาะทาง เพื่อติดหน้าค้นหาและหน้าแนะนำ
+        </li>
+        <li>
+          <strong>รีดประโยชน์จาก Stories</strong> — โพสต์ประจำวัน โพลล์ คำถาม กล่อง Q&amp;A เพื่อดันเอ็นเกจและความคุ้นเคย
+        </li>
+        <li>
+          <strong>ทำ Reels ให้ “กระชับและทันเทรนด์”</strong> — 15–30 วินาที โฟกัสสารเดียวชัด ๆ ใช้เพลงเทรนด์ ช็อตเปิดต้องดึงสายตาใน 3 วินาที
+        </li>
+      </ul>
+
+      <h3>จังหวะโพสต์แนะนำ</h3>
+      <ul>
+        <li>ช่วง 11:00–13:00 (พักเที่ยง)</li>
+        <li>ช่วง 18:00–21:00 (หลังเลิกงาน)</li>
+        <li>ศุกร์–อาทิตย์ มักมีทราฟฟิกสูงขึ้น</li>
+      </ul>
+
+      <hr>
+
+      <h2 id="checklist">เช็กลิสต์เล็ก ๆ ก่อนปล่อยโพสต์</h2>
+      <ul>
+        <li>ฮุก 3 วินาทีแรกแข็งแรงหรือยัง?</li>
+        <li>คำบรรยายมีคีย์เวิร์ดหลัก/แฮชแท็กพอดี ๆ แล้วหรือยัง?</li>
+        <li>ปก (Thumbnail) อ่านง่าย สะดุดตา?</li>
+        <li>มี Call-to-Action เช่น ชวนคอมเมนต์/แชร์/เซฟ?</li>
+      </ul>
+
+      <hr>
+
+      <h2 id="avoid">ข้อควรหลีกเลี่ยง</h2>
+      <ul>
+        <li>อย่าใช้บอท/ยอดคุณภาพต่ำ เสี่ยงโดนลด Reach หรือโดนเพ่งเล็ง</li>
+        <li>อย่าลอกคอนเทนต์แบบไร้เครดิต/ไร้ความคิดสร้างสรรค์</li>
+        <li>อย่าใช้เพลงลิขสิทธิ์ที่ไม่ได้รับอนุญาต</li>
+      </ul>
+
+      <hr>
+
+      <h2 id="summary">บทส่งท้าย</h2>
+      <p>
+        สรุป: ปี 2026 “ปั้นไอจี” ยังคุ้มและไปต่อได้อีกยาว ใครทำแบรนด์ ทำคอนเทนต์ หรือขายของ
+        ควรใช้ทั้ง Reels + Stories + โพสต์ภาพ/คารูเซล ทำอย่างสม่ำเสมอ วัดผลแล้วปรับ
+        ถ้าอยากได้ทีมช่วยวางแผน-ดันให้ถึงเป้า เราพร้อมช่วยคุณเริ่มให้ถูกทางและโตไวขึ้น ✨
+      </p>
+
+      <section class="ig-cta" aria-label="เริ่มสั่งซื้อบริการ Instagram">
+        <div>
+          <h3>อยากให้โปรไฟล์ IG โตไวขึ้น?</h3>
+          <p>เลือกบริการเพิ่มผู้ติดตาม ไลก์ วิว และเอ็นเกจเมนต์ได้ในระบบเดียว พร้อมติดตามสถานะงานแบบเรียลไทม์</p>
+        </div>
+        <a class="ig-btn" href="/order">เริ่มสั่งซื้อเลย →</a>
+      </section>
+    </article>
+
+    <aside class="ig-sidebar" aria-label="สารบัญและข้อมูลย่อ">
+      <section class="ig-side-card">
+        <h4>สารบัญบทความ</h4>
+        <nav class="ig-toc">
+          <a href="#still-work">ปั้นไอจียังเวิร์กไหม</a>
+          <a href="#why-ig">ทำไมยังควรใช้ IG</a>
+          <a href="#growth-tips">เทคนิคเพิ่มผู้ติดตาม</a>
+          <a href="#checklist">เช็กลิสต์ก่อนโพสต์</a>
+          <a href="#avoid">ข้อควรหลีกเลี่ยง</a>
+          <a href="#summary">บทส่งท้าย</a>
+        </nav>
+      </section>
+
+      <section class="ig-side-card">
+        <h4>โฟกัสสำคัญ</h4>
+        <div class="ig-mini-stats">
+          <div class="ig-mini-stat"><strong>Reels</strong><span>เข้าถึงไว</span></div>
+          <div class="ig-mini-stat"><strong>Stories</strong><span>คุยกับผู้ติดตาม</span></div>
+          <div class="ig-mini-stat"><strong>3–5</strong><span>โพสต์/สัปดาห์</span></div>
+          <div class="ig-mini-stat"><strong>CTA</strong><span>เพิ่มการกระทำ</span></div>
+        </div>
+      </section>
+
+      <section class="ig-side-card">
+        <h4>บริการที่เกี่ยวข้อง</h4>
+        <p style="margin:0 0 14px;color:var(--ig-muted);line-height:1.65;font-size:13px;font-weight:750;">
+          เพิ่มผู้ติดตาม ไลก์ วิว Reels และ Engagement สำหรับ Instagram ในราคาเข้าถึงง่าย
+        </p>
+        <a class="ig-btn" href="/services" style="width:100%;">ดูบริการทั้งหมด</a>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="ig-footer site-footer">
+    <div class="site-footer__topline"></div>
+
+    <div class="site-footer__container">
+      <section class="footer-col footer-brand">
+        <img class="brand-logo" src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH" height="56">
+        <p class="brand-text">
+          RTSSM-TH.COM ผู้ให้บริการ OTP24 ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก
+        </p>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">ผลิตภัณฑ์</h6>
+        <ul class="footer-list">
+          <li><a href="/">หน้าแรก</a></li>
+          <li><a href="/services">บริการทั้งหมด</a></li>
+          <li><a href="/order">คำสั่งซื้อใหม่</a></li>
+        </ul>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">FAQ</h6>
+        <ul class="footer-list">
+          <li><a href="/faq">คำถามที่พบบ่อย</a></li>
+          <li><a href="/blog">บทความ</a></li>
+        </ul>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">เกี่ยวกับเรา</h6>
+        <ul class="footer-list">
+          <li><a href="mailto:rtssm.th@gmail.com">Email: rtssm.th@gmail.com</a></li>
+          <li><a href="https://line.me/R/ti/p/@507vkplq">Line: @rtssm-th</a></li>
+          <li><a href="https://line.me/R/ti/p/@507vkplq">แจ้งปัญหาคำสั่งซื้อ</a></li>
+          <li><a href="/page/terms-of-use">เงื่อนไขและข้อตกลง</a></li>
+        </ul>
+      </section>
+    </div>
+  </footer>
+</section>

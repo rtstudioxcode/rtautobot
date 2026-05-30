@@ -1,0 +1,2516 @@
+<section class="account-container">
+  <h1 class="page-title" id="acctPageTitle">ตั้งค่าข้อมูลส่วนตัว</h1>
+
+  <div class="acc-wrap">
+    <!-- = LEFT: Summary = -->
+    <aside class="acc-side">
+      <div class="prof-card">
+        <div class="prof-avatar">
+          <img id="avatarPreview"
+            src="<%= userDoc.avatarSrc || (typeof buildAvatarSrc === 'function' ? buildAvatarSrc(userDoc.avatarUrl, userDoc.avatarVer) : (userDoc.avatarUrl || '/static/logo/icon-logo.png')) %>"
+            loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/static/logo/icon-logo.png';"
+            alt="avatar">
+        </div>
+
+        <div style="display:flex;justify-content:center;gap:8px;">
+          <button type="button" id="btnChangeAvatar" class="btn-line">เปลี่ยนรูปโปรไฟล์</button>
+          <input id="avatarInput" name="avatar" type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif">
+        </div>
+
+        <div class="prof-name">
+          <%= userDoc.name || (me?.username || '' ) %>
+        </div>
+        <div class="prof-mail">
+          <%= userDoc.email || '-' %>
+            <% if (userDoc.email) { %>
+              <% if (userDoc.emailVerified) { %>
+                <span class="badge ok">ยืนยันแล้ว</span>
+                <% } else { %>
+                  <span class="badge warn">ยังไม่ยืนยัน</span>
+                  <% } %>
+                    <% } %>
+        </div>
+
+        <div class="kv">
+          <div>ระดับบัญชี</div>
+          <div><span class="badge warn">
+              <%= userDoc.levelName || `เลเวล ${userDoc.level || '1' }` %>
+            </span></div>
+        </div>
+        <% if (userDoc.serial_key) { %>
+          <div class="kv">
+            <div>Serial Key</div>
+            <div>
+              <span class="badge ok">
+                <%= userDoc.serial_key %>
+              </span>
+            </div>
+          </div>
+          <% } %>
+            <div class="kv">
+              <div>ยอดคงเหลือ</div>
+              <div><span class="badge balance">
+                  <%= balanceText %>
+                </span></div>
+            </div>
+
+            <!-- ✅ อัปเดตข้อความรองรับไฟล์ -->
+            <div class="muted sm" style="margin-top:8px">ไฟล์ที่รองรับ: png, jpg, jpeg, webp, gif (สูงสุด 10MB)</div>
+      </div>
+
+      <div class="prof-card" style="margin-top:14px">
+        <div class="kv">
+          <div>ยืนยันตัวตน KYC</div>
+          <div><a class="badge danger">ยังไม่เปิดใช้งาน</a></div>
+        </div>
+        <div class="kv">
+          <div>ช่วยเหลือ</div>
+          <div><a class="badge ok" href="https://line.me/R/ti/p/@507vkplq" target="_blank" rel="noopener">Line
+              Official</a></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- = RIGHT: Tabs = -->
+    <div class="acc-main">
+      <div class="tabs">
+        <button class="tab active" data-tab="tab-general">การตั้งค่าทั่วไป</button>
+        <button class="tab" data-tab="tab-points">ข้อมูลระดับบัญชี</button>
+        <button class="tab" data-tab="tab-affiliate">แนะนำเพื่อน</button>
+      </div>
+
+      <!-- GENERAL -->
+      <div class="tabpane show" id="tab-general">
+        <form id="formProfile" class="card" enctype="multipart/form-data">
+          <div class="card-header">
+            <div class="title">ข้อมูลส่วนตัว</div>
+          </div>
+          <div class="form-grid">
+            <label>ชื่อ - นามสกุล
+              <input name="name" type="text" value="<%= userDoc.name || '' %>" <%=userDoc.name ? 'disabled' : '' %>
+              placeholder="ระบุชื่อ-นามสกุล">
+              <% if (userDoc.name) { %><small class="muted sm">ตั้งแล้ว หากต้องการเปลี่ยนให้ติดต่อผู้ดูแล</small>
+                <% } %>
+            </label>
+
+            <label>Username
+              <div class="static-input" aria-readonly="true">
+                <%= userDoc.username || '-' %>
+              </div>
+            </label>
+
+            <label>Email Address
+              <div class="email-row">
+                <input name="email" type="email" value="<%= userDoc.email || '' %>" <%=userDoc.email ? 'disabled' : ''
+                  %>
+                placeholder="name@example.com">
+                <% if (userDoc.email) { %>
+                  <% if (userDoc.emailVerified) { %>
+                    <button type="button" class="badge2 ok" disabled>ยืนยันแล้ว</button>
+                    <% } else { %>
+                      <button id="btnSendOtp" type="button" class="btn" data-email="<%= userDoc.email %>">
+                        ส่งรหัสยืนยัน
+                      </button>
+                      <% } %>
+                        <% } %>
+              </div>
+            </label>
+
+            <% if (userDoc.email && !userDoc.emailVerified) { %>
+              <!-- ซ่อนจนกว่าจะกด "ส่งรหัสยืนยัน" สำเร็จ -->
+              <div id="otpArea" class="otp-row" hidden>
+                <input id="otpCode" type="text" inputmode="numeric" maxlength="6" placeholder="กรอกรหัส 6 หลัก">
+                <button id="btnVerifyOtp" type="button" class="btn-lux">ยืนยัน</button>
+              </div>
+              <% } %>
+
+                <label>Timezone
+                  <div class="static-input" aria-readonly="true">(GMT+7:00) Asia/Bangkok (Thailand Time)</div>
+                </label>
+
+                <label>สกุลเงิน
+                  <div class="static-input" aria-readonly="true">
+                    <%= userDoc.currency || 'THB' %>
+                  </div>
+                </label>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-lux" type="submit">บันทึกข้อมูล</button>
+          </div>
+        </form>
+
+        <form id="formPassword" class="card">
+          <div class="card-header">
+            <div class="title">เปลี่ยนรหัสผ่าน</div>
+          </div>
+          <div class="form-grid">
+            <label>รหัสผ่านเดิม
+              <div class="pw-field">
+                <input name="currentPassword" type="password" required>
+                <button type="button" class="pw-toggle" aria-label="แสดง/ซ่อนรหัสผ่าน" aria-pressed="false"
+                  title="แสดง/ซ่อน"></button>
+              </div>
+            </label>
+
+            <label>รหัสผ่านใหม่
+              <div class="pw-field">
+                <input name="newPassword" type="password" minlength="6" required>
+                <button type="button" class="pw-toggle" aria-label="แสดง/ซ่อนรหัสผ่าน" aria-pressed="false"
+                  title="แสดง/ซ่อน"></button>
+              </div>
+            </label>
+
+            <label>ยืนยันรหัสผ่านใหม่
+              <div class="pw-field">
+                <input name="newPassword2" type="password" minlength="6" required>
+                <button type="button" class="pw-toggle" aria-label="แสดง/ซ่อนรหัสผ่าน" aria-pressed="false"
+                  title="แสดง/ซ่อน"></button>
+              </div>
+              <small id="pwMismatchMsg" class="muted sm" style="color: var(--danger); display:none;">
+                รหัสผ่านใหม่ไม่ตรงกัน
+              </small>
+            </label>
+          </div>
+          <div class="card-actions">
+            <button class="btn-lux" type="submit">เปลี่ยนรหัสผ่าน</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- =========== Tab: Points และ Level(แทนที่บล็อกเดิมทั้งหมด) =========== -->
+      <div class="tabpane" id="tab-points">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header">
+            <div class="title">คะแนนสะสม (Points)</div>
+            <span class="pill lvl">
+              <%= userDoc.levelName ? userDoc.levelName : ('เลเวล ' + (userDoc.level || ' 1')) %>
+            </span>
+          </div>
+
+          <div class="form-grid">
+            <div class="score-wrap">
+              <div>
+                <div class="bignum" data-id="points-num">
+                  <% var __points=(agg && typeof agg.points==='number' ) ? agg.points : 0; %>
+                    <%= __points.toLocaleString(undefined,{maximumFractionDigits:2}) %> คะแนน
+                </div>
+                <div class="muted" style="color: #31d810;">ใช้จ่ายครบ ฿50 | ได้รับ 0.5 Point</div>
+              </div>
+
+              <div>
+                <div class="kv" style="margin-bottom:8px">
+                  <div>เรทแลกเป็นเงิน</div>
+                  <% var __rate=(agg && typeof agg.pointRateTHB==='number' ) ? agg.pointRateTHB : 0; %>
+                    <div><span class="badge balance" data-id="point-rate">฿<%= __rate.toLocaleString() %> / 1
+                          แต้ม</span></div>
+                </div>
+                <div class="kv">
+                  <div>มูลค่าแลกได้ (หากแลกทั้งหมด)</div>
+                  <% var __val=(agg && typeof agg.pointValueTHB==='number' ) ? agg.pointValueTHB : 0; %>
+                    <div><span class="badge balance" data-id="point-value">≈ ฿<%=
+                          __val.toLocaleString(undefined,{maximumFractionDigits:2}) %></span></div>
+                </div>
+
+                <div class="kv" style="color: #dbad16;">
+                  <div>⚠️ คำเตือน: เมื่อแลกแต้มเป็นเงินระดับบัญชีของคุณจะลดลงตามไปด้วย</div>
+                </div>
+
+                <div class="card-actions" style="text-align:right;padding:12px 0 0">
+                  <% var __canRedeem=(__points>= 100);
+                    var __needLeft = Math.max(0, 100 - __points);
+                    %>
+                    <button id="btnRedeemPoints" class="btn <%= __canRedeem ? 'primary' : '' %>" <% if (!__canRedeem) {
+                      %>
+                      disabled aria-disabled="true"
+                      title="ต้องมีอย่างน้อย 100 แต้ม (ขาดอีก <%= __needLeft.toLocaleString() %> แต้ม)"
+                        <% } %>
+                          >
+                          แลกแต้มเป็นเงิน (ขั้นต่ำ 100 แต้ม)
+                    </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="title">ยอดใช้จ่ายสะสม</div>
+            <span class="pill lvl">
+              <%= userDoc.levelName || `เลเวล ${userDoc.level || '1' }` %>
+            </span>
+          </div>
+
+          <%
+            // ✅ ประกาศก่อนใช้งานเสมอ
+            const __spent = (typeof agg !== 'undefined' && agg && typeof agg.totalSpent === 'number')
+              ? agg.totalSpent
+              : 0;
+            const __level = Number(userDoc.level || 1);
+            const __need = [0, ...((levels || []).map(l => Number(l.need || 0)))];
+            const __nextMax = __need[__level + 1] || __need.at(-1) || 1;
+            const __pctRaw = (__spent / __nextMax) * 100;
+            const __pct = Math.max(0, Math.min(100, +__pctRaw.toFixed(2)));
+
+            // ✅ ถ้าจะโชว์ breakdown ให้ประกาศตัวแปรของมัน “หลังจาก” __spent แล้ว
+            const __raw = (agg && typeof agg.totalSpentRaw === 'number')
+              ? agg.totalSpentRaw
+              : (typeof userDoc.totalSpentRaw === 'number' ? userDoc.totalSpentRaw : 0);
+            const __redeemed = (agg && typeof agg.redeemedSpent === 'number')
+              ? agg.redeemedSpent
+              : (typeof userDoc.redeemedSpent === 'number' ? userDoc.redeemedSpent : 0);
+            %>
+
+            <div class="form-grid">
+              <div class="score-wrap">
+                <div>
+                  <div class="bignum">฿<%= __spent.toFixed(2) %>
+                  </div>
+                  <div class="subcap">ใช้จ่ายไปแล้ว</div>
+                  <!-- (ออปชัน) breakdown -->
+                  <div class="muted">ยอดทั้งหมด: ฿<%= __raw.toLocaleString(undefined,{maximumFractionDigits:2}) %>
+                  </div>
+                  <div class="muted">· แลกเครดิตไปแล้ว: ฿<%=
+                      __redeemed.toLocaleString(undefined,{maximumFractionDigits:2}) %>
+                  </div>
+                  <div class="muted">· ใช้แต้มไปแล้ว: <%=
+                      Number(agg?.pointsRedeemed||0).toLocaleString(undefined,{minimumFractionDigits:2}) %> Point</div>
+                  <!-- <div class="muted">· ใช้คำนวณเลเวล: ฿<%= __spent.toLocaleString(undefined,{maximumFractionDigits:2}) %></div> -->
+                  <!-- <div class="subcap" style="margin-top:6px">
+                    ยอดดิบทั้งหมด: ฿<%= __raw.toLocaleString(undefined,{maximumFractionDigits:2}) %>
+                    · แลกไปแล้ว: ฿<%= __redeemed.toLocaleString(undefined,{maximumFractionDigits:2}) %>
+                    · ใช้คำนวณเลเวล: ฿<%= __spent.toLocaleString(undefined,{maximumFractionDigits:2}) %>
+                  </div> -->
+                </div>
+                <div>
+                  <div class="prog">
+                    <div class="fill" style="width:<%= __pct %>%"></div>
+                  </div>
+                  <div class="subcap" style="margin-top:6px">
+                    เป้าหมายเลเวลถัดไป: ฿<%= (__nextMax || 0).toLocaleString() %> (<%= __pct %>%)
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <!-- ระดับบัญชี (แสดงทีละ 2 การ์ด) -->
+        <div class="card">
+          <div class="card-header">
+            <div class="title">ข้อมูลระดับบัญชี</div>
+          </div>
+
+          <div id="levelsTrack"><!-- เติมด้วย JS เดิม --></div>
+
+          <div class="level-nav">
+            <button class="btn" id="lvPrev" aria-label="ก่อนหน้า">‹</button>
+            <button class="btn primary" id="lvNext" aria-label="ถัดไป">›</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========== Tab: AFFILIATE(แนะนำเพื่อน) =========== -->
+      <!-- AFFILIATE -->
+      <div class="tabpane" id="tab-affiliate">
+        <!-- Section: รายละเอียด -->
+        <div class="card">
+          <div class="card-header">
+            <div class="title">ระบบแนะนำเพื่อน (Affiliate <span id="aff-rate-title">—</span>%)</div>
+          </div>
+          <div class="form-grid">
+            <div class="muted">
+              <ul style="margin:0 0 0 18px;padding:0">
+                <li>คุณจะได้รับ <strong><span id="aff-rate-inline"></span>%</strong>
+                  ของยอดออเดอร์ทุกคำสั่งซื้อของเพื่อนที่สมัครผ่านลิงก์ของคุณ</li>
+                <li>ระบบคิดให้อัตโนมัติทุกครั้งที่คำสั่งซื้อของเพื่อนอยู่ในสถานะนับยอด
+                  (paid/completed/success/done/processing)</li>
+                <li>ลิงก์แนะนำจะถูกสร้างเมื่อคุณกดปุ่ม “สร้างลิงก์แนะนำ” เท่านั้น และเป็นคีย์เฉพาะตัว
+                  ไม่ผูกกับชื่อผู้ใช้</li>
+                <li>ตัวอย่างรูปแบบลิงก์: <code>https://rtsmm-th.com/aff?=รหัสแนะนำเพื่อนของคุณ</code></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: สรุปรายได้ -->
+        <div class="card" style="margin-top:14px">
+          <div class="card-header aff-header">
+            <div class="title">
+              สรุปรายได้จากการแนะนำ
+            </div>
+
+            <!-- หลอดความคืบหน้าระดับ -->
+            <div class="aff-progress" aria-label="Affiliate tier progress">
+              <div class="bar">
+                <div class="fill" id="aff-tier-fill" style="width:0%"></div>
+              </div>
+              <div class="note muted" id="aff-tier-note"></div>
+            </div>
+
+            <span class="pill clickable" id="aff-tier-pill">
+              <span id="aff-refcount">
+                <%= (affiliateSummary?.referredCount ?? 0).toLocaleString() %>
+              </span> คนที่คุณแนะนำ
+            </span>
+          </div>
+
+          <div class="card-stack" id="aff-kpis">
+            <div class="summary-kpi">
+              <div class="rt-title">จำนวนออเดอร์ทั้งหมด</div>
+              <div class="bignum" id="aff-orders">
+                <%= (affiliateSummary?.orders ?? 0).toLocaleString() %>
+              </div>
+            </div>
+            <div class="summary-kpi">
+              <div class="rt-title">ยอดใช้จ่ายรวมของเพื่อน</div>
+              <div class="bignum">฿<span id="aff-spent">
+                  <%= Number(affiliateSummary?.spentTHB ?? 0).toLocaleString(undefined,{minimumFractionDigits:2}) %>
+                </span></div>
+            </div>
+
+            <div class="summary-kpi">
+              <div class="rt-title">
+                รายได้การแนะนำเพื่อนของคุณ (<span id="aff-rate-inline-2">
+                  <%= (typeof affRatePct==='number' ? affRatePct : (affiliateSummary?.ratePct ?? 5)) %>
+                </span>%)
+              </div>
+
+              <div class="bignum" style="color:#31d810">
+                <span id="aff-withdrawable">
+                  <%= Number(affiliateSummary?.withdrawableTHB ?? 0).toLocaleString(undefined,{minimumFractionDigits:2})
+                    %>
+                </span>
+              </div>
+
+              <div class="kpi-actions">
+                <div class="muted small">ยอดที่ถอนได้ตอนนี้: ฿
+                  <span id="aff-withdrawable">
+                    <%= Number(affiliateSummary?.withdrawableTHB ??
+                      0).toLocaleString(undefined,{minimumFractionDigits:2}) %>
+                  </span>
+                </div>
+                <button class="btn success" id="btnAffWithdraw" <%= Number(affiliateSummary?.withdrawableTHB ?? 0) > 0 ? '' : 'disabled' %>>
+                  ถอนรายได้
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: สร้าง/แสดงลิงก์ -->
+        <div class="card" style="margin-top:14px">
+          <div class="card-header">
+            <div class="title">ลิงก์แนะนำเพื่อน</div>
+          </div>
+          <div class="form-grid">
+            <div id="aff-create-area">
+              <button id="btnCreateAff" class="btn-lux">+ สร้างลิงก์แนะนำ</button>
+              <small class="muted">ลิงก์จะถูกสร้างเพียงครั้งเดียว และใช้งานได้ตลอด</small>
+            </div>
+            <div id="aff-link-area" hidden>
+              <label>ลิงก์ของคุณ
+                <div class="static-input" id="aff-link" style="word-break:break-all"></div>
+              </label>
+              <div class="card-actions" style="text-align:right;padding:0">
+                <button class="btn" id="btnCopyAff">คัดลอกลิงก์</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: รายการการถอนรายได้แนะนำเพื่อน -->
+        <div class="card" style="margin-top:14px">
+          <div class="card-header">
+            <div class="title">รายการการถอนรายได้แนะนำเพื่อน</div>
+          </div>
+          <div class="form-grid">
+            <!-- Desktop table -->
+            <div class="table-wrap only-desktop">
+              <table class="tbl" id="aff-withdraw-table">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">วันที่</th>
+                    <th>ยอดเงิน</th>
+                    <th>ประเภท</th>
+                    <th>สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody id="aff-list"></tbody>
+              </table>
+            </div>
+
+            <!-- Mobile list -->
+            <div class="only-mobile" id="aff-list-mobile"></div>
+
+            <!-- Page control -->
+            <div class="page-control" id="aff-pager">
+              <!-- Per-page: custom dropdown + select เดิม (ซ่อนไว้) -->
+              <div class="perpage perpage-dd">
+                <label>ต่อหน้า</label>
+
+                <!-- ปุ่มสวยๆ -->
+                <button id="perpageBtn" class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="perpageLabel">10</span>
+                  <svg class="chev" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M7 10l5 5 5-5z" />
+                  </svg>
+                </button>
+
+                <!-- เมนูลอย (จะถูกวางแบบ fixed) -->
+                <ul id="perpageMenu" class="dd-menu" role="listbox">
+                  <li role="option" data-val="20" aria-selected="true">20</li>
+                  <li role="option" data-val="50">50</li>
+                  <li role="option" data-val="100">100</li>
+                </ul>
+
+                <!-- select เดิม: ซ่อนไว้และใช้ sync กับ backend -->
+                <select id="aff-perpage" class="fsel" hidden>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+
+              <!-- กลุ่มปุ่มเปลี่ยนหน้า -->
+              <div class="pager">
+                <button class="btn" id="aff-prev" aria-label="หน้าก่อน">‹</button>
+                <span class="muted sm" id="aff-pageinfo">หน้า 1/1</span>
+                <button class="btn" id="aff-next" aria-label="หน้าถัดไป">›</button>
+              </div>
+            </div>
+
+            <div class="muted" id="aff-empty" style="display:none">ยังไม่มีข้อมูล</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal: เลือกประเภทการถอนรายได้แนะนำ -->
+<dialog id="affWithdrawModal">
+  <form method="dialog" class="modal affw-modal">
+    <h3 class="affw-title">เลือกวิธีการถอนรายได้</h3>
+    <p class="muted">โปรดเลือกวิธี</p>
+
+    <!-- hidden field สำหรับส่งค่า -->
+    <input type="hidden" id="affWKind" value="balance">
+
+    <div class="affw-grid">
+      <button type="button" class="affw-option is-active" data-kind="balance" aria-pressed="true">
+        <div class="affw-opt-title">เครดิต</div>
+        <div class="affw-opt-sub muted">สามารถถอนได้เลย</div>
+      </button>
+
+      <!-- <button type="button" class="affw-option" data-kind="cash" aria-pressed="false">
+        <div class="affw-opt-title">เงินสด</div>
+        <div class="affw-opt-sub muted">จำเป็นยืนยัน KYC ก่อนถอน</div>
+      </button> -->
+    </div>
+
+    <div class="card-actions">
+      <button class="btn" value="cancel">ยกเลิก</button>
+      <button id="affWConfirm" class="btn-lux" value="confirm">ถอนเลย</button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+  /* =========================================================
+   Account Enterprise High-end Theme
+   - Local-only CSS for /account/index.ejs
+   - Uses layout tokens: --page, --card, --text, --muted, --border, --accent
+   ========================================================= */
+  .account-container {
+    --acc-page: var(--page, #090a0d);
+    --acc-card: var(--card, #17181d);
+    --acc-card-2: color-mix(in srgb, var(--card, #17181d) 78%, #0b0c10);
+    --acc-soft: color-mix(in srgb, var(--card, #17181d) 86%, transparent);
+    --acc-soft-2: color-mix(in srgb, var(--card, #17181d) 70%, var(--page, #090a0d));
+    --acc-text: var(--text, #fff6e5);
+    --acc-muted: var(--muted, #c8b98d);
+    --acc-border: color-mix(in srgb, var(--border, rgba(255, 255, 255, .14)) 78%, transparent);
+    --acc-accent: var(--accent, #e8bc53);
+    --acc-accent-2: #ffe48e;
+    --acc-green: #21d07a;
+    --acc-red: #ff5d6c;
+    --acc-blue: #4da3ff;
+    --acc-purple: #8d6bff;
+    --acc-shadow: rgba(0, 0, 0, .34);
+    --acc-radius: 28px;
+    position: relative;
+    isolation: isolate;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: clamp(14px, 2vw, 28px);
+    color: var(--acc-text);
+  }
+
+  html[data-theme="light"] .account-container,
+  body.light .account-container,
+  body.theme-light .account-container {
+    --acc-page: var(--page, #f6f8fc);
+    --acc-card: var(--card, #ffffff);
+    --acc-card-2: #f8fafc;
+    --acc-soft: rgba(255, 255, 255, .82);
+    --acc-soft-2: #f3f6fb;
+    --acc-text: var(--text, #111827);
+    --acc-muted: var(--muted, #667085);
+    --acc-border: #dce4ef;
+    --acc-shadow: rgba(15, 23, 42, .10);
+  }
+
+  .account-container::before,
+  .account-container::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(1px);
+  }
+
+  .account-container::before {
+    width: min(620px, 60vw);
+    height: min(620px, 60vw);
+    top: -120px;
+    right: -120px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--acc-accent) 30%, transparent), transparent 66%);
+    opacity: .5;
+    animation: accGlowFloat 9s ease-in-out infinite alternate;
+  }
+
+  .account-container::after {
+    width: min(520px, 52vw);
+    height: min(520px, 52vw);
+    left: -180px;
+    bottom: 12%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--acc-purple) 20%, transparent), transparent 68%);
+    opacity: .42;
+    animation: accGlowFloat 11s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes accGlowFloat {
+    from {
+      transform: translate3d(0, 0, 0) scale(.98)
+    }
+
+    to {
+      transform: translate3d(28px, 18px, 0) scale(1.06)
+    }
+  }
+
+  @keyframes accRise {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(.985)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1)
+    }
+  }
+
+  @keyframes accShine {
+    0% {
+      transform: translateX(-140%) skewX(-18deg)
+    }
+
+    42%,
+    100% {
+      transform: translateX(160%) skewX(-18deg)
+    }
+  }
+
+  @keyframes accPulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc-accent) 26%, transparent)
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px transparent
+    }
+  }
+
+  .account-container * {
+    box-sizing: border-box;
+  }
+
+  .account-container .page-title {
+    margin: 0 0 18px;
+    font-size: clamp(34px, 5vw, 72px);
+    line-height: .96;
+    letter-spacing: -.055em;
+    font-weight: 950;
+    color: var(--acc-text);
+    text-wrap: balance;
+    animation: accRise .55s ease both;
+  }
+
+  .account-container .page-title::after {
+    content: "จัดการโปรไฟล์ ความปลอดภัย ระดับบัญชี และรายได้แนะนำเพื่อนในหน้าเดียว";
+    display: block;
+    max-width: 760px;
+    margin-top: 14px;
+    font-size: clamp(14px, 1.25vw, 18px);
+    line-height: 1.65;
+    letter-spacing: 0;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--acc-muted) 92%, var(--acc-text));
+  }
+
+  .acc-wrap {
+    display: grid;
+    grid-template-columns: minmax(270px, 340px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .acc-side,
+  .acc-main {
+    min-width: 0;
+    animation: accRise .65s ease both;
+  }
+
+  .acc-side {
+    animation-delay: .05s;
+  }
+
+  .acc-main {
+    animation-delay: .12s;
+  }
+
+  .prof-card,
+  .card,
+  .tabs,
+  .affw-modal {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .018)),
+      var(--acc-soft);
+    border: 1px solid var(--acc-border);
+    border-radius: var(--acc-radius);
+    box-shadow: 0 24px 64px var(--acc-shadow), inset 0 1px 0 rgba(255, 255, 255, .06);
+    backdrop-filter: blur(16px);
+  }
+
+  .prof-card::before,
+  .card::before,
+  .tabs::before,
+  .affw-modal::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--acc-accent-2), transparent);
+    opacity: .42;
+  }
+
+  .prof-card {
+    padding: 20px;
+  }
+
+  .prof-avatar {
+    width: 132px;
+    height: 132px;
+    margin: 4px auto 14px;
+    padding: 4px;
+    border-radius: 34px;
+    background: linear-gradient(135deg, var(--acc-accent-2), #c79322 55%, color-mix(in srgb, var(--acc-purple) 45%, var(--acc-card)));
+    box-shadow: 0 18px 38px color-mix(in srgb, var(--acc-accent) 24%, transparent);
+  }
+
+  .prof-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 30px;
+    display: block;
+    background: var(--acc-soft-2);
+    border: 1px solid rgba(255, 255, 255, .2);
+  }
+
+  .prof-name {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 650;
+    letter-spacing: -.03em;
+    color: var(--acc-text);
+  }
+
+  .prof-mail {
+    margin: 8px auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: var(--acc-muted);
+    font-weight: 550;
+  }
+
+  .kv {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid color-mix(in srgb, var(--acc-border) 72%, transparent);
+    color: var(--acc-muted);
+    font-weight: 600;
+  }
+
+  .kv>div:last-child {
+    color: var(--acc-text);
+    text-align: right;
+  }
+
+  .muted {
+    color: var(--acc-muted) !important;
+  }
+
+  .sm,
+  .small {
+    font-size: 12px;
+  }
+
+  .badge,
+  .badge2,
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-soft-2);
+    color: var(--acc-text);
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .badge.ok,
+  .badge2.ok,
+  .badge.st-success {
+    color: #dcfff0;
+    background: linear-gradient(135deg, rgba(21, 196, 112, .2), rgba(21, 196, 112, .08));
+    border-color: rgba(33, 208, 122, .35);
+  }
+
+  .badge.warn,
+  .pill.lvl {
+    color: #191308;
+    background: linear-gradient(135deg, #ffe58d, #d59c25);
+    border-color: rgba(255, 226, 138, .7);
+  }
+
+  .badge.danger,
+  .badge.st-fail {
+    color: #fff0f2;
+    background: linear-gradient(135deg, rgba(255, 93, 108, .24), rgba(255, 93, 108, .08));
+    border-color: rgba(255, 93, 108, .38);
+  }
+
+  .badge.balance {
+    color: #17130a;
+    background: linear-gradient(135deg, #ffe48e, #e0aa33);
+    border-color: rgba(255, 226, 138, .82);
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 16px;
+    border-radius: 24px;
+  }
+
+  .tab {
+    position: relative;
+    min-height: 52px;
+    border: 0;
+    border-radius: 17px;
+    padding: 10px 14px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--acc-muted);
+    font-weight: 650;
+    letter-spacing: -.01em;
+    transition: transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+
+  .tab:hover {
+    transform: translateY(-1px);
+    color: var(--acc-text);
+    background: color-mix(in srgb, var(--acc-soft-2) 74%, transparent);
+  }
+
+  .tab.active {
+    color: #17130a;
+    background: linear-gradient(135deg, #ffe58e, #e8bc53 55%, #b77c1e);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--acc-accent) 24%, transparent), inset 0 1px 0 rgba(255, 255, 255, .55);
+  }
+
+  .tabpane {
+    display: none;
+  }
+
+  .tabpane.show {
+    display: block;
+    animation: accRise .38s ease both;
+  }
+
+  .card {
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .card-header .title {
+    font-size: 20px;
+    font-weight: 950;
+    letter-spacing: -.025em;
+    color: var(--acc-text);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .form-grid>.muted,
+  .form-grid>.score-wrap,
+  .form-grid>.table-wrap,
+  .form-grid>.only-mobile,
+  .form-grid>.page-control,
+  .form-grid>#aff-empty,
+  .form-grid>#aff-create-area,
+  .form-grid>#aff-link-area,
+  .form-grid>.level-stage {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    display: block;
+    color: var(--acc-text);
+    font-weight: 600;
+  }
+
+  input,
+  textarea,
+  select,
+  .static-input {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--acc-border);
+    background: color-mix(in srgb, var(--acc-page) 72%, var(--acc-card));
+    color: var(--acc-text);
+    padding: 12px 14px;
+    font: inherit;
+    font-weight: 600;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus,
+  .static-input:focus-within {
+    border-color: color-mix(in srgb, var(--acc-accent) 70%, var(--acc-border));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc-accent) 18%, transparent);
+  }
+
+  input:disabled {
+    opacity: .75;
+    cursor: not-allowed;
+  }
+
+  .static-input {
+    display: flex;
+    align-items: center;
+    color: var(--acc-muted);
+  }
+
+  .email-row {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .email-row input {
+    flex: 1;
+  }
+
+  .otp-row {
+    grid-column: 1/-1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .otp-row input {
+    margin-top: 0;
+  }
+
+  .card-actions {
+    padding-top: 16px;
+    text-align: right;
+  }
+
+  .btn,
+  .btn-line,
+  .btn-lux,
+  .btn.primary,
+  .btn.success {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 15px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-soft-2);
+    color: var(--acc-text);
+    cursor: pointer;
+    font-weight: 650;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .18s ease;
+  }
+
+  .btn:hover,
+  .btn-line:hover,
+  .btn-lux:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px var(--acc-shadow);
+  }
+
+  .btn:disabled,
+  .btn[disabled] {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-lux,
+  .btn.primary,
+  .btn.success {
+    color: #17130a;
+    border: 0;
+    background: linear-gradient(135deg, #ffe78f, #e8bc53 55%, #bb801f);
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--acc-accent) 22%, transparent);
+  }
+
+  .btn-lux::after,
+  .btn.primary::after,
+  .btn.success::after {
+    content: "";
+    position: absolute;
+    inset: -40% auto -40% -38%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .48), transparent);
+    animation: accShine 3.8s ease-in-out infinite;
+  }
+
+  .btn-line {
+    width: 100%;
+    max-width: 190px;
+    min-height: 40px;
+    background: transparent;
+  }
+
+  .pw-field {
+    position: relative;
+  }
+
+  .pw-field input {
+    padding-right: 54px;
+  }
+
+  .pw-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-soft);
+    color: var(--acc-muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .pw-toggle svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .score-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .bignum {
+    font-size: clamp(26px, 3vw, 44px);
+    line-height: 1;
+    font-weight: 650;
+    letter-spacing: -.045em;
+    color: var(--acc-text);
+  }
+
+  .prog {
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--acc-page) 80%, var(--acc-card));
+    border: 1px solid var(--acc-border);
+  }
+
+  .prog .fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--acc-accent), #22c77a, var(--acc-blue));
+    box-shadow: 0 0 22px color-mix(in srgb, var(--acc-accent) 28%, transparent);
+    transition: width .8s cubic-bezier(.2, .8, .2, 1);
+  }
+
+  .subcap {
+    color: var(--acc-muted);
+    font-weight: 600;
+  }
+
+  #levelsTrack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    min-height: 120px;
+  }
+
+  .level-card,
+  .summary-kpi,
+  .affw-option {
+    border: 1px solid var(--acc-border);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015)), var(--acc-soft-2);
+    padding: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+  }
+
+  .level-nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .aff-header {
+    align-items: flex-start;
+  }
+
+  .aff-progress {
+    min-width: min(360px, 46%);
+  }
+
+  .aff-progress .bar {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--acc-soft-2);
+    border: 1px solid var(--acc-border);
+    overflow: hidden;
+  }
+
+  .aff-progress .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--acc-accent), var(--acc-green));
+  }
+
+  .card-stack {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .summary-kpi {
+    min-height: 132px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .rt-title {
+    color: var(--acc-muted);
+    font-weight: 600;
+  }
+
+  .kpi-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  code {
+    display: inline-flex;
+    max-width: 100%;
+    padding: 3px 7px;
+    border-radius: 9px;
+    color: var(--acc-accent-2);
+    background: color-mix(in srgb, var(--acc-page) 78%, transparent);
+    border: 1px solid var(--acc-border);
+    word-break: break-all;
+  }
+
+  .table-wrap {
+    overflow: auto;
+    border: 1px solid var(--acc-border);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--acc-page) 78%, transparent);
+  }
+
+  .tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 640px;
+  }
+
+  .tbl th,
+  .tbl td {
+    padding: 14px 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--acc-border) 70%, transparent);
+    color: var(--acc-text);
+    font-weight: 800;
+  }
+
+  .tbl th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--acc-soft-2);
+    color: var(--acc-muted);
+    font-size: 13px;
+  }
+
+  .tbl tr:hover td {
+    background: color-mix(in srgb, var(--acc-accent) 7%, transparent);
+  }
+
+  .only-mobile {
+    display: none;
+  }
+
+  .page-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 8;
+  }
+
+  .page-control .pager {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-control .perpage,
+  .perpage-dd {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-soft-2);
+  }
+
+  .dd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 7px 12px;
+    border-radius: 13px;
+    border: 1px solid var(--acc-border);
+    background: color-mix(in srgb, var(--acc-page) 74%, transparent);
+    color: var(--acc-text);
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  .dd-menu {
+    position: fixed;
+    display: none;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    min-width: 120px;
+    border-radius: 15px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-card);
+    box-shadow: 0 22px 54px rgba(0, 0, 0, .38);
+    z-index: 99999;
+  }
+
+  .dd-menu.show {
+    display: block;
+    animation: accRise .16s ease both;
+  }
+
+  .dd-menu li {
+    padding: 9px 12px;
+    border-radius: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--acc-text);
+    font-weight: 600;
+  }
+
+  .dd-menu li:hover,
+  .dd-menu li[aria-selected="true"] {
+    background: color-mix(in srgb, var(--acc-accent) 18%, transparent);
+  }
+
+  #aff-pageinfo {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--acc-soft-2);
+    border: 1px solid var(--acc-border);
+  }
+
+  #avatarPreview {
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  #avatarPreview.avatar-success {
+    box-shadow: 0 0 0 4px rgba(80, 200, 120, .6);
+    transform: scale(1.03);
+  }
+
+  #avatarPreview.avatar-error {
+    box-shadow: 0 0 0 4px rgba(255, 80, 80, .6);
+  }
+
+  #btnChangeAvatar.loading {
+    opacity: .6;
+    pointer-events: none;
+  }
+
+  /* Affiliate withdraw modal */
+  #affWithdrawModal {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    max-width: min(520px, 92vw);
+  }
+
+  #affWithdrawModal::backdrop {
+    background: rgba(0, 0, 0, .62);
+    backdrop-filter: blur(10px);
+  }
+
+  .affw-modal {
+    padding: 22px;
+    color: var(--acc-text);
+  }
+
+  .affw-title {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 650;
+    letter-spacing: -.03em;
+  }
+
+  .affw-grid {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0;
+  }
+
+  .affw-option {
+    cursor: pointer;
+    text-align: left;
+    color: var(--acc-text);
+    transition: .18s ease;
+  }
+
+  .affw-option:hover {
+    transform: translateY(-1px);
+  }
+
+  .affw-option.is-active {
+    border-color: color-mix(in srgb, var(--acc-accent) 72%, var(--acc-border));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc-accent) 13%, transparent);
+  }
+
+  .affw-opt-title {
+    font-weight: 650;
+    font-size: 18px;
+  }
+
+  /* Light adjustments */
+  html[data-theme="light"] .badge.ok,
+  body.light .badge.ok {
+    color: #067647;
+    background: #e9fbf4;
+    border-color: #bfead7;
+  }
+
+  html[data-theme="light"] .badge.danger,
+  body.light .badge.danger {
+    color: #b42318;
+    background: #feecec;
+    border-color: #ffd4d4;
+  }
+
+  html[data-theme="light"] .tbl th {
+    background: #eef2f7;
+    color: #334155;
+  }
+
+  html[data-theme="light"] input,
+  html[data-theme="light"] .static-input,
+  html[data-theme="light"] .dd-btn {
+    background: #fff;
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .acc-wrap {
+      grid-template-columns: 1fr;
+    }
+
+    .acc-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .prof-card {
+      margin-top: 0 !important;
+    }
+
+    .card-stack {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .account-container {
+      padding: 12px;
+    }
+
+    .account-container .page-title {
+      font-size: 42px;
+    }
+
+    .acc-side {
+      grid-template-columns: 1fr;
+    }
+
+    .tabs {
+      grid-template-columns: 1fr;
+    }
+
+    .tab {
+      min-height: 46px;
+    }
+
+    .form-grid,
+    .score-wrap,
+    #levelsTrack {
+      grid-template-columns: 1fr;
+    }
+
+    .email-row,
+    .otp-row,
+    .kpi-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .card,
+    .prof-card {
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .only-desktop {
+      display: none !important;
+    }
+
+    .only-mobile {
+      display: block;
+    }
+
+    .page-control {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .account-container .page-title {
+      font-size: 34px;
+    }
+
+    .prof-avatar {
+      width: 112px;
+      height: 112px;
+      border-radius: 28px;
+    }
+
+    .prof-avatar img {
+      border-radius: 24px;
+    }
+
+    .card-header,
+    .aff-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .aff-progress {
+      min-width: 100%;
+    }
+
+    .tbl {
+      min-width: 560px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .account-container::before,
+    .account-container::after,
+    .btn-lux::after,
+    .btn.primary::after,
+    .btn.success::after {
+      animation: none !important;
+    }
+
+    * {
+      scroll-behavior: auto !important;
+      transition: none !important;
+    }
+  }
+
+  /* Remove active tab underline */
+  .tabs .tab::after,
+  .tabs .tab.active::after {
+    display: none !important;
+    content: none !important;
+  }
+</style>
+
+<!-- 1) BRIDGE: map showMsg → notify และยึด alert ทั้งหน้าให้เป็น notify -->
+<script>
+  (() => {
+    // ถ้ามี layout.notify ให้แมป showMsg → notify
+    if (window.notify) {
+      window.showMsg = (opts) => window.notify(opts);
+    }
+
+    // เปลี่ยน alert ทั้งหน้า → notify
+    const __origAlert = window.alert.bind(window);
+    window.alert = (message) => {
+      if (window.notify) {
+        window.notify({ variant: 'info', title: 'แจ้งเตือน', text: String(message ?? '') });
+      } else {
+        __origAlert(message);
+      }
+    };
+
+    // ยูทิลสั้น
+    window._n = (variant, title, text = '', extras = {}) =>
+      (window.notify ? window.notify({ variant, title, text, ...extras }) : __origAlert(`${title}\n${text || ''}`));
+
+    // Helper มาตรฐาน (ไม่มี fallback เป็น alert อีก)
+    window.ok = (detail = 'ดำเนินการเรียบร้อย', extras = {}) => window.showMsg?.({ variant: 'success', title: 'สำเร็จ', text: detail, ...extras });
+    window.warn = (title, text = '', extras = {}) => window.showMsg?.({ variant: 'warn', title, text, ...extras });
+    window.fail = (title, text = '', extras = {}) => window.showMsg?.({ variant: 'error', title, text, ...extras });
+    window.info = (title, text = '', extras = {}) => window.showMsg?.({ variant: 'info', title, text, ...extras });
+  })();
+</script>
+
+<!-- 2) Password eye + validate (เดิม แต่ไม่แตะระบบแจ้งเตือน) -->
+<script>
+  (() => {
+    const ICON_EYE = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M12 5c-5.5 0-9.5 4.5-10.7 6 1.2 1.5 5.2 6 10.7 6s9.5-4.5 10.7-6C21.5 9.5 17.5 5 12 5zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+    </svg>`;
+    const ICON_EYE_OFF = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M2.8 1.4 1.4 2.8l3.1 3.1C2.8 7.3 1.5 8.9 1.3 9.2l-.3.4.3.4C2.5 11.5 6.5 16 12 16c1.7 0 3.2-.4 4.6-1.1l3.6 3.6 1.4-1.4L2.8 1.4zM12 14c-3.9 0-7.2-3-8.8-4.8C4.2 7.8 7.2 5 12 5c2 0 3.8.6 5.4 1.7l-2 2A4 4 0 0 0 10.7 8l-2 2A4 4 0 0 0 12 14z"/>
+    </svg>`;
+
+    document.querySelectorAll('.pw-toggle').forEach(btn => { btn.innerHTML = ICON_EYE; });
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pw-toggle'); if (!btn) return;
+      const input = btn.previousElementSibling; if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.innerHTML = show ? ICON_EYE_OFF : ICON_EYE;
+    });
+
+    const form = document.getElementById('formPassword');
+    const btnSubmit = form?.querySelector('button[type="submit"]');
+    const cur = form?.querySelector('input[name="currentPassword"]');
+    const pw1 = form?.querySelector('input[name="newPassword"]');
+    const pw2 = form?.querySelector('input[name="newPassword2"]');
+    const msg = document.getElementById('pwMismatchMsg');
+    const MIN = 6;
+
+    function validate() {
+      const v0 = (cur?.value || '').trim();
+      const v1 = (pw1?.value || '').trim();
+      const v2 = (pw2?.value || '').trim();
+      const tooShort = v1.length > 0 && v1.length < MIN;
+      const mismatch = v2.length > 0 && v1 !== v2;
+      msg.style.display = mismatch ? '' : 'none';
+      const okBtn = v0.length >= 1 && v1.length >= MIN && v2.length >= MIN && !mismatch && !tooShort;
+      if (btnSubmit) btnSubmit.disabled = !okBtn;
+    }
+    ['input', 'blur'].forEach(ev => {
+      cur?.addEventListener(ev, validate);
+      pw1?.addEventListener(ev, validate);
+      pw2?.addEventListener(ev, validate);
+    });
+    form?.addEventListener('submit', (e) => { validate(); if (btnSubmit?.disabled) e.preventDefault(); });
+    validate();
+  })();
+</script>
+
+<!-- 3) หน้า Account ทั้งหมด → ใช้ notify 100% -->
+<script>
+  (() => {
+    const $ = s => document.querySelector(s);
+    const pick = id => document.getElementById(id);
+
+    // ===== Levels data =====
+    window.__LEVELS__ = <%- JSON.stringify(levels || []).replace(/</g, '\\u003c') %>;
+    if (!Array.isArray(window.__LEVELS__) || !window.__LEVELS__.length) {
+      window.__LEVELS__ = [
+        { name: 'เลเวล 1', need: 0, rate: '฿0.05', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ช่วยเหลือผ่าน Line Official Account'] },
+        { name: 'เลเวล 2', need: 5000, rate: '฿0.1', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ช่วยเหลือผ่าน Line Official Account'] },
+        { name: 'เลเวล 3', need: 10000, rate: '฿0.15', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ช่วยเหลือผ่าน Line Official Account'] },
+        { name: 'เลเวล 4', need: 30000, rate: '฿0.2', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือ'] },
+        { name: 'เลเวล 5', need: 50000, rate: '฿0.25', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือ'] },
+        { name: 'Retail', need: 80000, rate: '฿0.3', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือ'] },
+        { name: 'Wholesale', need: 175000, rate: '฿0.5', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือ'] },
+        { name: 'Reseller', need: 700000, rate: '฿0.8', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือสูง'] },
+        { name: 'VIP', need: 1000000, rate: '฿1', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือสูง'] },
+        { name: 'Legendary', need: 5000000, rate: '฿15', perks: ['โบนัสเติมเงิน 0%', 'ส่วนลดทุกคำสั่งซื้อ 0%', 'ช่วยเหลือผ่านตั๋ว', 'ให้ความสำคัญการช่วยเหลือสูงสุด'] }
+      ];
+    }
+
+    // Tabs
+    document.querySelectorAll('.tabs .tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tabs .tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tabpane').forEach(p => p.classList.remove('show'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab)?.classList.add('show');
+      });
+    });
+
+    // ===== Avatar upload =====
+    const btnAvatar = pick('btnChangeAvatar');
+    const input = pick('avatarInput');
+    const img = pick('avatarPreview');
+
+    const MAX_MB = 10;
+    const ACCEPT = /image\/(png|jpe?g|webp|gif)/i;
+
+    let tmpUrl = null;
+    let abortController = null;
+
+    const setImg = (url) => {
+      if (!url) return;
+      img.src = url;
+    };
+
+    const revokeTmp = () => {
+      if (tmpUrl) {
+        try { URL.revokeObjectURL(tmpUrl); } catch { }
+        tmpUrl = null;
+      }
+    };
+
+    btnAvatar?.addEventListener('click', () => input?.click());
+
+    input?.addEventListener('change', async (e) => {
+      const f = e.currentTarget.files?.[0];
+      if (!f) return;
+
+      // ===== validate =====
+      if (!ACCEPT.test(f.type)) {
+        warn('ไฟล์ไม่รองรับ', 'อนุญาตเฉพาะ PNG, JPG, WEBP และ GIF');
+        input.value = '';
+        return;
+      }
+
+      if (f.size > MAX_MB * 1024 * 1024) {
+        warn('ไฟล์ใหญ่เกินไป', `ขนาดสูงสุด ${MAX_MB}MB`);
+        input.value = '';
+        return;
+      }
+
+      // ===== cancel request เก่า =====
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
+
+      // ===== preview =====
+      revokeTmp();
+      tmpUrl = URL.createObjectURL(f);
+      setImg(tmpUrl);
+
+      const prevSrc = img.dataset.prev || img.src;
+
+      btnAvatar.disabled = true;
+      btnAvatar.classList.add('loading');
+
+      const fd = new FormData();
+      fd.append('avatar', f);
+
+      try {
+        const r = await fetch('/account/profile', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin', // 🔥 สำคัญมาก
+          signal: abortController.signal,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        let j = {};
+        try { j = await r.json(); } catch { }
+
+        if (!r.ok || !j?.ok) {
+          throw new Error(j?.error || `HTTP ${r.status}`);
+        }
+
+        // ===== update image (กัน cache 100%) =====
+        if (j.user?.avatarUrl) {
+          revokeTmp();
+          setImg(j.user.avatarUrl);
+          img.dataset.prev = j.user.avatarUrl;
+        }
+
+        // ===== OTP UI =====
+        if (j.user?.email && !j.user?.emailVerified) {
+          document.getElementById('otpArea')?.removeAttribute('hidden');
+        }
+
+        // ===== success effect =====
+        img.classList.add('avatar-success');
+        setTimeout(() => img.classList.remove('avatar-success'), 500);
+
+        ok('อัปโหลดรูปโปรไฟล์แล้ว');
+
+      } catch (err) {
+
+        if (err.name === 'AbortError') return;
+
+        // ===== rollback =====
+        revokeTmp();
+        setImg(prevSrc);
+
+        img.classList.add('avatar-error');
+        setTimeout(() => img.classList.remove('avatar-error'), 600);
+
+        fail('อัปโหลดไม่สำเร็จ', err.message || 'เครือข่ายมีปัญหา');
+
+      } finally {
+        btnAvatar.disabled = false;
+        btnAvatar.classList.remove('loading');
+        input.value = '';
+      }
+    });
+
+    // ===== เก็บรูปล่าสุดไว้ fallback =====
+    img?.addEventListener('load', () => {
+      if (!img.src.startsWith('blob:')) {
+        img.dataset.prev = img.src;
+      }
+    });
+
+    // ===== Change password =====
+    $('#formPassword')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const btn = form.querySelector('button[type=submit]');
+      btn.disabled = true;
+
+      const fd = new FormData(form);
+      const body = Object.fromEntries(fd.entries());
+      if ((body.newPassword || '') !== (body.newPassword2 || '')) {
+        fail('เปลี่ยนรหัสไม่สำเร็จ', '⚠️รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน');
+        btn.disabled = false; return;
+      }
+
+      try {
+        const r = await fetch('/account/password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        let j = null; try { j = await r.json(); } catch { }
+
+        if (r.ok && j?.ok) {
+          form.reset();
+          ok('เปลี่ยนรหัสผ่านเรียบร้อย', { onClose: () => window.location.replace('/account') });
+          setTimeout(() => { try { window.location.replace('/account'); } catch { } }, 300);
+          return;
+        }
+        const msg = j?.error || (r.status >= 500 ? 'เซิร์ฟเวอร์มีปัญหา' : '⚠️ดำเนินการไม่สำเร็จเครือข่ายมีปัญหา');
+        fail('เปลี่ยนรหัสไม่สำเร็จ', msg);
+      } catch {
+        fail('เปลี่ยนรหัสผ่านไม่สำเร็จ', '⚠️เครือข่ายมีปัญหา');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ===== OTP =====
+    const btnSendOtp = $('#btnSendOtp');
+    const otpCodeInput = $('#otpCode');
+
+    const show = (variant, title, text, icon) =>
+      window.showMsg?.({ variant, title, text, icon });
+
+    function getEmail() {
+      const dataEmail = btnSendOtp?.dataset.email?.trim().toLowerCase();
+      if (dataEmail) return dataEmail;
+      const field = $('input[name="email"]');
+      return (field?.value || '').trim().toLowerCase();
+    }
+
+    function startCooldown(seconds) {
+      if (!btnSendOtp || !Number.isFinite(seconds) || seconds <= 0) return;
+      const original = btnSendOtp.textContent;
+      btnSendOtp.disabled = true;
+      let left = Math.ceil(seconds);
+      btnSendOtp.textContent = `ส่งใหม่ได้ใน ${left}s`;
+      const t = setInterval(() => {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(t);
+          btnSendOtp.disabled = false;
+          btnSendOtp.textContent = original || 'ส่งรหัสยืนยัน';
+          return;
+        }
+        btnSendOtp.textContent = `ส่งใหม่ได้ใน ${left}s`;
+      }, 1000);
+    }
+
+    btnSendOtp?.addEventListener('click', async () => {
+      const email = getEmail();
+      if (!email) { show('warn', 'กรอกอีเมลก่อน', 'โปรดกรอกอีเมลที่ใช้สมัคร', '⚠️'); return; }
+
+      btnSendOtp.disabled = true;
+      try {
+        const r = await fetch('/otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, channel: 'email' })
+        });
+
+        if (r.status === 429) {
+          const j = await r.json().catch(() => ({}));
+          const m = /\s(\d+)s\s/.exec(j?.error || '');
+          const waitSec = m ? Number(m[1]) : 60;
+          show('warn', 'ขอรหัสถี่เกินไป', j?.error || 'โปรดรอสักครู่ก่อนขอใหม่', '⏳');
+          startCooldown(waitSec);
+          return;
+        }
+
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j?.ok) { show('error', 'ส่งรหัสไม่สำเร็จ', j?.error || 'โปรดลองใหม่อีกครั้ง', '✖'); return; }
+
+        document.getElementById('otpArea')?.removeAttribute('hidden');
+        otpCodeInput?.focus();
+
+        const ttlSec = Number(j.ttl || 300);
+        const ttlMin = Math.max(1, Math.round(ttlSec / 60));
+        show('success', 'ส่งรหัสแล้ว', `เราได้ส่งรหัสไปยังอีเมลของคุณ (ใช้ได้ประมาณ ${ttlMin} นาที)`, '✅');
+        startCooldown(30);
+      } catch {
+        show('error', 'เครือข่ายมีปัญหา', 'โปรดลองใหม่อีกครั้ง', '✖');
+      } finally {
+        if (!btnSendOtp.hasAttribute('disabled')) btnSendOtp.disabled = false;
+      }
+    });
+
+    const verifyBtn = document.getElementById('btnVerifyOtp');
+    verifyBtn?.addEventListener('click', async () => {
+      const code = (document.getElementById('otpCode')?.value || '').trim();
+      if (code.length < 4) return warn('รหัสไม่ครบ', 'กรุณากรอกรหัสให้ครบ');
+      verifyBtn.disabled = true;
+      try {
+        const r = await fetch('/account/email/verify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
+        });
+        const j = await r.json();
+        if (!j.ok) { verifyBtn.disabled = false; return fail('ยืนยันไม่สำเร็จ', j.error || ''); }
+        ok('ยืนยันอีเมลเรียบร้อย');
+        window.location.reload();
+      } catch {
+        verifyBtn.disabled = false;
+        fail('ยืนยันไม่สำเร็จ', 'เครือข่ายมีปัญหา');
+      }
+    });
+
+    // ===== Redeem Points =====
+    const btnRedeem = document.getElementById('btnRedeemPoints');
+    if (btnRedeem) {
+      btnRedeem.addEventListener('click', async () => {
+        if (btnRedeem.disabled) return;
+        btnRedeem.disabled = true;
+        const oldLabel = btnRedeem.textContent;
+        btnRedeem.textContent = 'กำลังแลก…';
+
+        try {
+          const r = await fetch('/account/points/redeem', { method: 'POST' });
+          const j = await r.json();
+
+          if (!r.ok || !j?.ok) { fail('แลกแต้มไม่สำเร็จ', j?.error || 'โปรดลองใหม่'); return; }
+
+          const pointsNum = Number(j.remainPoints || 0);
+          const pointsEl = document.querySelector('[data-id="points-num"]');
+          if (pointsEl) pointsEl.innerHTML = `${pointsNum.toLocaleString(undefined, { maximumFractionDigits: 2 })} คะแนน`;
+          const rateEl = document.querySelector('[data-id="point-rate"]');
+          if (rateEl) rateEl.textContent = `฿${(j.rate || 0).toLocaleString()} / 1 แต้ม`;
+          const valEl = document.querySelector('[data-id="point-value"]');
+          if (valEl) valEl.textContent = `≈ ฿${(j.pointValueTHB || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+          const prEl = document.querySelector('[data-id="points-redeemed"]');
+          if (prEl && typeof j.pointsRedeemed === 'number') {
+            prEl.textContent = `฿${j.pointsRedeemed.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+          }
+
+          if (pointsNum < 100) {
+            btnRedeem.classList.remove('primary');
+            btnRedeem.setAttribute('disabled', 'disabled');
+          }
+
+          const added = Number(j.addedBalance || 0);
+          ok(`แลก ${j.redeemed} แต้ม เป็น ฿${added.toLocaleString(undefined, { maximumFractionDigits: 2 })} แล้ว`, {
+            onClose: () => window.location.replace('/account')
+          });
+          setTimeout(() => { try { window.location.replace('/account'); } catch { } }, 300);
+        } catch {
+          fail('แลกแต้มไม่สำเร็จ', 'เครือข่ายมีปัญหา');
+        } finally {
+          btnRedeem.textContent = oldLabel;
+          if (!btnRedeem.hasAttribute('disabled')) btnRedeem.disabled = false;
+        }
+      });
+    }
+
+    // ===== Levels renderer (2 cols) =====
+    const track = document.getElementById('levelsTrack');
+    const pages = [];
+    const _levels = window.__LEVELS__ || [];
+    for (let i = 0; i < _levels.length; i += 2) pages.push(_levels.slice(i, i + 2));
+    let page = 0;
+
+    function render() {
+      track.innerHTML = '';
+      const pickPercent = s => {
+        const m = (s || '').match(/-?\d+(?:\.\d+)?%/);
+        return m ? m[0] : (s || '—');
+      };
+      (pages[page] || []).forEach(lv => {
+        const perks = lv.perks || [];
+        const bonusTxt = perks.find(p => p.includes('โบนัสเติมเงิน')) || '';
+        const discountTxt = perks.find(p => p.includes('ส่วนลดทุกคำสั่งซื้อ')) || '';
+        const bonusVal = pickPercent(bonusTxt);
+        const discountVal = pickPercent(discountTxt);
+
+        track.insertAdjacentHTML('beforeend', `
+        <div class="prof-card" style="padding:14px">
+          <div class="kv" style="margin-bottom:8px">
+            <div><strong>${lv.name}</strong></div>
+            <div><span class="badge balance">ใช้จ่าย &gt; ฿${(lv.need || 0).toLocaleString()}</span></div>
+          </div>
+          <div class="kv"><div>อัตราการแลกเปลี่ยน ↔ (Point × Rate)</div><div><span class="badge balance">${lv.rate}</span></div></div>
+          <div class="kv"><div>โบนัสเติมเงิน</div><div><span class="badge warn">${bonusVal}</span></div></div>
+          <div class="kv"><div>ส่วนลดทุกคำสั่งซื้อ</div><div><span class="badge warn">${discountVal}</span></div></div>
+          ${perks.filter(p => !p.includes('โบนัสเติมเงิน') && !p.includes('ส่วนลดทุกคำสั่งซื้อ'))
+            .map(p => `<div class="muted" style="margin:6px 0">• ${p}</div>`).join('')}
+        </div>
+      `);
+      });
+    }
+    render();
+    document.getElementById('lvPrev')?.addEventListener('click', () => { page = (page - 1 + pages.length) % pages.length; render(); });
+    document.getElementById('lvNext')?.addEventListener('click', () => { page = (page + 1) % pages.length; render(); });
+  })();
+</script>
+
+<script>
+  (() => {
+    const $ = s => document.querySelector(s);
+    const fmt = n => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    // fallback สำหรับ ok/fail ถ้าไม่มีตัวช่วย
+    const ok = window.ok || (msg => alert(msg));
+    const fail = window.fail || (msg => alert(msg));
+    const btn = document.getElementById('btnCreateAff');
+    if (!btn) return;
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (btn.disabled) return;
+      const old = btn.textContent;
+      btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
+
+      try {
+        const r = await fetch('/account/affiliate/create-link', { method: 'POST' });
+        const j = await r.json();
+        if (!r.ok || !j?.ok || !j?.link) {
+          fail(j?.error || 'สร้างลิงก์ไม่สำเร็จ');
+          return;
+        }
+
+        // สลับ UI มาโชว์ลิงก์ทันที
+        const create = document.getElementById('aff-create-area');
+        const area = document.getElementById('aff-link-area');
+        const out = document.getElementById('aff-link');
+        if (create && area && out) {
+          create.hidden = true;
+          area.hidden = false;
+          out.textContent = j.link;
+        }
+
+        ok('สร้างลิงก์แนะนำเรียบร้อย');
+      } catch {
+        fail('เครือข่ายมีปัญหา โปรดลองใหม่');
+      } finally {
+        btn.disabled = false; btn.textContent = old;
+      }
+    });
+
+    let lastStats = null;
+
+    let __loadingStats = false;
+    async function loadStats() {
+      if (__loadingStats) return
+      __loadingStats = true;
+      try {
+        const r = await fetch('/account/affiliate/stats');
+        const j = await r.json();
+        if (!r.ok || !j?.ok) throw new Error('fail');
+        lastStats = j;
+
+        // % เรต (ป้องกัน NaN และปัดเศษ)
+        const rawRate = Number(j?.summary?.ratePct);
+        const rate = Number.isFinite(rawRate) ? Math.min(40, Math.max(5, Math.round(rawRate))) : 5;
+        $('#aff-rate-title') && ($('#aff-rate-title').textContent = rate);
+        $('#aff-rate-inline') && ($('#aff-rate-inline').textContent = rate);
+        $('#aff-rate-inline-2') && ($('#aff-rate-inline-2').textContent = rate);
+
+        $('#aff-refcount') && ($('#aff-refcount').textContent = j.summary.referredCount || 0);
+        $('#aff-orders') && ($('#aff-orders').textContent = j.summary.orders || 0);
+        $('#aff-spent') && ($('#aff-spent').textContent = fmt(j.summary.spentTHB || 0));
+        $('#aff-earn') && ($('#aff-earn').textContent = fmt(j.summary.earningsTHB || 0));
+
+        // ยอดถอนได้ + ปุ่ม
+        const wd = Number(j.summary.withdrawableTHB || 0);
+        $('#aff-withdrawable') && ($('#aff-withdrawable').textContent = fmt(wd));
+        // if (btn) btn.disabled = !(wd > 0.0001);
+
+        // หลอดเลื่อนระดับ
+        const t = j.tier || {};
+        const cont = $('.aff-progress');
+        const fill = $('#aff-tier-fill');
+        const note = $('#aff-tier-note');
+
+        const atMax = !!(t.atMax || rate >= 40);
+        cont && cont.classList.toggle('max', atMax);
+
+        if (atMax) {
+          fill && (fill.style.width = '100%');
+          note && (note.textContent = 'ระดับของคุณถึงระดับสูงสุดแล้ว');
+        } else if (t) {
+          const p = Math.max(0, Math.min(100, Number(t.progressPct || 0)));
+          fill && (fill.style.width = p + '%');
+          if (note && t.next) note.textContent = `ระดับถัดไป: ${t.next.rate}%`;
+        }
+      } finally {
+        __loadingStats = false;
+      }
+    }
+
+    function openTierModal(payload) {
+      const next = payload?.tier?.next;
+      const refs = payload?.summary?.referredCount || 0;
+      const earn = payload?.summary?.earningsTHB || 0;
+
+      let html;
+      if (!next) {
+        html = `<div class="modal"><div class="modal-body">
+        <h3>ระดับสูงสุดแล้ว</h3>
+        <p class="muted">คุณได้รับ 40% และไม่ต้องทำเงื่อนไขเพิ่มเติม</p>
+        <div style="text-align:right;margin-top:12px"><button class="btn" id="tierClose">ปิด</button></div>
+      </div></div>`;
+      } else {
+        const needRefs = Math.max(0, next.refs - refs);
+        const needEarn = Math.max(0, next.earn - earn);
+        html = `<div class="modal"><div class="modal-body">
+        <h3>ระดับถัดไป ${next.rate}%</h3>
+        <ul>
+          <li>แนะนำเพิ่มอีก <b>${needRefs}</b> คน (เป้าหมาย ${next.refs})</li>
+          <li>ยอดรายได้รวมถึง <b>฿${next.earn.toLocaleString()}</b>
+              <small class="muted">(ขาดอีก ฿${needEarn.toLocaleString()})</small></li>
+        </ul>
+        <div style="text-align:right;margin-top:12px"><button class="btn" id="tierClose">ปิด</button></div>
+      </div></div>`;
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'modal-wrap';
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap);
+      wrap.addEventListener('click', e => {
+        if (e.target.id === 'tierClose' || e.target === wrap) wrap.remove();
+      });
+    }
+
+    // เปิดโมดัลจากข้อมูลล่าสุด ถ้าไม่มีค่อย fetch
+    $('#aff-tier-pill')?.addEventListener('click', async () => {
+      if (lastStats) return openTierModal(lastStats);
+      try {
+        const r = await fetch('/account/affiliate/stats');
+        const j = await r.json();
+        if (r.ok && j?.ok) openTierModal(j);
+      } catch { }
+    });
+
+    window.loadAffStats = loadStats;
+
+    loadStats();
+  })();
+
+  (() => {
+    const titleEl = document.getElementById('acctPageTitle');
+    const tabs = document.querySelectorAll('.tabs .tab');
+
+    // อัปเดต H1 + document.title ตามแท็บที่ active
+    function updateTitle() {
+      const active = document.querySelector('.tabs .tab.active');
+      const label = (active?.textContent || 'ตั้งค่าข้อมูลส่วนตัว').trim();
+      if (titleEl) titleEl.textContent = label;
+      // (ออปชัน) อัปเดต title ของแท็บเบราว์เซอร์ให้เข้ากัน
+      document.title = `${label} — RTSMM-TH`;
+    }
+
+    // ผูก event กับทุกแท็บ (ถ้าโค้ดเปลี่ยนแท็บของคุณมีอยู่แล้ว แทรกแค่ updateTitle() หลังจากสลับคลาส)
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // ถ้ามีโค้ดสลับแท็บเดิมอยู่แล้ว ไม่ต้องทำส่วน remove/add นี้ซ้ำ
+        document.querySelectorAll('.tabs .tab').forEach(b => {
+          b.classList.toggle('active', b === btn);
+          b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+          b.setAttribute('tabindex', b === btn ? '0' : '-1');
+        });
+        updateTitle();
+      });
+    });
+
+    // รองรับเปิดด้วยแฮช เช่น /account#tab-affiliate
+    window.addEventListener('hashchange', updateTitle);
+
+    // ตั้งค่าครั้งแรกเมื่อโหลดหน้า
+    updateTitle();
+  })();
+
+  // สลับโชว์ลิงก์ถ้ามีคีย์อยู่แล้ว + ใช้ https:
+  (() => {
+    const key = <%- JSON.stringify(userDoc.affiliateKey || null).replace(/</g, '\\u003c') %>;
+    if (key) {
+      const link = `https://rtsmm-th.com/aff?=${key}`;
+      const create = document.getElementById('aff-create-area');
+      const area = document.getElementById('aff-link-area');
+      const out = document.getElementById('aff-link');
+      if (create && area && out) {
+        create.hidden = true; area.hidden = false; out.textContent = link;
+      }
+    }
+  })();
+</script>
+
+<script>
+  (() => {
+    // ดึงค่าลิงก์จาก #aff-link (รองรับ data-href หรือ textContent)
+    function getAffLink() {
+      const el = document.getElementById('aff-link');
+      if (!el) return '';
+      return (el.dataset.href || el.textContent || '').trim();
+    }
+
+    // คัดลอกด้วย Clipboard API พร้อม fallback execCommand
+    async function copyToClipboard(text) {
+      if (!text) return false;
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+    }
+
+    // แสดงผลลัพธ์ + feedback ปุ่ม
+    function showFeedback(ok, btn) {
+      if (window.showMsg) {
+        window.showMsg({
+          variant: ok ? 'success' : 'error',
+          title: ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ',
+          text: ok ? 'ลิงก์ถูกคัดลอกไปยังคลิปบอร์ดเรียบร้อย' : 'โปรดลองอีกครั้ง'
+        });
+      } else {
+        alert(ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ');
+      }
+
+      if (btn) {
+        const old = btn.textContent;
+        btn.textContent = ok ? 'คัดลอกแล้ว ✓' : 'คัดลอกลิงก์';
+        btn.disabled = true;
+        setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 1200);
+      }
+    }
+
+    // จัดการคลิกคัดลอกจากปุ่ม
+    async function handleCopyClick(e) {
+      e.preventDefault();
+      const link = getAffLink();
+      const ok = await copyToClipboard(link);
+      showFeedback(ok, e.currentTarget);
+    }
+
+    // ติดตั้ง event ให้ปุ่มและช่องลิงก์ (รองรับกรณี UI เพิ่งถูกสลับมาแสดง)
+    function bindCopyHandlers() {
+      const btn = document.getElementById('btnCopyAff');
+      if (btn && !btn.__copyBound) {
+        btn.addEventListener('click', handleCopyClick);
+        btn.__copyBound = true;
+      }
+      const field = document.getElementById('aff-link');
+      if (field && !field.__copyBound) {
+        field.addEventListener('click', async () => {
+          const ok = await copyToClipboard(getAffLink());
+          showFeedback(ok);
+        });
+        field.title = field.title || 'คลิกเพื่อคัดลอก';
+        field.style.cursor = field.style.cursor || 'pointer';
+        field.__copyBound = true;
+      }
+    }
+
+    // ผูกครั้งแรก
+    bindCopyHandlers();
+
+    // เฝ้าดู #aff-link-area เผื่อส่วนลิงก์ถูกเปลี่ยน DOM ภายหลัง (เช่น หลัง "สร้างลิงก์")
+    const area = document.getElementById('aff-link-area');
+    if (area) {
+      const mo = new MutationObserver(bindCopyHandlers);
+      mo.observe(area, { childList: true, subtree: true });
+    }
+  })();
+</script>
+
+<script>
+  // ===== ถอนรายได้ (เปิด Modal เลือกประเภท) =====
+  (() => {
+    const $ = s => document.querySelector(s);
+    const fmt = n => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    const modal = $('#affWithdrawModal');
+    const btnOpen = $('#btnAffWithdraw');
+    const btnConfirm = $('#affWConfirm');
+    const kindField = $('#affWKind');
+
+    function setActive(kind) {
+      kind = (kind === 'cash') ? 'cash' : 'balance';
+      kindField.value = kind;
+      document.querySelectorAll('#affWithdrawModal .affw-option').forEach(el => {
+        const on = el.dataset.kind === kind;
+        el.classList.toggle('is-active', on);
+        el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    // bind click ให้การ์ดตัวเลือก
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('#affWithdrawModal .affw-option');
+      if (!el) return;
+      setActive(el.dataset.kind);
+    });
+
+    async function doWithdraw(kind) {
+      try {
+        const r = await fetch('/account/affiliate/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: kind })
+        });
+        const j = await r.json();
+
+        if (!r.ok || !j?.ok) { fail(j?.error || 'ถอนรายได้ไม่สำเร็จ'); return; }
+
+        if (kind === 'balance') ok(`เพิ่มยอดกระเป๋าแล้ว ฿${fmt(j.addedBalance || 0)}`);
+        else ok('บันทึกการถอนแบบเงินสดแล้ว');
+
+        await (window.loadAffStats?.());
+        await (window.affWSetPage?.(1));
+        await (window.renderAffWithdraws?.());
+      } catch { fail('เครือข่ายมีปัญหา โปรดลองใหม่'); }
+    }
+
+    btnOpen?.addEventListener('click', e => {
+      e.preventDefault();
+      if (btnOpen.disabled) return;
+      btnOpen.disabled = true;                 /* ป้องกันดับเบิลคลิก */
+      try {
+        setActive(kindField?.value || 'balance');
+        if (typeof modal?.showModal === 'function') modal.showModal();
+        else {
+          const kind = confirm('ถอนเป็นเครดิต (OK) ? ยกเลิก = เงินสด') ? 'balance' : 'cash';
+          doWithdraw(kind);
+        }
+      } finally {
+        // เปิดโมดัลแล้วค่อยคืนค่า เพื่อกันคลิกซ้ำก่อน modal โผล่
+        setTimeout(() => { btnOpen.disabled = false; }, 250);
+      }
+    });
+
+    btnConfirm?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const kind = (kindField?.value === 'cash') ? 'cash' : 'balance';
+      modal?.close();
+      await doWithdraw(kind);
+    });
+  })();
+</script>
+
+<script>
+  (() => {
+    const $ = s => document.querySelector(s);
+    const listTbody = $('#aff-list');
+    const listMobile = $('#aff-list-mobile');
+    const emptyEl = $('#aff-empty');
+    const pageInfo = $('#aff-pageinfo');
+    const btnPrev = $('#aff-prev');
+    const btnNext = $('#aff-next');
+    const selPerPage = $('#aff-perpage');        // select เดิม (ซ่อนไว้)
+    // องค์ประกอบของดรอปดาวน์ใหม่
+    const ddBtn = document.getElementById('perpageBtn');
+    const ddMenu = document.getElementById('perpageMenu');
+    const ddLabel = document.getElementById('perpageLabel');
+
+    // ---------- state ----------
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const tFmt = new Intl.DateTimeFormat('th-TH', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Bangkok'
+    });
+
+    const fmtTH = n => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const kindBadge = k => k === 'balance' ? 'เครดิต' : 'เงินสด';
+    const statusBadge = s => s === 'success'
+      ? '<span class="badge st-success">สำเร็จ</span>'
+      : '<span class="badge st-fail">ล้มเหลว</span>';
+
+    async function fetchWithdraws(page = 1, perPage = 10) {
+      const r = await fetch(`/account/affiliate/withdraws?page=${page}&perPage=${perPage}`);
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error('fetch failed');
+      return j;
+    }
+
+    function renderDesktop(items) {
+      if (!listTbody) return;
+      listTbody.innerHTML = items.map(it => `
+      <tr>
+        <td>${tFmt.format(new Date(it.createdAt))}</td>
+        <td style="text-align:right">฿${fmtTH(it.amount)}</td>
+        <td style="text-align:center"><span class="badge kind">${kindBadge(it.kind)}</span></td>
+        <td style="text-align:center">${statusBadge(it.status)}</td>
+      </tr>
+    `).join('');
+    }
+
+    function renderMobile(items) {
+      if (!listMobile) return;
+      listMobile.innerHTML = items.map(it => `
+      <div class="affw-item">
+        <div class="affw-hd" onclick="this.parentElement.classList.toggle('open')">
+          <div class="affw-ttl">${tFmt.format(new Date(it.createdAt))}</div>
+          <div><span class="badge kind">${kindBadge(it.kind)}</span></div>
+        </div>
+        <div class="affw-body">
+          <div class="kv"><div>ยอดเงิน</div><div>฿${fmtTH(it.amount)}</div></div>
+          <div class="kv"><div>สถานะ</div><div>${statusBadge(it.status)}</div></div>
+        </div>
+      </div>
+    `).join('');
+    }
+
+    async function renderWithdraws() {
+      const per = Number(selPerPage?.value || 10);
+      try {
+        const j = await fetchWithdraws(currentPage, per);
+        const items = Array.isArray(j.items) ? j.items : [];
+        totalPages = Math.max(1, Math.ceil((j.total || 0) / (j.perPage || per)));
+
+        // toggle empty
+        const isEmpty = items.length === 0;
+        if (emptyEl) emptyEl.style.display = isEmpty ? '' : 'none';
+
+        renderDesktop(items);
+        renderMobile(items);
+
+        if (pageInfo) pageInfo.textContent = `หน้า ${currentPage}/${totalPages}`;
+        if (btnPrev) btnPrev.disabled = currentPage <= 1;
+        if (btnNext) btnNext.disabled = currentPage >= totalPages;
+      } catch {
+        if (emptyEl) emptyEl.style.display = '';
+        if (listTbody) listTbody.innerHTML = '';
+        if (listMobile) listMobile.innerHTML = '';
+        if (pageInfo) pageInfo.textContent = `หน้า 1/1`;
+        if (btnPrev) btnPrev.disabled = true;
+        if (btnNext) btnNext.disabled = true;
+      }
+    }
+
+    // ---------- page events ----------
+    btnPrev?.addEventListener('click', async () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        await renderWithdraws();
+      }
+    });
+    btnNext?.addEventListener('click', async () => {
+      if (currentPage < totalPages) {
+        currentPage += 1;
+        await renderWithdraws();
+      }
+    });
+    selPerPage?.addEventListener('change', async () => {
+      currentPage = 1;
+      // sync ป้ายบนปุ่มด้วย (กันกรณีมีการเปลี่ยนจากภายนอก)
+      if (ddLabel) ddLabel.textContent = selPerPage.value;
+      // sync aria-selected ของเมนู
+      if (ddMenu) {
+        [...ddMenu.children].forEach(li =>
+          li.setAttribute('aria-selected', li.dataset.val === selPerPage.value ? 'true' : 'false')
+        );
+      }
+      await renderWithdraws();
+    });
+
+    // ---------- Custom dropdown binding ----------
+    function openMenu() {
+      const rect = ddBtn.getBoundingClientRect();
+      ddMenu.style.minWidth = rect.width + 'px';
+      ddMenu.style.left = rect.left + 'px';
+      ddMenu.style.top = rect.bottom + 'px';
+      ddMenu.classList.add('show');
+      ddBtn.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu() {
+      ddMenu.classList.remove('show');
+      ddBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if (ddBtn && ddMenu && ddLabel && selPerPage) {
+      // init
+      const initVal = selPerPage.value || '10';
+      ddLabel.textContent = initVal;
+      [...ddMenu.children].forEach(li =>
+        li.setAttribute('aria-selected', li.dataset.val === initVal ? 'true' : 'false')
+      );
+
+      ddBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        ddMenu.classList.contains('show') ? closeMenu() : openMenu();
+      });
+
+      ddMenu.addEventListener('click', (e) => {
+        const li = e.target.closest('li[role="option"]');
+        if (!li) return;
+        const v = li.dataset.val;
+        ddLabel.textContent = v;
+        [...ddMenu.children].forEach(x => x.setAttribute('aria-selected', 'false'));
+        li.setAttribute('aria-selected', 'true');
+        closeMenu();
+        // sync -> select เดิม + trigger change
+        if (selPerPage.value !== v) {
+          selPerPage.value = v;
+          selPerPage.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+
+      // ปิดเมื่อคลิกนอก/กด ESC/เลื่อน/รีไซส์
+      document.addEventListener('click', (e) => { if (!e.target.closest('.perpage-dd')) closeMenu(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+      window.addEventListener('scroll', () => ddMenu.classList.contains('show') && closeMenu(), true);
+      window.addEventListener('resize', () => ddMenu.classList.contains('show') && closeMenu());
+    }
+
+    // ---------- expose & first render ----------
+    window.renderAffWithdraws = renderWithdraws;
+    window.affWSetPage = (p = 1) => {
+      currentPage = Math.max(1, Number(p) || 1);
+      renderWithdraws();
+    };
+
+    renderWithdraws();
+  })();
+</script>

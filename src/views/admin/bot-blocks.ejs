@@ -1,0 +1,2275 @@
+<%
+const q = query || {};
+
+function esc(v) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function fmtDate(d) {
+  if (!d) return "-";
+  try {
+    return new Date(d).toLocaleString("th-TH", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return "-";
+  }
+}
+
+function getGeo(item) {
+  return item.geo || item.blockGeo || item.blockedGeo || {};
+}
+
+function getCountry(item) {
+  const g = getGeo(item);
+  return g.country || item.country || "-";
+}
+
+function getCountryCode(item) {
+  const g = getGeo(item);
+  return g.countryCode || item.countryCode || item.country || "";
+}
+
+function getCity(item) {
+  const g = getGeo(item);
+  return g.city || item.city || "-";
+}
+
+function getRegion(item) {
+  const g = getGeo(item);
+  return g.regionName || g.region || "";
+}
+
+function getIsp(item) {
+  const g = getGeo(item);
+  return g.isp || g.org || g.as || "-";
+}
+
+function getGeoStatus(item) {
+  const g = getGeo(item);
+  return g.status || item.geoStatus || "-";
+}
+
+function hasMap(item) {
+  const g = getGeo(item);
+  return Number.isFinite(Number(g.lat)) && Number.isFinite(Number(g.lon));
+}
+
+function mapUrl(item) {
+  const g = getGeo(item);
+  if (!hasMap(item)) return "#";
+  return `https://www.google.com/maps?q=${encodeURIComponent(`${g.lat},${g.lon}`)}`;
+}
+
+/**
+ * รองรับหลายรูปแบบ:
+ * 1) item.blockedIp
+ * 2) item.block
+ * 3) item.ban
+ * 4) fields ตรงใน log item
+ */
+function getBlock(item) {
+  return (
+    item.blockedIp ||
+    item.block ||
+    item.ban ||
+    item.blockInfo ||
+    item.ipBlock ||
+    null
+  );
+}
+
+function getBlockStatus(item) {
+  const block = getBlock(item);
+
+  return String(
+    block?.status ||
+    item.blockStatus ||
+    item.ipBlockStatus ||
+    item.banStatus ||
+    ""
+  ).toLowerCase();
+}
+
+function getBlockedUntil(item) {
+  const block = getBlock(item);
+
+  return (
+    block?.expiresAt ||
+    block?.blockedUntil ||
+    block?.expireAt ||
+    item.blockExpiresAt ||
+    item.ipBlockedUntil ||
+    item.expiresAt ||
+    item.blockedUntil ||
+    null
+  );
+}
+
+function getBlockedAt(item) {
+  const block = getBlock(item);
+
+  return (
+    block?.bannedAt ||
+    block?.blockedAt ||
+    block?.createdAt ||
+    item.blockedAt ||
+    item.bannedAt ||
+    item.ipBlockedAt ||
+    null
+  );
+}
+
+function getBlockReason(item) {
+  const block = getBlock(item);
+
+  return (
+    block?.reason ||
+    block?.blockReason ||
+    item.reason ||
+    item.blockReason ||
+    ""
+  );
+}
+
+function getBlockRule(item) {
+  const block = getBlock(item);
+
+  return (
+    block?.rule ||
+    item.rule ||
+    "-"
+  );
+}
+
+function getReleasedAt(item) {
+  const block = getBlock(item);
+
+  return (
+    block?.releasedAt ||
+    block?.unblockedAt ||
+    item.releasedAt ||
+    item.unblockedAt ||
+    item.manualUnblockedAt ||
+    null
+  );
+}
+
+function isExpiredBlock(item) {
+  const until = getBlockedUntil(item);
+  if (!until) return false;
+
+  const t = new Date(until).getTime();
+  return Number.isFinite(t) && t <= Date.now();
+}
+
+function isBlocked(item) {
+  const block = getBlock(item);
+  const status = getBlockStatus(item);
+
+  if (["active", "blocked", "banned"].includes(status)) {
+    const until = getBlockedUntil(item);
+
+    if (!until) return true;
+
+    const t = new Date(until).getTime();
+    return Number.isFinite(t) && t > Date.now();
+  }
+
+  if (item.isBlocked === true) return true;
+  if (item.blocked === true) return true;
+  if (block?.isBlocked === true) return true;
+  if (block?.blocked === true) return true;
+
+  const until = getBlockedUntil(item);
+  if (until) {
+    const t = new Date(until).getTime();
+    return Number.isFinite(t) && t > Date.now();
+  }
+
+  return false;
+}
+
+function blockTypeText(item) {
+  const status = getBlockStatus(item);
+  const releasedAt = getReleasedAt(item);
+  const until = getBlockedUntil(item);
+
+  if (releasedAt || status === "released" || status === "unblocked") {
+    return "ปลดแบนแล้ว";
+  }
+
+  if (isExpiredBlock(item)) {
+    return "หมดอายุแล้ว";
+  }
+
+  if (isBlocked(item)) {
+    if (until) return "กำลังแบน";
+    return "แบนแล้ว";
+  }
+
+  return "เก็บ Log";
+}
+
+function blockClass(item) {
+  const status = getBlockStatus(item);
+
+  if (status === "released" || status === "unblocked" || getReleasedAt(item)) {
+    return "neutral";
+  }
+
+  if (isExpiredBlock(item)) return "warn";
+  if (isBlocked(item)) return "danger";
+
+  return "ok";
+}
+
+function remainText(item) {
+  const until = getBlockedUntil(item);
+  if (!until) return "";
+
+  const ms = new Date(until).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return "";
+
+  if (ms <= 0) return "หมดเวลาแล้ว";
+
+  const min = Math.ceil(ms / 60000);
+
+  if (min < 60) return `เหลือ ${min} นาที`;
+
+  const hr = Math.floor(min / 60);
+  const mm = min % 60;
+
+  if (hr < 24) return `เหลือ ${hr} ชม. ${mm} นาที`;
+
+  const day = Math.floor(hr / 24);
+  const hh = hr % 24;
+
+  return `เหลือ ${day} วัน ${hh} ชม.`;
+}
+
+function makeQuery(extra = {}) {
+  const params = new URLSearchParams();
+
+  const data = {
+    ip: q.ip || "",
+    path: q.path || "",
+    country: q.country || "",
+    city: q.city || "",
+    rule: q.rule || "",
+    geoStatus: q.geoStatus || "",
+    limit,
+    page,
+    ...extra,
+  };
+
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== undefined && v !== null && String(v) !== "") {
+      params.set(k, String(v));
+    }
+  }
+
+  return params.toString();
+}
+%>
+
+
+<%
+  const activeBlockedCount = (items || []).filter(item => isBlocked(item)).length;
+  const releasedCount = (items || []).filter(item => blockClass(item) === "released").length;
+  const logOnlyCount = Math.max(0, Number(total || 0) - activeBlockedCount - releasedCount);
+%>
+
+<div class="security-shell bot-block-page">
+  <section class="hero-card">
+    <div class="hero-glow"></div>
+
+    <div class="hero-main">
+      <div class="hero-kicker">
+        <span class="pulse-dot"></span>
+        Security Center
+      </div>
+
+      <h1>Bot Block Logs</h1>
+      <p>
+        ระบบตรวจจับ Request แปลก ๆ เช่น <code>/.env</code>, <code>phpinfo.php</code>, scanner และ bot probe
+        พร้อมสถานะแบน IP, Geo IP
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/admin/security/bot-blocks?<%= makeQuery({ format: 'json' }) %>" target="_blank" rel="noopener">
+          ดูข้อมูล JSON
+        </a>
+        <a class="btn btn-ghost" href="/admin/security/bot-blocks">
+          รีเฟรช
+        </a>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <article class="metric-card">
+        <span class="metric-label">รายการ Logs</span>
+        <strong><%= Number(total || 0).toLocaleString("th-TH") %></strong>
+        <small>รายการ Logs ทั้งหมด</small>
+      </article>
+
+      <article class="metric-card hot">
+        <span class="metric-label">Hit ทั้งหมด</span>
+        <strong><%= Number(totalHits || 0).toLocaleString("th-TH") %></strong>
+        <small>
+          Logs: <%= Number(logHits || 0).toLocaleString("th-TH") %>
+          +
+          Blocked IP: <%= Number(blockedHits || 0).toLocaleString("th-TH") %>
+        </small>
+      </article>
+
+      <article class="metric-card danger">
+        <span class="metric-label">แบนแล้ว</span>
+        <strong><%= Number(activeBlockedTotal || 0).toLocaleString("th-TH") %></strong>
+        <small>IP ที่โดนแบนทั้งหมด</small>
+      </article>
+
+      <article class="metric-card quiet">
+        <span class="metric-label">Blocked IP ทั้งหมด</span>
+        <strong><%= Number(blockedIpTotal || 0).toLocaleString("th-TH") %></strong>
+        <small>
+          โดนแบน <%= Number(activeBlockedTotal || 0).toLocaleString("th-TH") %>
+          /
+          ยังไม่โดนแบน <%= Number(releasedBlockedTotal || 0).toLocaleString("th-TH") %>
+        </small>
+      </article>
+    </div>
+  </section>
+
+  <section class="filter-panel">
+    <div class="panel-head">
+      <div>
+        <h2>ค้นหาและกรองข้อมูล</h2>
+        <p>เลือก IP, Path, ประเทศ, เมือง หรือ Rule</p>
+      </div>
+      <span class="panel-chip">Page <%= page %> / <%= totalPages %></span>
+    </div>
+
+    <form method="GET" action="/admin/security/bot-blocks" class="filter-form">
+      <div class="filter-grid">
+        <label class="field">
+          <span>IP Address</span>
+          <input name="ip" value="<%= esc(q.ip) %>" placeholder="เช่น 1.2.3.4" autocomplete="off">
+        </label>
+
+        <label class="field field-wide">
+          <span>Path / URI</span>
+          <input name="path" value="<%= esc(q.path) %>" placeholder=".env, phpinfo.php, backup.zip" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>ประเทศ</span>
+          <input name="country" value="<%= esc(q.country) %>" placeholder="TH, Thailand, Singapore" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>เมือง</span>
+          <input name="city" value="<%= esc(q.city) %>" placeholder="Bangkok, Singapore" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>Rule</span>
+          <select name="rule">
+            <option value="">ทั้งหมด</option>
+            <% (rules || []).forEach(r => { %>
+              <option value="<%= esc(r) %>" <%= q.rule === r ? "selected" : "" %>><%= r %></option>
+            <% }) %>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Geo Status</span>
+          <select name="geoStatus">
+            <option value="">ทั้งหมด</option>
+            <% (geoStatuses || []).forEach(s => { %>
+              <option value="<%= esc(s) %>" <%= q.geoStatus === s ? "selected" : "" %>><%= s %></option>
+            <% }) %>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Limit</span>
+          <select name="limit">
+            <% [10, 25, 50, 100].forEach(n => { %>
+              <option value="<%= n %>" <%= Number(limit) === n ? "selected" : "" %>><%= n %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" type="submit">ค้นหา</button>
+        <a class="btn btn-ghost" href="/admin/security/bot-blocks">ล้างตัวกรอง</a>
+        <a class="btn btn-soft" href="/admin/security/bot-blocks?<%= makeQuery({ format: 'json' }) %>" target="_blank" rel="noopener">เปิด JSON</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="data-panel">
+    <div class="panel-head table-head">
+      <div>
+        <h2>รายการที่ถูกระบบตรวจจับ</h2>
+        <p>แสดงสถานะ BotBlock</p>
+      </div>
+      <div class="legend">
+        <span><i class="dot danger"></i> แบนแล้ว</span>
+        <span><i class="dot success"></i> เก็บ Log</span>
+        <span><i class="dot muted"></i> ปลดแล้ว/หมดอายุ</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="security-table">
+        <colgroup>
+          <col class="col-time">
+          <col class="col-ip">
+          <col class="col-geo">
+          <col class="col-status">
+          <col class="col-request">
+          <col class="col-rule">
+          <col class="col-ua">
+          <col class="col-action">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>เวลาล่าสุด</th>
+            <th>IP / Network</th>
+            <th>สถานที่</th>
+            <th>สถานะแบน</th>
+            <th>Request</th>
+            <th>Rule</th>
+            <th>User-Agent</th>
+            <th class="right">จัดการ</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% if (!items || !items.length) { %>
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-icon">🛡️</div>
+                  <h3>ยังไม่มีรายการ Bot Block</h3>
+                  <p>ระบบยังไม่เจอ Request แปลก ๆ ในตัวกรองนี้ ถือว่าเว็บยังเงียบ หรือบอทกำลังพักกินกาแฟ</p>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+
+          <% (items || []).forEach(item => {
+            const g = getGeo(item);
+            const countryCode = getCountryCode(item);
+            const blockedNow = isBlocked(item);
+            const bClass = blockClass(item);
+            const bText = blockTypeText(item);
+            const remain = remainText(item);
+            const blockedUntil = getBlockedUntil(item);
+            const blockedAt = getBlockedAt(item);
+            const releasedAt = getReleasedAt(item);
+            const reason = getBlockReason(item);
+            const ruleName = getBlockRule(item);
+            const hitCount = Number(item.combinedHitCount || item.count || 1);
+            const logHitCount = Number(item.logHitCount || item.count || 1);
+            const ipBlockedHits = Number(item.ipBlockedHits || 0);
+            const requestUrl = item.originalUrl || item.path || "-";
+            const uaRaw = String(item.userAgent || item.sampleUserAgent || "").replace(/\s+/g, " ").trim();
+            const uaText = uaRaw || "-";
+            const uaShort = uaText.length > 78 ? uaText.slice(0, 78) + "…" : uaText;
+            const uaLower = uaText.toLowerCase();
+            const uaType = /postman|curl|wget|python|go-http|httpclient|axios|scrapy|spider|crawler|bot|scanner/.test(uaLower)
+              ? "Tool / Bot"
+              : /android|iphone|ipad|mobile/.test(uaLower)
+                ? "Mobile"
+                : /chrome|firefox|safari|edg|edge|opera/.test(uaLower)
+                  ? "Browser"
+                  : "Unknown";
+            const uaTone = uaType === "Tool / Bot" ? "danger" : uaType === "Browser" || uaType === "Mobile" ? "success" : "muted";
+          %>
+            <tr class="<%= blockedNow ? 'row-danger' : '' %>" data-id="<%= item._id %>">
+              <td class="time-cell">
+                <strong><%= fmtDate(item.lastSeenAt || item.createdAt) %></strong>
+                <small>เริ่ม: <%= fmtDate(item.firstSeenAt || item.createdAt) %></small>
+                <span class="hit-pill" title="Log <%= logHitCount.toLocaleString('th-TH') %> + Blocked IP <%= ipBlockedHits.toLocaleString('th-TH') %>">
+                  <%= hitCount.toLocaleString("th-TH") %> ครั้ง
+                </span>
+              </td>
+
+              <td class="ip-cell">
+                <div class="ip-main">
+                  <code><%= item.ip || "-" %></code>
+                  <% if (blockedNow) { %>
+                    <span class="mini-dot danger"></span>
+                  <% } %>
+                </div>
+
+                <% if (item.cfRay) { %>
+                  <small>CF-Ray: <%= esc(item.cfRay) %></small>
+                <% } %>
+
+                <% if (g.isp || g.org || g.as) { %>
+                  <small><%= esc(g.isp || g.org || g.as) %></small>
+                <% } %>
+              </td>
+
+              <td class="geo-cell">
+                <span class="geo-status <%= getGeoStatus(item) === 'success' ? 'success' : 'warning' %>">
+                  <%= esc(getGeoStatus(item)) %>
+                </span>
+
+                <strong>🌎 <%= esc(getCity(item)) %><%= getRegion(item) ? ", " + esc(getRegion(item)) : "" %>, <%= esc(getCountry(item)) %></strong>
+
+                <div class="tag-row">
+                  <% if (countryCode) { %><span><%= esc(countryCode) %></span><% } %>
+                  <% if (g.timezone) { %><span><%= esc(g.timezone) %></span><% } %>
+                </div>
+
+                <% if (hasMap(item)) { %>
+                  <a class="map-link" href="<%= mapUrl(item) %>" target="_blank" rel="noopener noreferrer">เปิด Google Maps</a>
+                <% } %>
+              </td>
+
+              <td class="block-cell">
+                <span class="status-pill <%= bClass %>"><%= bText %></span>
+
+                <% if (blockedAt) { %>
+                  <small>เริ่มแบน: <%= fmtDate(blockedAt) %></small>
+                <% } %>
+
+                <% if (blockedUntil) { %>
+                  <small>หมดอายุ: <%= fmtDate(blockedUntil) %></small>
+                  <small><%= remain %></small>
+                <% } %>
+
+                <% if (reason) { %>
+                  <small>เหตุผล: <%= esc(reason) %></small>
+                <% } %>
+
+                <% if (releasedAt) { %>
+                  <small>ปลดแบน: <%= fmtDate(releasedAt) %></small>
+                <% } %>
+              </td>
+
+              <td class="request-cell">
+                <div>
+                  <span class="method-pill"><%= esc(item.method || "-") %></span>
+                  <strong><%= esc(requestUrl) %></strong>
+                </div>
+
+                <% if (item.host) { %>
+                  <small>Host: <%= esc(item.host) %></small>
+                <% } %>
+
+                <% if (item.decodedPath && item.decodedPath !== item.path) { %>
+                  <small>Decoded: <%= esc(item.decodedPath) %></small>
+                <% } %>
+              </td>
+
+              <td>
+                <span class="rule-pill"><%= esc(ruleName) %></span>
+              </td>
+
+              <td class="ua-cell">
+                <div class="ua-card">
+                  <div class="ua-top">
+                    <span class="ua-badge <%= uaTone %>"><%= esc(uaType) %></span>
+                    <button
+                      type="button"
+                      class="mini-copy"
+                      data-action="copy-ua"
+                      data-ua="<%= esc(uaText) %>"
+                      aria-label="คัดลอก User-Agent"
+                    >คัดลอก</button>
+                  </div>
+
+                  <details class="ua-details">
+                    <summary title="<%= esc(uaText) %>"><%= esc(uaShort) %></summary>
+                  </details>
+
+                  <% if (item.referer) { %>
+                    <div class="ref-box" title="<%= esc(item.referer) %>">
+                      <span>Ref</span>
+                      <em><%= esc(item.referer) %></em>
+                    </div>
+                  <% } %>
+                </div>
+              </td>
+
+              <td class="action-cell right">
+                <div class="action-stack">
+                  <% if (blockedNow) { %>
+                    <button type="button" class="icon-btn danger" data-action="release-ip" data-ip="<%= esc(item.ip) %>">
+                      ปลดแบน IP
+                    </button>
+                  <% } else { %>
+                    <span class="state-note">ไม่อยู่ในสถานะแบน</span>
+                  <% } %>
+
+                  <button type="button" class="icon-btn" data-action="copy-ip" data-ip="<%= esc(item.ip) %>">
+                    คัดลอก IP
+                  </button>
+
+                  <button type="button" class="icon-btn" data-action="copy-url" data-url="<%= esc(item.originalUrl || item.path || '') %>">
+                    คัดลอก URL
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-log-list" aria-label="Mobile BotBlock list">
+      <% if (!items || !items.length) { %>
+        <div class="mobile-empty">
+          <div class="empty-icon">🛡️</div>
+          <h3>ยังไม่มีรายการ Bot Block</h3>
+          <p>ระบบยังไม่เจอ Request แปลก ๆ ในตัวกรองนี้</p>
+        </div>
+      <% } %>
+
+      <% (items || []).forEach(item => {
+        const g = getGeo(item);
+        const countryCode = getCountryCode(item);
+        const blockedNow = isBlocked(item);
+        const bClass = blockClass(item);
+        const bText = blockTypeText(item);
+        const remain = remainText(item);
+        const blockedUntil = getBlockedUntil(item);
+        const blockedAt = getBlockedAt(item);
+        const releasedAt = getReleasedAt(item);
+        const reason = getBlockReason(item);
+        const ruleName = getBlockRule(item);
+        const hitCount = Number(item.combinedHitCount || item.count || 1);
+        const logHitCount = Number(item.logHitCount || item.count || 1);
+        const ipBlockedHits = Number(item.ipBlockedHits || 0);
+        const requestUrl = item.originalUrl || item.path || "-";
+        const uaRaw = String(item.userAgent || item.sampleUserAgent || "").replace(/\s+/g, " ").trim();
+        const uaText = uaRaw || "-";
+        const uaShort = uaText.length > 110 ? uaText.slice(0, 110) + "…" : uaText;
+        const uaLower = uaText.toLowerCase();
+        const uaType = /postman|curl|wget|python|go-http|httpclient|axios|scrapy|spider|crawler|bot|scanner/.test(uaLower)
+          ? "Tool / Bot"
+          : /android|iphone|ipad|mobile/.test(uaLower)
+            ? "Mobile"
+            : /chrome|firefox|safari|edg|edge|opera/.test(uaLower)
+              ? "Browser"
+              : "Unknown";
+        const uaTone = uaType === "Tool / Bot" ? "danger" : uaType === "Browser" || uaType === "Mobile" ? "success" : "muted";
+      %>
+        <article class="mobile-log-card <%= blockedNow ? 'is-blocked' : '' %>" data-id="<%= item._id %>">
+          <div class="mobile-card-top">
+            <div class="mobile-ip-wrap">
+              <span class="mobile-label">IP / Network</span>
+              <div class="mobile-ip-line">
+                <code><%= item.ip || "-" %></code>
+                <% if (blockedNow) { %><span class="mini-dot danger"></span><% } %>
+              </div>
+              <% if (item.cfRay) { %><small>CF-Ray: <%= esc(item.cfRay) %></small><% } %>
+            </div>
+            <span class="status-pill <%= bClass %>"><%= bText %></span>
+          </div>
+
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-box">
+              <span>เวลาล่าสุด</span>
+              <strong><%= fmtDate(item.lastSeenAt || item.createdAt) %></strong>
+              <em>เริ่ม: <%= fmtDate(item.firstSeenAt || item.createdAt) %></em>
+            </div>
+            <div class="mobile-meta-box">
+              <span>จำนวนครั้ง</span>
+              <strong><%= hitCount.toLocaleString("th-TH") %> ครั้ง</strong>
+              <em>Log <%= logHitCount.toLocaleString("th-TH") %> + Blocked IP <%= ipBlockedHits.toLocaleString("th-TH") %></em>
+              <em><%= esc(ruleName) %></em>
+            </div>
+          </div>
+
+          <div class="mobile-section compact">
+            <div class="mobile-section-title">Request</div>
+            <div class="mobile-request-line">
+              <span class="method-pill"><%= esc(item.method || "-") %></span>
+              <strong><%= esc(requestUrl) %></strong>
+            </div>
+            <% if (item.host) { %><small>Host: <%= esc(item.host) %></small><% } %>
+            <% if (item.decodedPath && item.decodedPath !== item.path) { %><small>Decoded: <%= esc(item.decodedPath) %></small><% } %>
+          </div>
+
+          <div class="mobile-section">
+            <div class="mobile-section-title">สถานที่</div>
+            <div class="mobile-geo-head">
+              <span class="geo-status <%= getGeoStatus(item) === 'success' ? 'success' : 'warning' %>"><%= esc(getGeoStatus(item)) %></span>
+              <strong>🌎 <%= esc(getCity(item)) %><%= getRegion(item) ? ", " + esc(getRegion(item)) : "" %>, <%= esc(getCountry(item)) %></strong>
+            </div>
+            <div class="tag-row">
+              <% if (countryCode) { %><span><%= esc(countryCode) %></span><% } %>
+              <% if (g.timezone) { %><span><%= esc(g.timezone) %></span><% } %>
+            </div>
+            <% if (g.isp || g.org || g.as) { %><small><%= esc(g.isp || g.org || g.as) %></small><% } %>
+            <% if (hasMap(item)) { %><a class="map-link" href="<%= mapUrl(item) %>" target="_blank" rel="noopener noreferrer">เปิด Google Maps</a><% } %>
+          </div>
+
+          <div class="mobile-section">
+            <div class="mobile-section-title">User-Agent</div>
+            <div class="ua-card mobile-ua-card">
+              <div class="ua-top">
+                <span class="ua-badge <%= uaTone %>"><%= esc(uaType) %></span>
+                <button type="button" class="mini-copy" data-action="copy-ua" data-ua="<%= esc(uaText) %>" aria-label="คัดลอก User-Agent">คัดลอก</button>
+              </div>
+              <details class="ua-details">
+                <summary title="<%= esc(uaText) %>"><%= esc(uaShort) %></summary>
+              </details>
+              <% if (item.referer) { %>
+                <div class="ref-box" title="<%= esc(item.referer) %>">
+                  <span>Ref</span>
+                  <em><%= esc(item.referer) %></em>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <% if (blockedAt || blockedUntil || reason || releasedAt) { %>
+            <div class="mobile-section mobile-status-notes">
+              <div class="mobile-section-title">รายละเอียดสถานะ</div>
+              <% if (blockedAt) { %><small>เริ่มแบน: <%= fmtDate(blockedAt) %></small><% } %>
+              <% if (blockedUntil) { %><small>หมดอายุ: <%= fmtDate(blockedUntil) %> • <%= remain %></small><% } %>
+              <% if (reason) { %><small>เหตุผล: <%= esc(reason) %></small><% } %>
+              <% if (releasedAt) { %><small>ปลดแบน: <%= fmtDate(releasedAt) %></small><% } %>
+            </div>
+          <% } %>
+
+          <div class="mobile-actions">
+            <% if (blockedNow) { %>
+              <button type="button" class="icon-btn danger" data-action="release-ip" data-ip="<%= esc(item.ip) %>">ปลดแบน IP</button>
+            <% } else { %>
+              <span class="state-note">ไม่อยู่ในสถานะแบน</span>
+            <% } %>
+            <button type="button" class="icon-btn" data-action="copy-ip" data-ip="<%= esc(item.ip) %>">คัดลอก IP</button>
+            <button type="button" class="icon-btn" data-action="copy-url" data-url="<%= esc(item.originalUrl || item.path || '') %>">คัดลอก URL</button>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+
+  </section>
+
+  <nav class="pager">
+    <% if (page > 1) { %>
+      <a class="btn btn-ghost" href="/admin/security/bot-blocks?<%= makeQuery({ page: page - 1 }) %>">← ก่อนหน้า</a>
+    <% } else { %>
+      <span></span>
+    <% } %>
+
+    <strong>หน้า <%= page %> / <%= totalPages %></strong>
+
+    <% if (page < totalPages) { %>
+      <a class="btn btn-ghost" href="/admin/security/bot-blocks?<%= makeQuery({ page: page + 1 }) %>">ถัดไป →</a>
+    <% } else { %>
+      <span></span>
+    <% } %>
+  </nav>
+</div>
+
+<script>
+(() => {
+  const toast = (message, type = "ok", title = "") => {
+    const variantMap = {
+      ok: "success",
+      success: "success",
+      warn: "warning",
+      warning: "warning",
+      err: "error",
+      error: "error",
+      danger: "error",
+      info: "info",
+    };
+
+    const variant = variantMap[type] || "info";
+    const fallbackTitle = {
+      success: "สำเร็จ",
+      warning: "แจ้งเตือน",
+      error: "ไม่สำเร็จ",
+      info: "แจ้งเตือน",
+    }[variant];
+
+    if (typeof window.showMsg === "function") {
+      window.showMsg({
+        variant,
+        title: title || fallbackTitle,
+        text: message,
+      });
+      return;
+    }
+
+    if (window.notify && typeof window.notify[variant] === "function") {
+      window.notify[variant](title || fallbackTitle, message);
+      return;
+    }
+
+    alert(message);
+  };
+
+  const uiConfirm = async ({
+    title = "ยืนยันการทำรายการ",
+    text = "",
+    okText = "ยืนยัน",
+    cancelText = "ยกเลิก",
+    variant = "danger",
+  } = {}) => {
+    if (typeof window.uiConfirm === "function") {
+      return await window.uiConfirm({
+        variant,
+        title,
+        sub: text,
+        okText,
+        cancelText,
+        focus: "cancel",
+      });
+    }
+
+    if (typeof window.confirm === "function") {
+      return window.confirm(text || title);
+    }
+
+    return false;
+  };
+
+  const copyText = async (text, label) => {
+    const value = String(text || "").trim();
+    if (!value) return toast("ไม่มีข้อมูลให้คัดลอก", "warn");
+
+    try {
+      await navigator.clipboard.writeText(value);
+      toast(`คัดลอก${label}แล้ว`);
+    } catch (err) {
+      const tmp = document.createElement("textarea");
+      tmp.value = value;
+      tmp.style.position = "fixed";
+      tmp.style.opacity = "0";
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand("copy");
+      tmp.remove();
+      toast(`คัดลอก${label}แล้ว`);
+    }
+  };
+
+  const releaseIp = async (ip, btn) => {
+    const cleanIp = String(ip || "").trim();
+    if (!cleanIp) return toast("ไม่พบ IP", "warn");
+
+    const confirmed = await uiConfirm({
+      variant: "danger",
+      title: "ปลดแบน IP",
+      text: `ต้องการปลดแบน IP ${cleanIp} ใช่ไหม?`,
+      okText: "ปลดแบน IP",
+      cancelText: "ยกเลิก",
+    });
+
+    if (!confirmed) return;
+
+    const oldText = btn?.textContent || "ปลดแบน IP";
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "กำลังปลด...";
+    }
+
+    try {
+      const res = await fetch("/admin/security/bot-blocks/release-ip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({ ip: cleanIp }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || "ปลดแบนไม่สำเร็จ");
+      }
+
+      toast(`ปลดแบน ${cleanIp} แล้ว`, "success", "ปลดแบนสำเร็จ");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 650);
+    } catch (err) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+
+      toast(err.message || "เกิดข้อผิดพลาด", "error", "ปลดแบนไม่สำเร็จ");
+    }
+  };
+
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    if (action === "copy-ip") {
+      copyText(btn.dataset.ip, " IP");
+      return;
+    }
+
+    if (action === "copy-url") {
+      copyText(btn.dataset.url, " URL");
+      return;
+    }
+
+    if (action === "copy-ua") {
+      copyText(btn.dataset.ua, " User-Agent");
+      return;
+    }
+
+    if (action === "release-ip") {
+      releaseIp(btn.dataset.ip, btn);
+    }
+  });
+})();
+</script>
+
+
+<style>
+  :root {
+    --bb-bg: #080a0f;
+    --bb-card: rgba(18, 20, 28, .86);
+    --bb-card-2: rgba(24, 27, 36, .92);
+    --bb-line: rgba(255, 255, 255, .08);
+    --bb-line-2: rgba(255, 255, 255, .14);
+    --bb-text: #f5f7fb;
+    --bb-muted: #9ba3b4;
+    --bb-soft: #c7ccd8;
+    --bb-gold: #f7d56b;
+    --bb-green: #28e59b;
+    --bb-red: #ff5b6e;
+    --bb-blue: #68a7ff;
+    --bb-orange: #ffb45c;
+    --bb-radius: 24px;
+    --bb-shadow: 0 24px 80px rgba(0, 0, 0, .34);
+  }
+
+  .security-shell {
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--bb-text);
+    background:
+      radial-gradient(circle at 10% -10%, rgba(247, 213, 107, .16), transparent 34%),
+      radial-gradient(circle at 90% 0%, rgba(104, 167, 255, .13), transparent 36%),
+      linear-gradient(180deg, #090a0f 0%, #06070a 100%);
+  }
+
+  .security-shell * { box-sizing: border-box; }
+
+  .hero-card,
+  .filter-panel,
+  .data-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius);
+    background: linear-gradient(145deg, rgba(22, 24, 33, .92), rgba(12, 14, 20, .92));
+    box-shadow: var(--bb-shadow);
+    backdrop-filter: blur(16px);
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: 1.2fr .9fr;
+    gap: 22px;
+    padding: 28px;
+    margin-bottom: 18px;
+  }
+
+  .hero-glow {
+    position: absolute;
+    inset: -80px auto auto -80px;
+    width: 240px;
+    height: 240px;
+    border-radius: 999px;
+    background: rgba(247, 213, 107, .14);
+    filter: blur(22px);
+    pointer-events: none;
+  }
+
+  .hero-main {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-kicker {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid rgba(247, 213, 107, .22);
+    border-radius: 999px;
+    color: var(--bb-gold);
+    background: rgba(247, 213, 107, .08);
+    font-weight: 800;
+    letter-spacing: .02em;
+  }
+
+  .pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--bb-green);
+    box-shadow: 0 0 0 8px rgba(40, 229, 155, .1);
+  }
+
+  .hero-card h1 {
+    margin: 18px 0 10px;
+    font-size: clamp(32px, 4vw, 54px);
+    line-height: 1;
+    letter-spacing: -.04em;
+  }
+
+  .hero-card p {
+    max-width: 780px;
+    margin: 0;
+    color: var(--bb-soft);
+    line-height: 1.75;
+  }
+
+  .hero-card code {
+    padding: 3px 7px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .06);
+    color: #fff5be;
+  }
+
+  .hero-actions,
+  .filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 18px;
+    border: 1px solid var(--bb-line);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .025));
+  }
+
+  .metric-label {
+    display: block;
+    color: var(--bb-muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .metric-card strong {
+    display: block;
+    margin: 8px 0 4px;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .metric-card small { color: var(--bb-muted); }
+  .metric-card.hot strong { color: var(--bb-gold); }
+  .metric-card.danger strong { color: var(--bb-red); }
+  .metric-card.quiet strong { color: var(--bb-blue); }
+
+  .filter-panel,
+  .data-panel {
+    margin-top: 18px;
+    padding: 22px;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .panel-head h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    letter-spacing: -.02em;
+  }
+
+  .panel-head p {
+    margin: 0;
+    color: var(--bb-muted);
+    line-height: 1.6;
+  }
+
+  .panel-chip {
+    white-space: nowrap;
+    padding: 9px 12px;
+    border: 1px solid rgba(104, 167, 255, .22);
+    border-radius: 999px;
+    color: #cfe0ff;
+    background: rgba(104, 167, 255, .08);
+    font-weight: 600;
+  }
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr 1fr 1fr .95fr .95fr .72fr;
+    gap: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field span {
+    color: var(--bb-soft);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--bb-line-2);
+    border-radius: 15px;
+    outline: none;
+    color: var(--bb-text);
+    background: rgba(4, 6, 10, .52);
+    transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    border-color: rgba(247, 213, 107, .55);
+    box-shadow: 0 0 0 4px rgba(247, 213, 107, .1);
+    background: rgba(8, 10, 15, .86);
+  }
+
+  .btn,
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--bb-line-2);
+    border-radius: 14px;
+    color: var(--bb-text);
+    background: rgba(255, 255, 255, .06);
+    text-decoration: none;
+    font-weight: 600;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    cursor: pointer;
+    transition: transform .16s ease, border .16s ease, background .16s ease, opacity .16s ease;
+  }
+
+  .btn:hover,
+  .icon-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, .24);
+    background: rgba(255, 255, 255, .1);
+  }
+
+  .btn-primary {
+    border-color: rgba(247, 213, 107, .48);
+    color: #160f00;
+    background: linear-gradient(135deg, #ffe081, #d9a72b);
+  }
+
+  .btn-ghost { background: rgba(255, 255, 255, .045); }
+  .btn-soft {
+    border-color: rgba(104, 167, 255, .25);
+    color: #dbe8ff;
+    background: rgba(104, 167, 255, .08);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+    color: var(--bb-muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot,
+  .mini-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--bb-muted);
+  }
+
+  .dot.danger,
+  .mini-dot.danger { background: var(--bb-red); }
+  .dot.success { background: var(--bb-green); }
+  .dot.muted { background: #717989; }
+
+  .table-scroll {
+    overflow: auto;
+    border: 1px solid var(--bb-line);
+    border-radius: 20px;
+  }
+
+  .security-table {
+    width: 100%;
+    min-width: 1280px;
+    border-collapse: collapse;
+    background: rgba(6, 8, 12, .38);
+  }
+
+  .security-table th,
+  .security-table td {
+    padding: 17px 16px;
+    border-bottom: 1px solid var(--bb-line);
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .security-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    color: #fff4ba;
+    background: rgba(12, 14, 20, .96);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .security-table tr {
+    transition: background .16s ease;
+  }
+
+  .security-table tbody tr:hover {
+    background: rgba(255, 255, 255, .035);
+  }
+
+  .security-table tbody tr.row-danger {
+    background: linear-gradient(90deg, rgba(255, 91, 110, .09), transparent 55%);
+  }
+
+  .security-table strong {
+    display: block;
+    color: #fff;
+  }
+
+  .security-table small {
+    display: block;
+    margin-top: 7px;
+    color: var(--bb-muted);
+    line-height: 1.45;
+  }
+
+  .time-cell { min-width: 160px; }
+
+  .hit-pill,
+  .method-pill,
+  .rule-pill,
+  .status-pill,
+  .geo-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 10px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 450;
+    line-height: 1;
+  }
+
+  .hit-pill {
+    border: 1px solid rgba(247, 213, 107, .24);
+    color: #ffe99a;
+    background: rgba(247, 213, 107, .1);
+  }
+
+  .ip-cell code {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid rgba(247, 213, 107, .18);
+    border-radius: 12px;
+    color: #ffe99a;
+    background: rgba(247, 213, 107, .075);
+    font-weight: 350;
+  }
+
+  .ip-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .geo-cell { min-width: 260px; }
+
+  .geo-status.success {
+    border: 1px solid rgba(40, 229, 155, .28);
+    color: #8fffd0;
+    background: rgba(40, 229, 155, .1);
+  }
+
+  .geo-status.warning {
+    border: 1px solid rgba(255, 180, 92, .28);
+    color: #ffd7a8;
+    background: rgba(255, 180, 92, .1);
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 9px 0;
+  }
+
+  .tag-row span {
+    padding: 6px 9px;
+    border: 1px solid var(--bb-line);
+    border-radius: 999px;
+    color: var(--bb-soft);
+    background: rgba(255, 255, 255, .055);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .map-link {
+    display: inline-flex;
+    margin-top: 7px;
+    padding: 9px 12px;
+    border: 1px solid rgba(247, 213, 107, .26);
+    border-radius: 14px;
+    color: #fff0a9;
+    background: rgba(247, 213, 107, .08);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .status-pill.active,
+  .status-pill.temporary,
+  .status-pill.danger {
+    border: 1px solid rgba(255, 91, 110, .32);
+    color: #ffd0d6;
+    background: rgba(255, 91, 110, .14);
+  }
+
+  .status-pill.released,
+  .status-pill.expired {
+    border: 1px solid rgba(113, 121, 137, .3);
+    color: #d5d9e2;
+    background: rgba(113, 121, 137, .12);
+  }
+
+  .status-pill.log {
+    border: 1px solid rgba(40, 229, 155, .28);
+    color: #9fffd5;
+    background: rgba(40, 229, 155, .1);
+  }
+
+  .method-pill {
+    margin: 0 8px 0 0;
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: #fff;
+    background: rgba(255, 255, 255, .09);
+  }
+
+  .request-cell { min-width: 210px; }
+  .request-cell > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rule-pill {
+    margin-top: 0;
+    border: 1px solid rgba(255, 91, 110, .3);
+    color: #ffbec7;
+    background: rgba(255, 91, 110, .12);
+  }
+
+  .ua-cell {
+    max-width: 320px;
+    color: var(--bb-soft);
+    line-height: 1.55;
+    word-break: break-word;
+  }
+
+  .action-cell { min-width: 156px; }
+  .right { text-align: right !important; }
+
+  .action-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    min-height: 38px;
+    border-radius: 13px;
+    font-size: 13px;
+  }
+
+  .icon-btn.danger {
+    border-color: rgba(255, 91, 110, .38);
+    background: rgba(255, 91, 110, .16);
+    color: #ffd3d8;
+  }
+
+  .icon-btn:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+    transform: none;
+  }
+
+  .state-note {
+    display: block;
+    color: var(--bb-muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .empty-state {
+    padding: 54px 20px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 70px;
+    height: 70px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    border: 1px solid var(--bb-line);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, .06);
+    font-size: 34px;
+  }
+
+  .empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+  }
+
+  .empty-state p {
+    margin: 0;
+    color: var(--bb-muted);
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 0;
+  }
+
+  .pager strong {
+    padding: 10px 14px;
+    border: 1px solid var(--bb-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .05);
+    color: #fff3b0;
+  }
+
+  .pager .btn:last-child { justify-self: end; }
+
+  @media (max-width: 1180px) {
+    .hero-card {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .security-shell {
+      padding: 14px;
+    }
+
+    .hero-card,
+    .filter-panel,
+    .data-panel {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .metric-grid,
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .panel-head,
+    .table-head {
+      flex-direction: column;
+    }
+
+    .legend {
+      justify-content: flex-start;
+    }
+
+    .hero-actions,
+    .filter-actions {
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  /* ===== Compact Production table sizing / User-Agent redesign ===== */
+  .bb-shell {
+    font-size: 13px;
+  }
+
+  .section-head h2 {
+    font-size: 20px;
+  }
+
+  .section-head p,
+  .legend {
+    font-size: 12px;
+  }
+
+  .table-scroll {
+    overflow-x: visible;
+    overflow-y: visible;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(8, 11, 18, .52);
+  }
+
+  .security-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgba(6, 8, 12, .38);
+  }
+
+  /* รวมแล้ว 100% เพื่อไม่ให้เกิด horizontal scrollbar บน Desktop */
+  .security-table .col-time { width: 9.5%; }
+  .security-table .col-ip { width: 18%; }
+  .security-table .col-geo { width: 18%; }
+  .security-table .col-status { width: 10.5%; }
+  .security-table .col-request { width: 14%; }
+  .security-table .col-rule { width: 8.5%; }
+  .security-table .col-ua { width: 13.5%; }
+  .security-table .col-action { width: 8%; }
+
+  .security-table th,
+  .security-table td {
+    padding: 13px 12px;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .security-table th {
+    font-size: 11px;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+  }
+
+  .security-table strong {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .security-table small {
+    margin-top: 5px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .time-cell,
+  .geo-cell,
+  .request-cell,
+  .action-cell {
+    min-width: 0 !important;
+  }
+
+  .hit-pill,
+  .method-pill,
+  .rule-pill,
+  .status-pill,
+  .geo-status,
+  .tag-row span {
+    margin-top: 7px;
+    padding: 5px 8px;
+    font-size: 10.5px;
+    line-height: 1;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 8px 18px rgba(0,0,0,.14);
+  }
+
+  .ip-cell code {
+    max-width: 100%;
+    padding: 6px 9px;
+    border-radius: 11px;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .ip-main {
+    gap: 6px;
+  }
+
+  .mini-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+  }
+
+  .tag-row {
+    gap: 5px;
+    margin: 7px 0;
+  }
+
+  .map-link {
+    margin-top: 5px;
+    padding: 7px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .method-pill {
+    margin: 0 6px 0 0;
+  }
+
+  .request-cell > div {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .request-cell strong {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .ua-cell {
+    max-width: none;
+    overflow: hidden;
+    color: var(--bb-soft);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .ua-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 15px;
+    background:
+      radial-gradient(circle at 0 0, rgba(250, 204, 21, .07), transparent 38%),
+      rgba(255,255,255,.045);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  .ua-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .ua-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 21px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .01em;
+    white-space: nowrap;
+  }
+
+  .ua-badge.success {
+    font-size: 9.5px;
+    font-weight: 900;
+  }
+
+  .ua-card .ua-text,
+  .ua-card code,
+  .ua-card pre,
+  .ua-card p {
+    max-width: 100%;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .ua-card .ua-text,
+  .ua-card pre {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden !important;
+  }
+
+  .ref-box em {
+    max-width: 100%;
+    color: #94a3b8;
+    font-style: normal;
+    font-size: 10.5px;
+    line-height: 1.25;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    word-break: break-word;
+  }
+
+  .action-stack {
+    gap: 7px;
+  }
+
+  .icon-btn {
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .state-note {
+    font-size: 10.5px;
+    line-height: 1.25;
+  }
+
+  @media (max-width: 1400px) {
+    .security-table .col-time { width: 9%; }
+    .security-table .col-ip { width: 17%; }
+    .security-table .col-geo { width: 17%; }
+    .security-table .col-status { width: 10%; }
+    .security-table .col-request { width: 14%; }
+    .security-table .col-rule { width: 8%; }
+    .security-table .col-ua { width: 15%; }
+    .security-table .col-action { width: 10%; }
+
+    .security-table th,
+    .security-table td {
+      padding: 12px 10px;
+    }
+
+    .ip-cell code,
+    .security-table strong {
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 1180px) {
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    .security-table {
+      min-width: 1080px;
+    }
+  }
+
+
+  /* ===== Mobile SaaS card view ===== */
+  .mobile-log-list {
+    display: none;
+  }
+
+  .mini-copy {
+    min-height: 24px;
+    padding: 0 9px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 999px;
+    color: #fff4ba;
+    background: rgba(255,255,255,.06);
+    font-size: 10px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .ua-badge.danger {
+    border: 1px solid rgba(255,91,110,.30);
+    color: #ffd0d6;
+    background: rgba(255,91,110,.13);
+  }
+
+  .ua-badge.success {
+    border: 1px solid rgba(40,229,155,.25);
+    color: #baffdf;
+    background: rgba(40,229,155,.10);
+  }
+
+  .ua-badge.muted {
+    border: 1px solid rgba(148,163,184,.22);
+    color: #d7dee9;
+    background: rgba(148,163,184,.10);
+  }
+
+  .ua-details summary {
+    cursor: pointer;
+    color: #e7ebf3;
+    font-size: 11px;
+    line-height: 1.45;
+    list-style: none;
+  }
+
+  .ua-details summary::-webkit-details-marker { display: none; }
+
+  /* .ua-details summary::after {
+    content: "ดูเต็ม";
+    display: inline-flex;
+    margin-left: 7px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: #fff0a9;
+    background: rgba(247,213,107,.13);
+    font-size: 9px;
+    font-weight: 950;
+    vertical-align: middle;
+  } */
+
+  /* .ua-details[open] summary::after { content: "ย่อ"; } */
+
+  .ua-details pre {
+    margin: 8px 0 0;
+    padding: 9px;
+    border: 1px dashed rgba(255,255,255,.10);
+    border-radius: 12px;
+    color: #dbe2ee;
+    background: rgba(0,0,0,.18);
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .ref-box {
+    margin-top: 9px;
+    padding: 8px;
+    border: 1px dashed rgba(255,255,255,.10);
+    border-radius: 12px;
+    background: rgba(0,0,0,.14);
+  }
+
+  .ref-box span {
+    display: inline-flex;
+    margin-bottom: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: #fff0a9;
+    background: rgba(247,213,107,.12);
+    font-size: 9px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 820px) {
+    .security-shell {
+      padding: 10px;
+      background:
+        radial-gradient(circle at 18% -8%, rgba(247, 213, 107, .18), transparent 32%),
+        radial-gradient(circle at 95% 2%, rgba(104, 167, 255, .14), transparent 30%),
+        linear-gradient(180deg, #090a0f 0%, #05070b 100%);
+    }
+
+    .hero-card {
+      padding: 16px;
+      gap: 16px;
+      border-radius: 22px;
+    }
+
+    .hero-kicker {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .hero-card h1 {
+      margin: 14px 0 8px;
+      font-size: 30px;
+      letter-spacing: -.035em;
+    }
+
+    .hero-card p {
+      font-size: 12.5px;
+      line-height: 1.65;
+    }
+
+    .hero-actions,
+    .filter-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .hero-actions .btn:first-child,
+    .filter-actions .btn:first-child {
+      grid-column: 1 / -1;
+    }
+
+    .btn,
+    .icon-btn {
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: 13px;
+      font-size: 12px;
+    }
+
+    .metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .metric-card {
+      padding: 13px;
+      border-radius: 17px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+    }
+
+    .metric-card strong {
+      margin: 7px 0 3px;
+      font-size: 25px;
+    }
+
+    .metric-card small {
+      display: block;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .filter-panel,
+    .data-panel {
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 22px;
+    }
+
+    .panel-head {
+      margin-bottom: 13px;
+      gap: 9px;
+    }
+
+    .panel-head h2 {
+      font-size: 17px;
+    }
+
+    .panel-head p,
+    .legend {
+      font-size: 11.5px;
+    }
+
+    .panel-chip {
+      padding: 7px 10px;
+      font-size: 11px;
+    }
+
+    .filter-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .field span {
+      font-size: 11.5px;
+    }
+
+    .field input,
+    .field select {
+      min-height: 42px;
+      border-radius: 13px;
+      font-size: 13px;
+    }
+
+    .legend {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .table-scroll {
+      display: none;
+    }
+
+    .mobile-log-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mobile-log-card {
+      position: relative;
+      overflow: hidden;
+      padding: 13px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 0 0, rgba(247,213,107,.08), transparent 40%),
+        linear-gradient(180deg, rgba(15,18,26,.96), rgba(8,10,15,.96));
+      box-shadow: 0 18px 48px rgba(0,0,0,.22);
+    }
+
+    .mobile-log-card.is-blocked {
+      border-color: rgba(255,91,110,.18);
+      background:
+        radial-gradient(circle at 0 0, rgba(255,91,110,.16), transparent 44%),
+        linear-gradient(180deg, rgba(25,16,24,.96), rgba(8,10,15,.96));
+    }
+
+    .mobile-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .mobile-ip-wrap {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .mobile-label,
+    .mobile-section-title,
+    .mobile-meta-box span {
+      display: block;
+      margin-bottom: 6px;
+      color: #9ba3b4;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .mobile-ip-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .mobile-ip-line code {
+      max-width: 100%;
+      padding: 7px 10px;
+      border: 1px solid rgba(247,213,107,.22);
+      border-radius: 13px;
+      color: #ffe99a;
+      background: rgba(247,213,107,.09);
+      font-size: 14px;
+      font-weight: 950;
+      word-break: break-all;
+    }
+
+    .mobile-ip-wrap small,
+    .mobile-section small,
+    .mobile-meta-box em {
+      display: block;
+      margin-top: 6px;
+      color: #9ba3b4;
+      font-size: 11px;
+      font-style: normal;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .mobile-card-top .status-pill {
+      flex: 0 0 auto;
+      margin-top: 0;
+      white-space: nowrap;
+    }
+
+    .mobile-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 11px;
+    }
+
+    .mobile-meta-box {
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 15px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .mobile-meta-box strong {
+      display: block;
+      color: #fff;
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .mobile-section {
+      margin-top: 11px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 17px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .mobile-section.compact {
+      background: rgba(247,213,107,.045);
+    }
+
+    .mobile-request-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .mobile-request-line strong {
+      min-width: 0;
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .mobile-geo-head {
+      display: grid;
+      gap: 7px;
+    }
+
+    .mobile-geo-head strong {
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .mobile-ua-card {
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .mobile-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .mobile-actions .icon-btn.danger,
+    .mobile-actions .state-note {
+      grid-column: 1 / -1;
+    }
+
+    .mobile-actions .state-note {
+      display: grid;
+      place-items: center;
+      min-height: 38px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 13px;
+      background: rgba(255,255,255,.04);
+      text-align: center;
+    }
+
+    .mobile-empty {
+      padding: 34px 16px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      background: rgba(255,255,255,.035);
+      text-align: center;
+    }
+
+    .mobile-empty h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+    }
+
+    .mobile-empty p {
+      margin: 0;
+      color: #9ba3b4;
+      font-size: 12px;
+    }
+
+    .pager {
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .pager .btn,
+    .pager .btn:last-child,
+    .pager strong {
+      width: 100%;
+      justify-self: stretch;
+      text-align: center;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .metric-grid,
+    .mobile-meta-grid,
+    .mobile-actions,
+    .hero-actions,
+    .filter-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-actions .icon-btn.danger,
+    .mobile-actions .state-note {
+      grid-column: auto;
+    }
+
+    .hero-card h1 {
+      font-size: 26px;
+    }
+  }
+
+</style>

@@ -1,0 +1,3466 @@
+<div class="orders-enterprise order-new-enterprise">
+  <section class="oe-hero" aria-label="Orders hero">
+    <div class="oe-hero-inner">
+      <div>
+        <div class="oe-eyebrow"><i></i> SERVICE ORDER CENTER</div>
+        <h1>บริการ Social</h1>
+        <p>ยกระดับโปรไฟล์และคอนเทนต์ของคุณด้วยบริการเพิ่มผู้ติดตาม ไลก์ วิว คอมเมนต์ และ Engagement ครบวงจร รองรับหลายแพลตฟอร์ม สั่งซื้อง่าย เห็นสถานะชัดเจน พร้อมเริ่มเติบโตได้ในไม่กี่คลิก</p>
+      </div>
+      <div class="oe-metrics" aria-label="Order summary">
+        <div class="oe-metric"><small>แพลตฟอร์ม</small><b id="oePlatformCount">—</b></div>
+        <div class="oe-metric"><small>หมวดหมู่</small><b id="oeGroupCount">—</b></div>
+        <div class="oe-metric"><small>สถานะระบบ</small><b>Online</b></div>
+      </div>
+    </div>
+  </section>
+
+<!-- ===== แท็บด้านบน ===== -->
+<div class="tabs">
+  <button type="button" class="tab active" data-tab="order">
+    สั่งซื้อบริการ
+  </button>
+  <button type="button" class="tab" data-tab="history">
+    ประวัติคำสั่งซื้อ
+  </button>
+</div>
+
+<!-- ===== TAB 1: สั่งซื้อบริการ (ของเดิมทั้งหมด) ===== -->
+<section id="tab-order" class="tabpane show">
+  <!-- เลือกแพลตฟอร์ม -->
+  <section class="card">
+    <h3 class="title">แพลตฟอร์ม</h3>
+    <div id="platformGrid" class="grid"></div>
+  </section>
+
+  <section class="card soft">
+    <div class="row">
+      <!-- ครอบ input ด้วย wrapper เพื่อวาง dropdown ทับ -->
+      <div class="search-all-wrap">
+        <input id="searchAll" class="input" placeholder="ค้นหาได้ทั้ง ID / ชื่อบริการ">
+        <!-- กล่องผลลัพธ์ค้นหา -->
+        <div id="searchSuggest" class="search-suggest" hidden></div>
+      </div>
+
+      <!-- ชิปกรอง -->
+      <div id="chipBar" class="chips">
+        <button type="button" class="chip active" data-sub="">ทั้งหมด</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ตัวเลือกหมวดหมู่ (กลุ่มบริการ) + บริการย่อย -->
+  <section class="card">
+    <div class="sel-grid">
+      <!-- กลุ่มบริการ -->
+      <div class="sel">
+        <label>หมวดหมู่</label>
+        <div class="select" id="groupSel">
+          <button class="select-btn" id="groupBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="groupText">—</span><span class="chev">▾</span>
+          </button>
+          <div class="select-menu" role="listbox">
+            <div class="select-search">
+              <input id="groupSearch" placeholder="ค้นหากลุ่มบริการ…">
+            </div>
+            <div id="groupList" class="list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- บริการย่อย -->
+      <div class="sel">
+        <label>บริการ</label>
+        <div class="select wide" id="childSel">
+          <button class="select-btn" id="childBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="childText">—</span><span class="chev">▾</span>
+          </button>
+          <div class="select-menu" role="listbox">
+            <div class="select-search">
+              <input id="childSearch" placeholder="พิมพ์หา ID หรือชื่อบริการ…">
+            </div>
+            <div id="childList" class="list svc"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== กล่อง 2 คอลัมน์: ฟอร์มซ้าย + อิโมจิขวา ===== -->
+  <section class="detail-grid">
+    <!-- ซ้าย: รายละเอียด + ฟอร์มสั่งซื้อ (ของเดิม) -->
+    <section class="card" id="detailBox" style="display:none">
+      <div id="hdr" class="hdr"></div>
+      <div id="meta" class="meta"></div>
+
+      <details class="mt" open>
+        <summary>รายละเอียดบริการ</summary>
+        <div id="desc" class="desc mt">—</div>
+      </details>
+
+      <form id="orderForm" class="form" onsubmit="return submitOrder(event)">
+        <input type="hidden" id="groupId" name="groupId">
+        <input type="hidden" id="providerServiceId" name="providerServiceId">
+
+        <label>ลิงก์/เป้าหมาย
+          <input id="link" name="link" required placeholder="https://…">
+        </label>
+
+        <!-- ==== ช่องคอมเมนต์สำหรับบริการที่ต้องใช้ Comments ==== -->
+        <div id="commentBox" class="form-group" style="display:none;">
+          <label class="form-label">คอมเมนต์ (1 บรรทัด = 1 คอมเมนต์)</label>
+          <textarea id="comments" name="comments" class="textarea"
+            placeholder="พิมพ์คอมเมนต์ที่ต้องการ..."></textarea>
+          <small class="muted">* บริการประเภทกำหนดคอมเมนต์เองจำเป็นต้องกรอก</small>
+        </div>
+
+        <!-- ==== ช่อง Keyword สำหรับ SEO ==== -->
+        <div id="keywordBox" class="form-group" style="display:none;">
+          <label class="form-label">Keyword</label>
+          <input type="text" id="keywords" name="keywords" class="input"
+            placeholder="เช่น best product, buy now ...">
+          <small class="muted">* บริการ SEO ต้องกรอก Keyword</small>
+        </div>
+
+        <div class="row2">
+          <label class="with-hint full-row">ปริมาณ
+            <input id="qty" name="quantity" type="number" required>
+            <div id="qtyHint" class="hintline">
+              <span class="min">ขั้นต่ำ: <b id="minVal">—</b></span>
+              <span class="dot">•</span>
+              <span class="max">สูงสุด: <b id="maxVal">—</b></span>
+            </div>
+          </label>
+
+          <label class="full-row">
+            ค่าใช้จ่ายโดยประมาณ
+            <div class="input-group">
+              <span class="input-prefix">฿</span>
+              <input id="est" class="input right" type="text" readonly value="0">
+            </div>
+            <small class="muted" id="rateNote" style="display:none"></small>
+          </label>
+        </div>
+
+        <div class="row2 toggles">
+          <label class="toggle">
+            <input id="drip" type="checkbox">
+            <span class="lbl">📦 ทยอยดำเนินการ (Dripfeed)</span>
+            <small class="hint">ระบบจะค่อย ๆ ทำงานเป็นรอบ เพื่อความปลอดภัย</small>
+          </label>
+          <label class="toggle">
+            <input id="sys" type="checkbox">
+            <span class="lbl">⚙️ ตั้งออเดอร์ตามระบบ</span>
+            <small class="hint">ให้ระบบตรวจสอบและสั่งซ้ำให้อัตโนมัติ</small>
+          </label>
+        </div>
+
+        <button class="btn primary block">ยืนยันคำสั่งซื้อ</button>
+      </form>
+
+      <div id="resp" class="mt"></div>
+    </section>
+
+    <!-- ขวา: อัปเดตวันนี้ + ความหมายอิโมจิ -->
+    <aside class="right-rail">
+      <div class="right-rail-stack">
+      <!-- อัปเดตบริการวันนี้ -->
+      <section class="card updates-card updates-panel" aria-label="อัปเดตบริการ (วันนี้)">
+        <div class="legend-head">
+          <div class="legend-title">🛎️ อัปเดตบริการ (วันนี้)</div>
+          <small class="legend-sub muted">ข้อมูลอัปเดตบริการรายวัน</small>
+        </div>
+        <div id="updatesList" class="updates-list">
+          <div class="muted">กำลังโหลด…</div>
+        </div>
+      </section>
+
+      <!-- ขวา: ความหมายอิโมจิ -->
+      <section class="card updates-card emoji-panel" aria-label="ความหมาย อิโมจิ ในชื่อบริการ">
+        <div class="legend-head">
+          <div class="legend-title">🧩 ความหมาย อิโมจิ ในชื่อบริการ</div>
+          <small class="legend-sub muted">สิ่งสำคัญที่ต้องรู้เกี่ยวกับอิโมจิต่างๆ</small>
+        </div>
+
+        <div class="legend-list">
+
+          <div class="legend-item">
+            <div class="legend-emoji">⭐ | 🔥</div>
+            <div class="legend-content">
+              <div class="legend-label">บริการที่ดี, ขายดี | ยอดฮิต พิเศษ</div>
+            </div>
+          </div>
+
+          <div class="legend-item"><div class="legend-emoji">🍓</div><div class="legend-content"><div class="legend-label">ราคาถูก ลดราคา โปรโมชั่น</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">💎</div><div class="legend-content"><div class="legend-label">คุณภาพสูง ราคาสูง</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">👍🏻</div><div class="legend-content"><div class="legend-label">บริการแนะนำ</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">🐌</div><div class="legend-content"><div class="legend-label">เริ่มทำงานช้า / จัดส่งช้า</div></div></div>
+          <!-- <div class="legend-item"><div class="legend-emoji">♻️, 𝐑𝐁</div><div class="legend-content"><div class="legend-label">มีปุ่มเติมคืนตามระยะเวลา แสดงผลทุกๆ 24 ชั่วโมง</div></div></div> -->
+          <div class="legend-item"><div class="legend-emoji">💧</div><div class="legend-content"><div class="legend-label">ทยอยจัดส่ง</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">🆕</div><div class="legend-content"><div class="legend-label">บริการใหม่ อัพเดทล่าสุด</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">🚫, ❌, 𝐍𝐑</div><div class="legend-content"><div class="legend-label">ไม่มีรับประกัน ไม่เติมคืน แม้ว่ายอดจะลดหรือไม่ครบ</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">🛡️</div><div class="legend-content"><div class="legend-label">บริการมีรับประกันจากเซิพเวอร์</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">𝐒𝐭𝐚𝐛𝐥𝐞, 𝐎𝐫𝐠𝐚𝐧𝐢𝐜</div><div class="legend-content"><div class="legend-label">การจัดส่งที่มีเสถียรภาพ เป็นธรรมชาติ</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">𝐍𝐨𝐧 𝐃𝐫𝐨𝐩</div><div class="legend-content"><div class="legend-label">ไม่ลดลง แต่ก็มีโอกาสลดลงได้บ้าง</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">⚡️, 🚀</div><div class="legend-content"><div class="legend-label">ความเร็วในการจัดส่ง ยิ่งเยอะยิ่งไว</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">⛔️</div><div class="legend-content"><div class="legend-label">มีปุ่มยกเลิก</div></div></div>
+          <div class="legend-item">
+            <div class="legend-emoji">𝐑𝟑𝟎, 𝐑∞, 𝐆∞</div>
+            <div class="legend-content">
+              <div class="legend-label">R = รับประกันจากบริการ, ตัวเลขคือจำนวนวัน เช่น R30 และ ∞ = ตลอดอายุบริการ</div>
+            </div>
+          </div>
+          <div class="legend-item"><div class="legend-emoji">~1H , 0-24H</div><div class="legend-content"><div class="legend-label">เริ่มประมาณ 1 ชั่วโมง / เริ่มในช่วง 0–24 ชั่วโมง</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">~1K/D</div><div class="legend-content"><div class="legend-label">ความเร็วเฉลี่ย ~1,000 ต่อวัน</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">Mix/Mixed, Bot/Clone, Real</div><div class="legend-content"><div class="legend-label">Mixed=ผสม, Bot/Clone=บอท/เลียนแบบ, Real=บัญชีจริง</div></div></div>
+          <div class="legend-item"><div class="legend-emoji">HQ, MQ, LQ</div><div class="legend-content"><div class="legend-label">คุณภาพ: HQ สูง / MQ กลาง / LQ ต่ำ</div></div></div>
+
+        </div>
+      </section>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ===== TAB 2: ประวัติคำสั่งซื้อ ===== -->
+  <section id="tab-history" class="tabpane">
+    <!-- ไปที่หน้า /my/orders แทน  -->
+  </section>
+</section>
+
+
+</div>
+<script>
+// ✅ local wrapper: ใช้ชื่อ notify ในไฟล์นี้โดยไม่พึ่ง window.notify
+const notify = (opts = {}) => {
+  const { variant='info', title='ข้อความ', text='' } = opts || {};
+  // ถ้ามี window.notify ที่เป็นฟังก์ชัน ให้เรียกอันนั้น
+  if (typeof window.notify === 'function') {
+    return window.notify({ variant, title, text });
+  }
+  // ถ้ามี showMsg (ของ dialog) ก็ใช้ได้
+  if (typeof window.showMsg === 'function') {
+    return window.showMsg({ variant, title, text });
+  }
+  // fallback สุดท้าย
+  alert((title ? title + '\n' : '') + (text || ''));
+};
+</script>
+
+<script>
+// =========================
+// ⚡ CONFIG + GLOBALS
+// =========================
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 ชม.
+const CACHE_REVALIDATE_AFTER = 30 * 60 * 1000; // อย่า SWR ทุก refresh ลด network origin
+let CACHE_VERSION = window.__CACHE_VERSION__ || "v1";
+
+const MEMORY_CACHE = new Map();
+const PENDING_FETCH = new Map();
+const MAX_MEMORY_ITEMS = 150;
+
+// =========================
+// 🔑 LOAD CACHE VERSION
+// =========================
+async function initCacheVersion() {
+  try {
+    const res = await fetch('/api/cache-version');
+    const json = await res.json();
+    if (json?.version) {
+      CACHE_VERSION = String(json.version);
+      // console.log("🔑 CACHE_VERSION:", CACHE_VERSION);
+    }
+  } catch (e) {
+    // console.warn("cache version fallback");
+  }
+}
+
+// =========================
+// 🧠 KEY (07:03 + VERSION)
+// =========================
+function getServiceCacheKey(url) {
+  const now = new Date();
+
+  if (
+    now.getHours() < 7 ||
+    (now.getHours() === 7 && now.getMinutes() < 3)
+  ) {
+    now.setDate(now.getDate() - 1);
+  }
+
+  const dateKey = now.toISOString().slice(0, 10);
+
+  // 🔥 สำคัญ: ใส่ version
+  return `${url}:v=${CACHE_VERSION}:${dateKey}`;
+}
+
+// =========================
+// ⚡ MEMORY CACHE (LRU)
+// =========================
+function setMemoryCache(key, value) {
+  if (MEMORY_CACHE.size >= MAX_MEMORY_ITEMS) {
+    const firstKey = MEMORY_CACHE.keys().next().value;
+    MEMORY_CACHE.delete(firstKey);
+  }
+  MEMORY_CACHE.set(key, value);
+}
+
+// =========================
+// 📦 IndexedDB (L2)
+// =========================
+const DB_NAME = "rt_cache_db";
+const STORE = "api_cache";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, "readonly");
+    const store = tx.objectStore(STORE);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function idbSet(key, value) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    store.put(value, key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+}
+
+// =========================
+// ♻️ SWR REVALIDATE
+// =========================
+function revalidate(url, key) {
+  if (PENDING_FETCH.has(key)) return;
+
+  setTimeout(async () => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setMemoryCache(key, data);
+
+      const payload = { data, ts: Date.now() };
+      const str = JSON.stringify(payload);
+
+      if (str.length > 400_000) {
+        await idbSet(key, payload);
+      } else {
+        localStorage.setItem(key, str);
+      }
+
+      // console.log("♻️ revalidated:", key);
+    } catch {}
+  }, 1000);
+}
+
+// =========================
+// 🧹 CLEANUP
+// =========================
+function cleanupLocalStorage() {
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.includes(':v='));
+    const removeCount = Math.floor(keys.length / 2);
+
+    for (let i = 0; i < removeCount; i++) {
+      localStorage.removeItem(keys[i]);
+    }
+
+    // console.warn("🧹 cleaned localStorage:", removeCount);
+  } catch {}
+}
+
+// =========================
+// 🚀 FETCH CACHED (FULL SWR)
+// =========================
+async function fetchCached(url) {
+  const key = getServiceCacheKey(url);
+
+  // ⚡ MEMORY
+  if (MEMORY_CACHE.has(key)) {
+    return MEMORY_CACHE.get(key);
+  }
+
+  // 🟣 IDB
+  try {
+    const idbVal = await idbGet(key);
+    if (idbVal && idbVal.data && Date.now() - idbVal.ts < CACHE_TTL) {
+      setMemoryCache(key, idbVal.data);
+      if (Date.now() - idbVal.ts > CACHE_REVALIDATE_AFTER) revalidate(url, key);
+      return idbVal.data;
+    }
+  } catch {}
+
+  // 🟢 localStorage
+  const raw = localStorage.getItem(key);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.data && Date.now() - parsed.ts < CACHE_TTL) {
+        setMemoryCache(key, parsed.data);
+        if (Date.now() - parsed.ts > CACHE_REVALIDATE_AFTER) revalidate(url, key);
+        return parsed.data;
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }
+
+  // 🚫 dedupe
+  if (PENDING_FETCH.has(key)) {
+    return PENDING_FETCH.get(key);
+  }
+
+  // 🔴 FETCH
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      setMemoryCache(key, data);
+
+      const payload = { data, ts: Date.now() };
+      const str = JSON.stringify(payload);
+
+      try {
+        if (str.length > 400_000) {
+          await idbSet(key, payload);
+        } else {
+          localStorage.setItem(key, str);
+        }
+      } catch {
+        cleanupLocalStorage();
+        try { await idbSet(key, payload); } catch {}
+      }
+
+      return data;
+    } finally {
+      PENDING_FETCH.delete(key);
+    }
+  })();
+
+  PENDING_FETCH.set(key, fetchPromise);
+  return fetchPromise;
+}
+
+// =========================
+// 🚀 INIT (สำคัญมาก)
+// =========================
+(async () => {
+  await initCacheVersion(); // 🔥 โหลด version ก่อนใช้ cache
+})();
+</script>
+
+<script>
+// === หน่วยคำนวณตาม DB (เลิกยึด 1/1000 ตายตัว) ===
+let currentUnitStep = 1000; // หน่วยที่ใช้คำนวณ ณ ตอนนี้
+
+function isPerPiece(obj = {}) {
+  const type = String(obj.type || '').toLowerCase();
+  const step = Number(obj.step ?? NaN);
+  const min  = Number(obj.min  ?? NaN);
+  const max  = Number(obj.max  ?? NaN);
+  // “แบบชิ้นเดียว” หรือแพ็กเกจ -> ต่อ 1 ชิ้น
+  return (type === 'package') || (step === 1) || (min === 1 && max === 1);
+}
+function pickUnitStepFromSvc(svc = {}) {
+  if (isPerPiece(svc)) return 1;
+  if (Number.isFinite(+svc.step) && +svc.step > 0) return +svc.step;
+  return 1000; // fallback เดิม
+}
+
+function unitLabel(u){ return (u <= 1 ? '1' : u.toLocaleString()); }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const filtersBar  = document.getElementById('filtersBar');
+  const searchWrap  = document.querySelector('.search-all-wrap');
+  const searchInput = document.getElementById('searchAll');
+  const chipBar = document.getElementById('chipBar');
+
+  if (chipBar) {
+    chipBar.addEventListener('click', (e) => {
+      window.RTSMM_ORDER_PAGE?.onChip?.(e);
+    });
+  }
+
+  // ถ้าไม่มีอะไรเลยก็ไม่ต้องทำ
+  if (!filtersBar && !searchWrap && !searchInput) return;
+
+  function resetChipToAll() {
+    if (window.RTSMM_ORDER_PAGE?.resetChipToAll) {
+      window.RTSMM_ORDER_PAGE.resetChipToAll();
+    }
+  }
+
+  // คลิกที่โซน search (ไม่รวมชิป) -> reset เป็น "ทั้งหมด"
+  if (filtersBar) {
+    filtersBar.addEventListener('click', (e) => {
+      const inSearchArea =
+        e.target.closest('.search-all-wrap') ||
+        e.target.id === 'searchAll';
+
+      if (!inSearchArea) return;
+      resetChipToAll();
+    });
+  }
+
+  // โฟกัสที่ input ค้นหา -> ก็ reset ด้วย (กันคลิกจาก icon ฯลฯ)
+  if (searchInput) {
+    searchInput.addEventListener('focus', resetChipToAll);
+  }
+});
+</script>
+
+<script>
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+
+  const tab = btn.dataset.tab;
+
+  // ===== กรณี TAB 2 → Redirect ไป /my/orders =====
+  if (tab === 'history') {
+    window.location.href = '/my/orders';
+    return;
+  }
+
+  // ===== เปลี่ยนแท็บปกติ (TAB 1) =====
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.remove('active')
+  );
+  btn.classList.add('active');
+
+  document.querySelectorAll('.tabpane').forEach(p =>
+    p.classList.remove('show')
+  );
+  document.getElementById('tab-' + tab).classList.add('show');
+});
+</script>
+
+<script>
+// === ไอคอนสถานะ (ใช้ซ้ำ) ===
+const __STATUS_ICONS__ = {
+  processing: '/static/assets/status/processing.png',
+  inprogress: '/static/assets/status/inprogress.png',
+  completed:  '/static/assets/status/completed.png',
+  partial:    '/static/assets/status/partial.png',
+  canceled:   '/static/assets/status/canceled.png',
+  canceling:  '/static/assets/status/processing.png',
+  default:    '/static/assets/status/processing.png'
+};
+
+function ensureStatusIcon(pill, status){
+  if (!pill) return;
+  const url = __STATUS_ICONS__[String(status||'').toLowerCase()] || __STATUS_ICONS__.default;
+
+  // หา/สร้างตัวไอคอน
+  let ico = pill.querySelector(':scope .label .st-ico, :scope > .st-ico');
+  if (!ico) {
+    ico = document.createElement('span');
+    ico.className = 'st-ico';
+    // ใส่หน้า label ถ้ามี ไม่งั้นใส่ต้น pill
+    const lbl = pill.querySelector(':scope .label');
+    (lbl || pill).prepend(ico);
+  }
+  ico.style.setProperty('--st-ico', `url("${url}")`);
+  pill.classList.add('has-ico'); // กัน ::before ซ้อน
+}
+</script>
+
+<script>
+// ⬇️ helper: อ่านเหตุผลจาก response (รองรับ JSON หรือ text เผื่อ 502/HTML)
+async function extractErrorInfo(res) {
+  let bodyText = '';
+  const ct = res.headers.get('content-type') || '';
+  try {
+    if (ct.includes('application/json')) {
+      const j = await res.json();
+      // คืนทั้ง object และข้อความสรุป
+      const msg =
+        j?.error ||
+        j?.message ||
+        (typeof j?.detail === 'string' ? j.detail :
+          (j?.detail?.message || j?.detail?.error)) ||
+        '';
+      return { data:j, message: String(msg || '').trim() };
+    }
+    // ไม่ใช่ JSON -> เอา text
+    bodyText = (await res.text() || '').trim();
+  } catch {
+    // ถ้า parse พัง ลองอ่านเป็น text อีกที
+    try { bodyText = (await res.text() || '').trim(); } catch {}
+  }
+  return { data:null, message: bodyText };
+}
+
+// ⬇️ แปลงรหัสสถานะให้เป็นเหตุผลที่อ่านง่าย
+function explainHttpStatus(status, fallbackMsg='') {
+  const clean = (fallbackMsg || '').replace(/\s+/g,' ').trim();
+  switch (status) {
+    case 400: return clean || 'คำขอไม่ถูกต้อง (ข้อมูลไม่ครบ/รูปแบบไม่ถูกต้อง)';
+    case 401: return clean || 'ยังไม่ได้เข้าสู่ระบบ หรือสิทธิ์ไม่พอ';
+    case 402: return clean || 'เครดิต/ยอดเงินไม่เพียงพอ';
+    case 403: return clean || 'ไม่มีสิทธิ์ทำรายการนี้';
+    case 404: return clean || 'ไม่พบบริการหรือเส้นทาง /orders';
+    case 409: return clean || 'รายการซ้ำ/ชนเงื่อนไขบางอย่าง';
+    case 422: return clean || 'จำนวนไม่อยู่ในช่วงขั้นต่ำ-สูงสุด หรือข้อมูลไม่ผ่าน validation';
+    case 429: return clean || 'ส่งคำขอบ่อยเกินไป (rate limit)';
+    case 500: return clean || 'ระบบภายในขัดข้อง';
+    case 502: return clean || 'Gateway รับคำตอบจากผู้ให้บริการไม่สำเร็จ (ปลายทางล่ม/timeout/format ผิด)';
+    case 503: return clean || 'ผู้ให้บริการปิดปรับปรุง/โหลดสูง';
+    case 504: return clean || 'ผู้ให้บริการตอบช้าเกินกำหนด (timeout)';
+    default:  return clean || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+  }
+}
+</script>
+
+<script>
+(() => {
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  const br = s => String(s||'').replace(/\r?\n/g,'<br>');
+  const linkify = s => String(s||'').replace(/https?:\/\/[^\s<>]+/g, m => {
+    if (!/^https?:\/\//i.test(m)) return escHtml(m);
+    return `<a href="${escHtml(m)}" target="_blank" rel="noopener noreferrer">${escHtml(m)}</a>`;
+  });
+
+  // ✅ Provider บางเจ้าใส่ \n\n\n หรือ <br><br><br> มาเยอะ ทำให้รายละเอียดบริการเว้นช่องว่างยาวผิดปกติ
+  // normalize ก่อน render: รวมบรรทัดว่างติดกันให้เหลือไม่เกิน 1 บรรทัด และ escape text ก่อน linkify
+  function normalizeDescText(s) {
+    const rows = String(s || '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/&nbsp;/gi, ' ')
+      .split('\n')
+      .map(line => line.replace(/[\t ]+$/g, ''));
+
+    const out = [];
+    for (const line of rows) {
+      const clean = line.trim();
+      if (!clean) {
+        if (out.length && out[out.length - 1] !== '') out.push('');
+        continue;
+      }
+      out.push(clean);
+    }
+
+    return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  function renderDescText(s) {
+    const clean = normalizeDescText(s);
+    return clean ? linkify(br(escHtml(clean))) : '—';
+  }
+
+  function sanitizeDesc(s) {
+    return String(s||'')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+      .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+      .replace(/\son\w+\s*=[^\s>]*/gi, '')
+      .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"')
+      .replace(/href\s*=\s*javascript:[^\s>]*/gi, 'href="#"');
+  }
+  const fmt = n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:4});
+  const debounce = (fn,ms=220)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+
+  let groupsByPlatform = new Map();
+  let platforms=[], groups=[], children=[];
+  let subcats=[];
+  let currentPlatform=null, currentGroup=null, currentChild=null;
+  let currentChipId="";
+  let visibleChipList=[];
+  let rate=0, currency='THB';
+  let effectiveRate=null; // อัตราตามกฎ (ถ้า endpoint มี)
+  let rateSource='base';  // 'base' | 'effective'
+
+  /* ✅ flag สำหรับตรวจว่า service นี้เป็น comment/SEO หรือไม่ */
+  let isCommentService = false;
+  let isSeoService = false;
+  let isPerPieceService = false;
+
+  /* ✅ ช่วงขั้นต่ำ/สูงสุดของ service ปัจจุบัน (ไว้ใช้ validate ตอน submit) */
+  let currentMin = 1;
+  let currentMax = Infinity;
+
+  let allGroupsLoaded = false;
+
+  let searchResults = [];
+  let searchRendered = 0;
+  const SEARCH_CHUNK_SIZE = 30;
+
+  /* ✅ helper นับบรรทัดที่ไม่ว่าง */
+  function countNonEmptyLines(str) {
+    return String(str || '')
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(Boolean).length;
+  }
+
+  /* ✅ sync จำนวนบรรทัด → quantity อัตโนมัติ */
+  function syncAutoQtyFromFields() {
+    const qtyInput = document.getElementById('qty');
+    if (!qtyInput) return;
+    if (!(isCommentService || isSeoService)) return;
+
+    const commentsVal = document.getElementById('comments')?.value || '';
+    const keywordsVal = document.getElementById('keywords')?.value || '';
+
+    let total = 0;
+    if (isCommentService) total += countNonEmptyLines(commentsVal);
+    if (isSeoService)    total += countNonEmptyLines(keywordsVal);
+
+    qtyInput.value = total > 0 ? String(total) : '';
+    updateEstimate();
+  }
+
+  document.addEventListener('click',e=>{
+    const sel=e.target.closest('.select');
+    $$('.select.open').forEach(x=>{
+      if(x!==sel) x.classList.remove('open');
+      x.querySelector('.select-btn')?.setAttribute('aria-expanded','false');
+    });
+  });
+  document.addEventListener('keydown',e=>{
+    if (e.key==='Escape') $$('.select.open').forEach(x=>x.classList.remove('open'));
+  });
+
+  /* --------- Utils --------- */
+  function oid(x){
+    if (!x) return '';
+    if (typeof x === 'string') return x;
+    if (typeof x === 'object'){
+      if (x.$oid) return String(x.$oid);
+      if (x._id)  return oid(x._id);
+    }
+    return String(x);
+  }
+  function groupSubId(g){ return oid(g?.subcategory); }
+
+  /* --------- นิยามชิปภาษาไทย + คีย์เวิร์ด --------- */
+  const CHIP_DEFS = [
+    { id:"",               label:"ทั้งหมด",             kw:[] },
+    { id:"views",          label:"วิว",                 kw:["view","views","watch","play","ชม","วิว"] },
+    { id:"likes",          label:"ไลก์",                kw:["like","likes","heart","react","reactions","ถูกใจ","ไลก์"] },
+    { id:"members",        label:"สมาชิก | ผู้ติดตาม",    kw:["follow","follower","followers","subscriber","subscribers","subs","ติดตาม","ผู้ติดตาม","สมาชิก","members"] },
+    { id:"comments",       label:"คอมเมนต์",            kw:["comment","comments","คอมเมน"] },
+    { id:"shares",         label:"แชร์",                kw:["share","shares","รีโพสต์","repost","retweet","แชร์"] },
+    { id:"traffic",        label:"SEO | Traffic",      kw:["link click","click","traffic","คลิก","ทราฟฟิก"] },
+    { id:"shorts",         label:"Shorts",             kw:["short","shorts"] },
+    { id:"reels",          label:"Reels",              kw:["reel","reels"] },
+    { id:"live",           label:"Live",               kw:["live","สตรีม","ไลฟ์"] },
+    { id:"general",        label:"ทั่วไป",               kw:["general","รวม","รวมบริการ","all-in-one"] },
+  ];
+
+  function groupMatchesChip(group, chip){
+    if (!chip || chip.id==="") return true;
+    if (chip.realId){
+      const gSub = groupSubId(group);
+      if (gSub && gSub === chip.realId) return true;
+    }
+    const name = `${group?.name||''} ${group?.details?.name||''}`.toLowerCase();
+    return chip.kw.some(k => name.includes(k.toLowerCase()));
+  }
+
+  /* ---------- แพลตฟอร์ม & ไอคอน ---------- */
+  const PLATFORM_ICON_URLS = {
+    all:      "/static/assets/platform/all.png",
+    tiktok:   "/static/assets/platform/tiktok.png",
+    facebook: "/static/assets/platform/facebook.png",
+    youtube:  "/static/assets/platform/youtube.png",
+    instagram:"/static/assets/platform/ig.png",
+    threads:  "/static/assets/platform/threads.png",
+    twitter:  "/static/assets/platform/twitter.png",
+    line:     "/static/assets/platform/line.png",
+    telegram: "/static/assets/platform/telegram.png",
+    discord:  "/static/assets/platform/discord.png",
+    twitch:   "/static/assets/platform/twitch.png",
+    spotify:  "/static/assets/platform/spotify.png",
+    kick:     "/static/assets/platform/kick.png",
+    premium:  "/static/assets/platform/premium.png",
+    seo:      "/static/assets/platform/seo.png",
+    traffic:  "/static/assets/platform/traffic.png",
+    thailand: "/static/assets/platform/thailand.png",
+    shopee:   "/static/assets/platform/shopee.png",
+    other:    "/static/assets/platform/other.png"
+  };
+  function pickIconUrl(name=''){
+    const s = name.toLowerCase();
+    if (s.includes('tiktok')) return PLATFORM_ICON_URLS.tiktok;
+    if (s.includes('facebook')) return PLATFORM_ICON_URLS.facebook;
+    if (s.includes('youtube') || s.includes('youtub')) return PLATFORM_ICON_URLS.youtube;
+    if (s.includes('instagram') || s.includes('ig')) return PLATFORM_ICON_URLS.instagram;
+    if (s.includes('thread')) return PLATFORM_ICON_URLS.threads;
+    if (s.includes('twitter') || s==='x' || s.includes(' x ')) return PLATFORM_ICON_URLS.x || PLATFORM_ICON_URLS.twitter;
+    if (s.includes('line')) return PLATFORM_ICON_URLS.line;
+    if (s.includes('telegram')) return PLATFORM_ICON_URLS.telegram;
+    if (s.includes('discord')) return PLATFORM_ICON_URLS.discord;
+    if (s.includes('twitch')) return PLATFORM_ICON_URLS.twitch;
+    if (s.includes('spotify')) return PLATFORM_ICON_URLS.spotify;
+    if (s.includes('kick')) return PLATFORM_ICON_URLS.kick;
+    if (s.includes('พรีเมีย') || s.includes('premium')) return PLATFORM_ICON_URLS.premium;
+    if (s.includes('seo')) return PLATFORM_ICON_URLS.seo;
+    if (s.includes('traffic') || s.includes('เพิ่มคนเข้าเว็บ')) return PLATFORM_ICON_URLS.traffic;
+    if (s.includes('ไทย') || s.includes('thailand')) return PLATFORM_ICON_URLS.thailand;
+    if (s.includes('shopee') || s.includes('ช้อป')) return PLATFORM_ICON_URLS.shopee;
+    if (s.includes('other') || s.includes('อื่นๆ')) return PLATFORM_ICON_URLS.other;
+    return PLATFORM_ICON_URLS.seo;
+  }
+
+  /* ---------- Group Icon ตามกลุ่มบริการ (หมวดหมู่) ---------- */
+  /* รูปเก็บไว้ใน /static/assets/services_icon/ */
+  const GROUP_ICON_MAP = [
+    // อื่นๆ
+    {
+      icon: '/static/assets/services_icon/free.png',   // ตัวอย่างไฟล์ free
+      match: ['[free trial]', 'บริการทดลองฟรี']
+    },
+    {
+      icon: '/static/assets/services_icon/yearpro.png',
+      match: ['โปรโมชั่นประจำปี', 'promotion']
+    },
+    {
+      icon: '/static/assets/services_icon/bilibili.png',
+      match: ['BiliBili']
+    },
+    {
+      icon: '/static/assets/services_icon/canva.png',
+      match: ['canva']
+    },
+    {
+      icon: '/static/assets/services_icon/douyin.png', 
+      match: ['douyin']
+    },
+    // Telegram
+    {
+      icon: '/static/assets/services_icon/telegram.png',
+      match: ['Telegram']
+    },
+    {
+      icon: '/static/assets/services_icon/line.png',
+      match: ['Line']
+    },
+    {
+      icon: '/static/assets/services_icon/chatgpt.png',
+      match: ['chatgpt']
+    },
+    {
+      icon: '/static/assets/services_icon/disney-amazon.png',
+      match: ['Disney+ 🔴 Amazon Prime 🔴 Youtube Premium']
+    },
+    {
+      icon: '/static/assets/services_icon/license-key.png',
+      match: ['✅License Key 🔑']
+    },
+    {
+      icon: '/static/assets/services_icon/camera.png',
+      match: ['✅ดาวน์โหลด ไฟล์ลิขสิทธิ์ 📷']
+    },
+    {
+      icon: '/static/assets/services_icon/zepeto.png',
+      match: ['Zepeto']
+    },
+    {
+      icon: '/static/assets/services_icon/lemon8.png',
+      match: ['Lemon8']
+    },
+    {
+      icon: '/static/assets/services_icon/capcut.png',
+      match: ['CapCut']
+    },
+    {
+      icon: '/static/assets/services_icon/joylada.png',
+      match: ['Joylada']
+    },
+    // Tiktok
+    {
+      icon: '/static/assets/services_icon/Tiktok-ALLTH.png',
+      match: ['TikTok 🎯 Thailand 🇹🇭 Services – รวมบริการประเทศไทย', '🇹🇭 TikTok']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok.png',
+      match: ['TikTok 🎯 All Services', 'TikTok 💔 Not Interested']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-views.png',
+      match: ['TikTok 👁️ Video Views']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-follow.png',
+      match: ['TikTok 👤 Followers']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-warn.png',
+      match: ['คำสั่งซื้อหนาแน่น ✅TikTok']
+    },
+    {
+      icon: '/static/assets/services_icon/br-tiktok.png',
+      match: ['🇧🇷 TikTok']
+    },
+    {
+      icon: '/static/assets/services_icon/us-tiktok.png',
+      match: ['🇺🇸 TikTok']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-likes.png',
+      match: ['TikTok ❤️️ Likes']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-save.png',
+      match: ['TikTok 💾 Saves']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-share.png',
+      match: ['TikTok 🔗 Shares']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-reposts.png',
+      match: ['TikTok 🔃 Reposts']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-comments.png',
+      match: ['TikTok 💬 Comments']
+    },
+    {
+      icon: '/static/assets/services_icon/tiktok-lives.png',
+      match: ['TikTok 🔴 Live Stream', 'TikTok ❤️️ Live Likes', 'TikTok 💬 Live Comments', '✅TikTok 🥊 PK Battle Points']
+    },
+    // Youtube
+    {
+      icon: '/static/assets/services_icon/yt-all.png',
+      match: ['YouTube รวมบริการ']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-views.png',
+      match: ['✅YouTube Views', '🆕YouTube Views', 'YouTube มาใหม่', 'YouTube Views', 'YouTube Video Views']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-ctr.png',
+      match: ['YouTube 🔎 CTR', 'YouTube Views 🔎 SEO Search']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-th.png',
+      match: ['🇹🇭 Youtube']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-hr.png',
+      match: ['Youtube ► เพิ่มชั่วโมง']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-awards.png',
+      match: ['Youtube Adword Views', 'YouTube Views 🤑 โฆษณา Google Adword', '✅YouTube Views 💎 Native 𝐀𝐝𝐰𝐨𝐫𝐝𝐬', 'Youtube | Short Views']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-makemoney.png',
+      match: ['YouTube Views ► 𝐌𝐨𝐧𝐞𝐭𝐢𝐳𝐚𝐛𝐥𝐞 / 𝐑𝐞𝐯𝐞𝐧𝐮𝐞 ► ดูโฆษณาในวิดีโอ ✅📅']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-shorts.png',
+      match: ['✅YouTube ► Shorts', 'YouTube Shorts']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-likes.png',
+      match: ['✅YouTube 👍']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-dislike.png',
+      match: ['✅YouTube 👎']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-comments.png',
+      match: ['✅Youtube 💬']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-sub.png',
+      match: ['✅Youtube Subscribers']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-shares.png',
+      match: ['✅YouTube ► แชร์']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-lives.png',
+      match: ['Youtube 🔴 Live', '✅Youtube 🔴 Like For Live Stream', '✅Youtube 🔴 Reaction For Live Stream']
+    },
+    {
+      icon: '/static/assets/services_icon/yt-partial.png',
+      match: ['🪚 YouTube Split']
+    },
+    // Threads & IG
+    {
+      icon: '/static/assets/services_icon/threads.png',
+      match: ['Threads']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-th.png',
+      match: ['🇹🇭 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-all.png',
+      match: [
+        'Instagram ► รวมบริการไอจี', 
+        '✅Instagram Service', 
+        'Instagram Business', 
+        'Instagram Impressions', 
+        'Instagram ► Engagement', 
+        'Instagram Content', 
+        'Instagram ► Channel Member', 
+        'Instagram ► บริการโซน เอเชีย'
+      ]
+    },
+    {
+      icon: '/static/assets/services_icon/ig-likes.png',
+      match: ['✅Instagram Likes', 'Instagram Comment Likes']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-autolike.png',
+      match: [
+        'Instagram Auto Likes', 
+        '✅Instagram รีโพสต์', 
+        'แบ่งยอดวิว 🪚 Instagram', 
+        'แบ่งยอดไลค์ บัญชีผู้หญิง🪚 Instagram', 
+        'แบ่งยอดเซฟ 🪚 Instagram', 
+        'แบ่งยอดแชร์ 🪚 Instagram'
+      ]
+    },
+    {
+      icon: '/static/assets/services_icon/ig-follows.png',
+      match: ['✅Instagram ผู้ติดตาม']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-views.png',
+      match: ['Instagram Views']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-comments.png',
+      match: ['✅Instagram ► คอมเม้นท์']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-story.png',
+      match: ['✅Instagram Story']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-shares.png',
+      match: ['Instagram ► Shares']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-reach.png',
+      match: ['Instagram ► Reach']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-save.png',
+      match: ['Instagram ► Saves']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-nft.png',
+      match: ['Instagram ► NFT']
+    },
+    {
+      icon: '/static/assets/services_icon/ig-lives.png',
+      match: ['✅Instagram 🔴 Live']
+    },
+    {
+      icon: '/static/assets/services_icon/bd-ig.png',
+      match: ['🇧🇩 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/pt-ig.png',
+      match: ['🇵🇹 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/br-ig.png',
+      match: ['🇧🇷 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/eg-ig.png',
+      match: ['🇪🇬 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/tr-ig.png',
+      match: ['🇹🇷 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/sa-ig.png',
+      match: ['🇸🇦 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/kr-ig.png',
+      match: ['🇰🇷 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/jp-ig.png',
+      match: ['🇯🇵 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/id-ig.png',
+      match: ['🇮🇩 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/vn-ig.png',
+      match: ['🇻🇳 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/ng-ig.png',
+      match: ['🇳🇬 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/in-ig.png',
+      match: ['🇮🇳 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/us-ig.png',
+      match: ['🇺🇸 Instagram']
+    },
+    {
+      icon: '/static/assets/services_icon/pk-ig.png',
+      match: ['🇵🇰 Instagram']
+    },
+    // Facebook
+    {
+      icon: '/static/assets/services_icon/th-fb.png',
+      match: ['🇹🇭 Facebook']
+    },
+    {
+      icon: '/static/assets/services_icon/fb.png',
+      match: ['✅Facebook Services', 'Facebook ► ซ่อนคอมเม้นท์', 'Facebook ► คอมเม้นท์', 'Facebook ► Saves', 'Facebook ► Shares', 'Facebook ► แชร์โพส', 'Facebook ► ตอบกลับคอมเม้นท์', 'Facebook ► เพิ่มเพื่อนบัญชีเฟสบุ๊ค', 'Facebook ► เพิ่มคนเข้ากลุ่ม', '🪚 Facebook Split']
+    },
+    {
+      icon: '/static/assets/services_icon/fb-follows.png',
+      match: ['Facebook ► ผู้ติดตามแฟนเพจ', 'Facebook ► ถูกใจแฟนเพจ']
+    },
+    {
+      icon: '/static/assets/services_icon/fb-likes.png',
+      match: ['Facebook ► ไลค์โพส SV1', 'Facebook ► ไลค์โพส คุณภาพสูง SV2', 'Facebook ► ไลค์โพส SV3', 'Facebook ► ออโต้ไลค์โพส', 'Facebook ► ไลค์โพส แบ่งไลค์', 'Facebook ► ไลค์คอมเม้นท์']
+    },
+    {
+      icon: '/static/assets/services_icon/fb-likeemoji.png',
+      match: ['Facebook ► ไลค์โพส อิโมติคอน', 'Facebook ► กดอิโมจิสตอรี่']
+    },
+    {
+      icon: '/static/assets/services_icon/fb-views.png',
+      match: ['Facebook ► วิววิดีโอ', 'Facebook 60K Minutes', 'Facebook 120K Minutes', 'Facebook 600K Minutes', 'Facebook ► ดูสตอรี่']
+    },
+    {
+      icon: '/static/assets/services_icon/fb-lives.png',
+      match: ['Facebook 🔴 Live', 'Facebook 🔴 Auto Live']
+    },
+    {
+      icon: '/static/assets/services_icon/br-fb.png',
+      match: ['🇧🇷 Facebook']
+    },
+    {
+      icon: '/static/assets/services_icon/pk-fb.png',
+      match: ['🇵🇰 Facebook']
+    },
+    // X [Twtiiter]
+    {
+      icon: '/static/assets/services_icon/th-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการประเทศไทย 🇹🇭']
+    },
+    {
+      icon: '/static/assets/services_icon/x.png',
+      match: [
+        'X.com | Twitter Verified Accounts Services',
+        'X.com | Twitter Services',
+        'X.com | Twitter 🐦',
+        'X.com | Twitter 👁️',
+        'X.com | Twitter 🔁',
+        'X.com | Twitter 💬',
+        'X.com | Twitter 📊',
+        'X.com | Twitter 📥',
+        'X.com | Twitter 🔴',
+        'X.com | Twitter 🎧'
+      ]
+    },
+    {
+      icon: '/static/assets/services_icon/x-likes.png',
+      match: ['X.com | Twitter Likes']
+    },
+    {
+      icon: '/static/assets/services_icon/x-re.png',
+      match: ['X.com | Twitter Retweet']
+    },
+    {
+      icon: '/static/assets/services_icon/br-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการบราซิล 🇧🇷 Brazil']
+    },
+    {
+      icon: '/static/assets/services_icon/fr-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการฝรั่งเศส 🇫🇷 France']
+    },
+    {
+      icon: '/static/assets/services_icon/de-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการเยอรมนี 🇩🇪 Germany']
+    },
+    {
+      icon: '/static/assets/services_icon/in-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการอินเดีย 🇮🇳 India']
+    },
+    {
+      icon: '/static/assets/services_icon/id-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการอินโดนีเซีย 🇮🇩 Indonesia']
+    },
+    {
+      icon: '/static/assets/services_icon/jp-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการญี่ปุ่น 🇯🇵 Japan']
+    },
+    {
+      icon: '/static/assets/services_icon/sa-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการซาอุดิอาระเบีย 🇸🇦 Saudi Arabia']
+    },
+    {
+      icon: '/static/assets/services_icon/tr-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการตุรกี 🇹🇷 Turkey']
+    },
+    {
+      icon: '/static/assets/services_icon/uk-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการสหราชอาณาจักร 🇬🇧 United Kingdom']
+    },
+    {
+      icon: '/static/assets/services_icon/arab-x.png',
+      match: ['X.com | Twitter Services ► รวมบริการประเทศอาหรับ Arabic Countries']
+    },
+    // Traffic - SEO
+    {
+      icon: '/static/assets/services_icon/MobileTraffic.png',
+      match: [
+        'Mobile Traffic', 
+        '🚀Website Traffic 🌐 𝐍𝐢𝐜𝐡𝐞 เว็บไซต์ที่เกี่ยวข้อง', 
+        '🚀Website Traffic ► Mobile Traffic 📱'
+      ]
+    },
+    {
+      icon: '/static/assets/services_icon/Traffic.png',
+      match: [
+        '🌐เพิ่มทราฟฟิคเข้าเว็บไซต์ 🚀 Website Traffic', 
+        '🚀Website 💎 Premium Traffic Packages', 
+        '🚀Website Traffic ►',
+        '🚀Website Traffic 🌐 𝐖𝐨𝐫𝐥𝐝𝐰𝐢𝐝𝐞 สุ่มทั่วโลก',
+        '✅🌐เพิ่มทราฟฟิคเข้าเว็บไซต์',
+        '🚀Website Traffic ► Choose GEO',
+        '✅🔴Premium Pop-Under Traffic'
+      ]
+    },
+    {
+      icon: '/static/assets/services_icon/GoogleSearch.png',
+      match: ['Google Search Console']
+    },
+    {
+      icon: '/static/assets/services_icon/premium-traffic.png',
+      match: ['🚀Website 💎 Premium Traffic']
+    },
+    {
+      icon: '/static/assets/services_icon/world-traffic.png',
+      match: ['✅🚀Website Traffic ► แหล่งอ้างอิง เลือกประเทศ']
+    },
+    {
+      icon: '/static/assets/services_icon/th-traffic.png',
+      match: ['Website Traffic 🇹🇭']
+    },
+    {
+      icon: '/static/assets/services_icon/backlinks.png',
+      match: ['🔗Backlinks & Website']
+    },
+    {
+      icon: '/static/assets/services_icon/SocialSignals.png',
+      match: ['📊Social Signals']
+    },
+    {
+      icon: '/static/assets/services_icon/seo-ranking.png',
+      match: ['✅📊SEO Package Ranking']
+    },
+    // Shopee
+    {
+      icon: '/static/assets/services_icon/shopee.png',
+      match: ['Shopee']
+    },
+    // Discord
+    {
+      icon: '/static/assets/services_icon/discord.png',
+      match: ['Discord']
+    },
+    // Meta
+    {
+      icon: '/static/assets/services_icon/meta.png',
+      match: ['Meta']
+    },
+    // New
+    {
+      icon: '/static/assets/services_icon/new.png',
+      match: ['new for']
+    },
+    // Opensea
+    {
+      icon: '/static/assets/services_icon/Opensea.png',
+      match: ['Opensea']
+    },
+    // Coingecko
+    {
+      icon: '/static/assets/services_icon/Coingecko.png',
+      match: ['Coingecko']
+    },
+    // Superrare
+    {
+      icon: '/static/assets/services_icon/Superrare.png',
+      match: ['Superrare']
+    },
+    // Crypto
+    {
+      icon: '/static/assets/services_icon/Crypto.webp',
+      match: ['Crypto']
+    },
+    // Rarible
+    {
+      icon: '/static/assets/services_icon/Rarible.png',
+      match: ['Rarible']
+    },
+    // Spotify
+    {
+      icon: '/static/assets/services_icon/spotify.png',
+      match: ['Spotify']
+    },
+    // Twitch
+    {
+      icon: '/static/assets/services_icon/twitch.png',
+      match: ['Twitch']
+    },
+    // Kick.com
+    {
+      icon: '/static/assets/services_icon/kick.png',
+      match: ['Kick.com']
+    },
+    // Whatsapp
+    {
+      icon: '/static/assets/services_icon/whatsapp.png',
+      match: ['Whatsapp']
+    },
+    // Soundcloud
+    {
+      icon: '/static/assets/services_icon/soundcloud.png',
+      match: ['SoundCloud']
+    },
+    // Kwai
+    {
+      icon: '/static/assets/services_icon/Kwai.png',
+      match: ['Kwai']
+    },
+    // LinkedIn
+    {
+      icon: '/static/assets/services_icon/LinkedIn.png',
+      match: ['LinkedIn']
+    },
+    // Dailymotion
+    {
+      icon: '/static/assets/services_icon/Dailymotion.png',
+      match: ['Dailymotion']
+    },
+    // Likee
+    {
+      icon: '/static/assets/services_icon/Likee.png',
+      match: ['Likee']
+    },
+    // Pinterest
+    {
+      icon: '/static/assets/services_icon/Pinterest.png',
+      match: ['✅Pinterest']
+    },
+    // Tumblr
+    {
+      icon: '/static/assets/services_icon/Tumblr.png',
+      match: ['Tumblr']
+    },
+    // Trovo
+    {
+      icon: '/static/assets/services_icon/Trovo.png',
+      match: ['Trovo']
+    },
+    // BlueSky
+    {
+      icon: '/static/assets/services_icon/BlueSky.png',
+      match: ['BlueSky']
+    },
+    // Vimeo
+    {
+      icon: '/static/assets/services_icon/Vimeo.png',
+      match: ['Vimeo']
+    },
+    // Sooplive
+    {
+      icon: '/static/assets/services_icon/Sooplive.png',
+      match: ['Sooplive']
+    },
+    // Naver TV
+    {
+      icon: '/static/assets/services_icon/Naver-TV.png',
+      match: ['Naver TV']
+    },
+    // Audiomack
+    {
+      icon: '/static/assets/services_icon/Audiomack.png',
+      match: ['Audiomack']
+    },
+    // Reddit
+    {
+      icon: '/static/assets/services_icon/Reddit.png',
+      match: ['Reddit']
+    },
+    // Deezer
+    {
+      icon: '/static/assets/services_icon/Deezer.png',
+      match: ['Deezer']
+    },
+    // Potato Chat
+    {
+      icon: '/static/assets/services_icon/Potato-Chat.png',
+      match: ['Potato Chat']
+    },
+    // Quora.Com
+    {
+      icon: '/static/assets/services_icon/Quora.png',
+      match: ['Quora.Com']
+    },
+    // Napster
+    {
+      icon: '/static/assets/services_icon/Napster.png',
+      match: ['Napster']
+    },
+    // Rumble
+    {
+      icon: '/static/assets/services_icon/Rumble.png',
+      match: ['Rumble']
+    },
+    // Rutube
+    {
+      icon: '/static/assets/services_icon/Rutube.png',
+      match: ['Rutube']
+    },
+    // DLive
+    {
+      icon: '/static/assets/services_icon/DLive.png',
+      match: ['DLive']
+    },
+    // Bigo
+    {
+      icon: '/static/assets/services_icon/Bigo.png',
+      match: ['BIGO.TV', 'Bigo Live']
+    },
+    // SnapChat
+    {
+      icon: '/static/assets/services_icon/SnapChat.png',
+      match: ['SnapChat']
+    },
+    // GitHub
+    {
+      icon: '/static/assets/services_icon/GitHub.png',
+      match: ['GitHub']
+    },
+    // Binance
+    {
+      icon: '/static/assets/services_icon/Binance.png',
+      match: ['Binance']
+    },
+    // IMDB
+    {
+      icon: '/static/assets/services_icon/IMDB.png',
+      match: ['IMDB']
+    },
+    // Mobile App Installs ► iOS / Android
+    {
+      icon: '/static/assets/services_icon/Mobile.png',
+      match: ['Mobile App Installs ► iOS / Android']
+    },
+    // Apple Music
+    {
+      icon: '/static/assets/services_icon/Apple-Music.png',
+      match: ['Apple Music']
+    },
+    // Google Map
+    {
+      icon: '/static/assets/services_icon/GoogleMap.png',
+      match: ['Google Map']
+    },
+    // Dexscreener
+    {
+      icon: '/static/assets/services_icon/Dexscreener.png',
+      match: ['Dexscreener']
+    },
+    // CoinMarketCap
+    {
+      icon: '/static/assets/services_icon/CoinMarketCap.png',
+      match: ['CoinMarketCap']
+    },
+    // PUBG
+    {
+      icon: '/static/assets/services_icon/PUBG.png',
+      match: ['PUBG']
+    },
+    // Free Fire
+    {
+      icon: '/static/assets/services_icon/FreeFire.png',
+      match: ['Free Fire']
+    },
+    // Steam
+    {
+      icon: '/static/assets/services_icon/Steam.png',
+      match: ['Steam']
+    },
+    // Spam
+    {
+      icon: '/static/assets/services_icon/Spam.png',
+      match: ['✅ส่งรายงาน ❌ Spam Report']
+    },
+    // เพิ่ม mapping อื่น ๆ ตามที่มีรูป
+  ];
+
+  function pickGroupIcon(group) {
+    const text = String(group?.name || '').toLowerCase();
+
+    for (const def of GROUP_ICON_MAP) {
+      const hit = def.match.some(k => text.includes(k.toLowerCase()));
+      if (hit) return def.icon;
+    }
+    return null; // ไม่มีไอคอนตรงคำ -> ไม่ต้องโชว์รูป
+  }
+
+  function getPlatformNameById(id) {
+    const p = platforms.find(p => String(p._id) === String(id));
+    return p ? (p.name || '') : '';
+  }
+
+  // เลือกแพลตฟอร์มจาก id + ทำ tile ให้ active
+  async function ensurePlatformSelected(platformId) {
+    platformId = String(platformId);
+    if (String(currentPlatform) !== platformId) {
+      // เปลี่ยน active tile
+      $$('#platformGrid .p-tile').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === platformId);
+      });
+      await choosePlatform(platformId);
+    }
+  }
+
+  /* ---------- Boot ---------- */
+  async function init(){
+    await loadPlatforms();
+    await tryAutoSelectFromURL();
+
+    const onGlobalSearch = debounce(async () => {
+      const v = ($('#searchAll').value || '').trim();
+
+      // ✅ โหลด groups ของทุกแพลตฟอร์มเข้า groupsByPlatform ให้ครบก่อน
+      await ensureAllGroupsLoaded();
+
+      // กรองรายชื่อ service ในเมนูเดิม (ในกล่อง select ด้านล่าง)
+      filterChildrenFromGlobal();
+
+      // แสดง dropdown ผลลัพธ์ (แพลตฟอร์ม / หมวดหมู่ / บริการ) จากทุก platform
+      await runGlobalSearchDropdown(v);
+
+      // ถ้าเป็นเลขล้วน และไม่คลิกอะไรเลย -> auto jump ตาม ID เหมือนเดิม
+      if (/^\d+$/.test(v)) {
+        await autoPickByServiceId(v);
+      }
+    }, 160);
+
+    $('#searchAll').addEventListener('input', onGlobalSearch);
+
+    // ปิด dropdown ด้วย ESC
+    $('#searchAll').addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const box = document.getElementById('searchSuggest');
+        if (box) {
+          box.hidden = true;
+        }
+      }
+    });
+  }
+
+  async function autoPickByServiceId(pid){
+    const pidStr = String(pid);
+
+    const pickInsideCurrent = () => {
+      const grp = (groups || []).find(g =>
+        Array.isArray(g?.details?.services) &&
+        g.details.services.some(s => String(s.id) === pidStr)
+      );
+      if (!grp) return false;
+
+      chooseGroup(grp);
+      const svc = grp.details.services.find(s => String(s.id) === pidStr);
+      if (svc) {
+        chooseChild(svc);
+        document.getElementById('detailBox').style.display = '';
+        document.getElementById('qty')?.focus();
+      }
+      return true;
+    };
+
+    // 1) หาในแพลตฟอร์มปัจจุบันก่อน
+    if (pickInsideCurrent()) return true;
+
+    // 2) ไม่เจอ -> วนทุกแพลตฟอร์ม
+    for (const p of platforms){
+      if (String(p._id) === String(currentPlatform)) continue;
+      await choosePlatform(p._id);
+      if (pickInsideCurrent()){
+        // ทำ tile ให้ active
+        $$('#platformGrid .p-tile').forEach(el=>{
+          el.classList.toggle('active', el.dataset.id === String(p._id));
+        });
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /* ---------- auto-pick service from ?type=service&id=xxx ---------- */
+  async function tryAutoSelectFromURL(){
+    const sp = new URLSearchParams(location.search);
+    const type = sp.get('type');
+    const pid  = sp.get('id');
+    if (type !== 'service' || !pid) return;
+
+    const pickInsideCurrent = ()=>{
+      const grp = (groups||[]).find(g =>
+        Array.isArray(g?.details?.services) &&
+        g.details.services.some(s => String(s.id) === String(pid))
+      );
+      if (!grp) return false;
+      chooseGroup(grp);
+      const svc = grp.details.services.find(s => String(s.id) === String(pid));
+      if (svc) chooseChild(svc);
+      document.getElementById('detailBox').style.display = '';
+      document.getElementById('qty')?.focus();
+      return true;
+    };
+
+    if (pickInsideCurrent()) return;
+
+    for (const p of platforms){
+      await choosePlatform(p._id);
+      if (pickInsideCurrent()){
+        $$('#platformGrid .p-tile').forEach(el=>{
+          el.classList.toggle('active', el.dataset.id === String(p._id));
+        });
+        break;
+      }
+    }
+  }
+
+  /* ---------- ชิปคลิก ---------- */
+  function onChip(e) {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+
+    const chipId = b.dataset.chip ?? b.dataset.sub ?? '';
+
+    const chip = visibleChipList.find(c => c.id === chipId);
+    if (chip && chip.id !== "" && chip.count === 0) return;
+
+    currentChipId = chipId;
+
+    document.querySelectorAll('#chipBar .chip')
+      .forEach(x => x.classList.remove('active'));
+
+    b.classList.add('active');
+
+    renderGroupList(true);
+  }
+
+  /* ---------- โหลดแพลตฟอร์ม ---------- */
+  async function loadPlatforms(){
+    const platformsData = await fetchCached('/api/platforms');
+    platforms = platformsData;
+
+    const grid = $('#platformGrid');
+    grid.innerHTML = platforms.map(p=>{
+      const img = pickIconUrl(p.name||'');
+      return `
+        <div class="p-tile" data-id="${p._id}" data-name="${escHtml(p.name||'')}">
+          <div class="p-icon"><img loading="lazy" src="${img}" alt="${escHtml(p.name||'')}"></div>
+          <div class="p-name">${escHtml(p.name||'')}</div>
+        </div>`;
+    }).join('');
+
+    grid.addEventListener('click', async e=>{
+      const t = e.target.closest('.p-tile'); if(!t) return;
+      $$('#platformGrid .p-tile').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      await choosePlatform(t.dataset.id);
+    });
+
+    if (platforms.length){
+      const first = $('#platformGrid .p-tile');
+      first?.classList.add('active');
+      choosePlatform(platforms[0]._id);
+    }
+  }
+
+  /* ---------- เมื่อเลือกแพลตฟอร์ม ---------- */
+  async function choosePlatform(catId){
+    currentPlatform = catId;
+    currentChipId   = "";
+
+    try{
+      const subRes = await fetchCached(`/api/subcategories?cat=${catId}`);
+      subcats = await subRes.json();
+    }catch(e){ subcats = []; }
+
+    if (groupsByPlatform.has(String(catId))) {
+      groups = groupsByPlatform.get(String(catId));
+      renderGroupList(true);
+      return;
+    }
+
+    // 🔴 fetch เฉพาะตอนยังไม่มี
+    groups = await fetchCached(`/api/service-groups?cat=${catId}`);
+    groupsByPlatform.set(String(catId), groups);
+
+    renderGroupList(true);
+
+    const chipsWithCount = CHIP_DEFS.map(ch=>{
+      const sub = subcats.find(s => (s.name||'').toLowerCase() === ch.label.toLowerCase());
+      const realId = sub ? oid(sub._id) : null;
+      const chipObj = { ...ch, realId, count:0 };
+      chipObj.count = groups.filter(g => groupMatchesChip(g, chipObj)).length;
+      return chipObj;
+    });
+
+    visibleChipList = chipsWithCount.filter(ch => ch.id==="" || ch.count>0);
+    renderChipsTH();
+  }
+
+  /* ---------- วาดชิปภาษาไทย (เฉพาะที่มีจริง) ---------- */
+  function renderChipsTH() {
+    const bar = document.getElementById('chipBar');
+    bar.innerHTML = visibleChipList.map(ch => `
+      <button type="button"
+              class="chip ${currentChipId === ch.id ? 'active' : ''} 
+                            ${ch.id !== '' && ch.count === 0 ? 'disabled' : ''}"
+              data-chip="${ch.id}">
+        ${ch.label}${ch.id === '' ? '' : ` (${ch.count})`}
+      </button>
+    `).join('');
+  }
+
+  /* ---------- กลุ่มบริการ (ซ้าย) กรองด้วยชิป + คำค้น ---------- */
+  function renderGroupList(reset=false){
+    const q = ($('#groupSearch').value||'').toLowerCase().trim();
+    const chip = visibleChipList.find(c => c.id===currentChipId) || visibleChipList[0];
+
+    const filtered = groups.filter(g =>
+      groupMatchesChip(g, chip) &&
+      (String(g.name||'').toLowerCase().includes(q))
+    );
+
+    $('#groupList').innerHTML = filtered.length
+      ? filtered.map(x => {
+          const iconUrl = pickGroupIcon(x);
+          return `
+            <div class="opt" data-id="${x._id}">
+              ${iconUrl ? `<img class="grp-icon" src="${iconUrl}" alt="" loading="lazy">` : ''}
+              <span class="grp-name">${x.name || '-'}</span>
+            </div>
+          `;
+        }).join('')
+      : `<div class="empty muted">ไม่พบกลุ่มบริการที่ตรงกับคำค้น</div>`;
+
+    $('#groupList').onclick = e=>{
+      const el=e.target.closest('.opt'); if(!el) return;
+      $('#groupSel').classList.remove('open');
+      $('#groupBtn').setAttribute('aria-expanded','false');
+      const grp = filtered.find(v=>String(v._id)===el.dataset.id);
+      chooseGroup(grp);
+    };
+
+    if(reset){
+      if(filtered.length) chooseGroup(filtered[0]); else clearAll();
+    }
+  }
+
+  /* ---------- เลือกกลุ่ม → บริการย่อย ---------- */
+  function chooseGroup(grp){
+    currentGroup = grp;
+    children = Array.isArray(grp?.details?.services) ? grp.details.services : [];
+
+    const name = grp?.name || '—';
+    const iconUrl = pickGroupIcon(grp);   // ⬅ เปลี่ยนจาก name → grp
+
+    const span = document.getElementById('groupText');
+    if (iconUrl) {
+      span.innerHTML = `<img class="grp-icon" src="${escHtml(iconUrl)}" alt=""> <span>${escHtml(name)}</span>`;
+    } else {
+      span.textContent = name;
+    }
+
+    $('#groupId').value = grp?._id || '';
+    renderChildList();
+    if (children.length) chooseChild(children[0]); else resetDetail();
+  }
+  /* ---------- รายการบริการย่อย ---------- */
+  function computeUnitForService(c) {
+    return Number(c.rateUnit || 1000);
+  }
+
+  function renderChildList(){
+    const q = ($('#childSearch').value || '').toLowerCase().trim();
+    const globalQ = ($('#searchAll').value || '').toLowerCase().trim();
+
+    const list = children.filter(c=>{
+      const s = `${c.id} ${c.name}`.toLowerCase();
+      return (!q || s.includes(q)) && (!globalQ || s.includes(globalQ));
+    });
+
+    const gid = $('#groupId').value;
+
+    // ใส่ base rate ไว้ก่อน
+    $('#childList').innerHTML = list.length ? list.map(c => {
+      const u = Number(c.rateUnit || 1000);
+      const unitStr = (u <= 1 ? '1' : u.toLocaleString());
+      return `
+        <div class="opt" data-id="${c.id}">
+          <div class="row">
+            <div>
+              <span class="id">ID: ${c.id}</span>
+              <span class="name"> — ${c.name || ''}</span>
+            </div>
+            <div class="rate" data-rate-for="${c.id}">
+              ${fmt(c.rate)} ${c.currency || 'THB'} / ${u.toLocaleString()}
+            </div>
+          </div>
+        </div>`;
+    }).join('') : `<div class="empty muted">ไม่พบบริการที่ตรงกับคำค้น</div>`;
+
+    // แล้วค่อยอัปเดตเป็น effective rate ทีละตัว — ใช้ cache ก่อน ยิง API เฉพาะตัวที่ยังไม่มี
+    (async () => {
+      const gid = $('#groupId').value;
+      const miss = [];
+      list.forEach(c => {
+        const cached = getCachedEffectiveRate(gid, c.id);
+        const el = document.querySelector(`.rate[data-rate-for="${CSS.escape(String(c.id))}"]`);
+        if (cached != null) {
+          if (el) {
+            const u = Number(c.rateUnit || 1000);
+            const unitStr = (u <= 1 ? '1' : u.toLocaleString());
+            el.textContent = `${fmt(cached)} ${c.currency || 'THB'} / ${unitStr}`;
+          }
+        } else {
+          miss.push(c);
+        }
+      });
+      if (!miss.length) return;
+
+      const requestKey = `${gid}:${miss.map(c => c.id).join(',')}`;
+      if (effectiveRatePending.has(requestKey)) return effectiveRatePending.get(requestKey);
+
+      const job = (async () => {
+        const items = miss.map(c => ({ serviceId: gid, childId: String(c.id), qty: 0 }));
+        try {
+          const res = await fetch('/api/pricing/effective-rate/batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!json.ok) return;
+          const rates = json.rates || {};
+          miss.forEach(c => {
+            const erObj = rates[`${gid}:${c.id}:0`];
+            if (!erObj || erObj.rate == null) return;
+            const rateValue = Number(erObj.rate);
+            setCachedEffectiveRate(gid, c.id, rateValue);
+            const el = document.querySelector(`.rate[data-rate-for="${CSS.escape(String(c.id))}"]`);
+            if (el) {
+              const u = Number(c.rateUnit || 1000);
+              const unitStr = (u <= 1 ? '1' : u.toLocaleString());
+              el.textContent = `${fmt(rateValue)} ${c.currency || 'THB'} / ${unitStr}`;
+            }
+          });
+        } catch {}
+        finally { effectiveRatePending.delete(requestKey); }
+      })();
+      effectiveRatePending.set(requestKey, job);
+      return job;
+    })();
+
+    $('#childList').onclick = e=>{
+      const el=e.target.closest('.opt'); if(!el) return;
+      $('#childSel').classList.remove('open');
+      $('#childBtn').setAttribute('aria-expanded','false');
+      const svc = children.find(v=>String(v.id)===el.dataset.id);
+      chooseChild(svc);
+    };
+  }
+
+  // ✅ โหลด service-groups ของทุกแพลตฟอร์มเข้า groupsByPlatform ให้ครบก่อนค้นหา
+  async function ensureAllGroupsLoaded() {
+    if (allGroupsLoaded) return;
+    if (!Array.isArray(platforms) || !platforms.length) return;
+
+    const jobs = platforms.map(async (p) => {
+      const key = String(p._id);
+      if (groupsByPlatform.has(key)) return; // โหลดแล้วข้าม
+
+      try {
+        const res = await fetchCached(`/api/service-groups?cat=${key}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          groupsByPlatform.set(key, data);
+        } else {
+          groupsByPlatform.set(key, []);
+        }
+      } catch (e) {
+        // console.error('load groups for', key, 'error', e);
+        groupsByPlatform.set(key, []);
+      }
+    });
+
+    await Promise.all(jobs);
+    allGroupsLoaded = true;
+  }
+
+  function renderSearchChunk(reset = false) {
+    const box = document.getElementById('searchSuggest');
+    if (!box) return;
+    if (reset) {
+      box.innerHTML = '';
+      searchRendered = 0;
+    }
+
+    // ถ้าแสดงครบแล้วก็ไม่ต้องทำอะไร
+    if (searchRendered >= searchResults.length) return;
+
+    const slice = searchResults.slice(
+      searchRendered,
+      searchRendered + SEARCH_CHUNK_SIZE
+    );
+
+    const html = slice.map(r => {
+      let kindClass = 'sg-kind-s';
+      let kindLabel = 'บริการ';
+      let iconHtml = '';
+
+      if (r.kind === 'platform') {
+        kindClass = 'sg-kind-p';
+        kindLabel = 'แพลตฟอร์ม';
+      } else if (r.kind === 'group') {
+        kindClass = 'sg-kind-g';
+        kindLabel = 'หมวดหมู่';
+
+        // icon กลุ่ม (เหมือนเดิม)
+        const grpArr = groupsByPlatform.get(r.platformId) || [];
+        const gObj = grpArr.find(g => String(g._id) === String(r.groupId));
+        const iconUrl = gObj ? pickGroupIcon(gObj) : null;
+        if (iconUrl) {
+          iconHtml = `<img class="sg-icon" src="${iconUrl}" alt="">`;
+        }
+      }
+
+      const labelSafe = r.label.replace(/"/g, '&quot;');
+
+      return `
+        <button type="button"
+                class="sg-opt"
+                data-kind="${r.kind}"
+                data-platform="${r.platformId || ''}"
+                data-group="${r.groupId || ''}"
+                data-service="${r.serviceId || ''}">
+          ${iconHtml}
+          <span class="sg-kind ${kindClass}">${kindLabel}</span>
+          <span class="sg-main" title="${labelSafe}">${r.label}</span>
+          ${r.sub ? `<span class="sg-sub">${r.sub}</span>` : ''}
+        </button>
+      `;
+    }).join('');
+
+    box.insertAdjacentHTML('beforeend', html);
+    searchRendered += slice.length;
+  }
+
+  async function runGlobalSearchDropdown(query) {
+    const box = document.getElementById('searchSuggest');
+    if (!box) return;
+
+    const q = String(query || '').trim().toLowerCase();
+    if (q.length < 2) {
+      box.hidden = true;
+      box.innerHTML = '';
+      searchResults = [];
+      searchRendered = 0;
+      return;
+    }
+
+    const results = [];
+
+    // 1) แพลตฟอร์ม
+    for (const p of platforms) {
+      if ((p.name || '').toLowerCase().includes(q)) {
+        results.push({
+          kind: 'platform',
+          platformId: String(p._id),
+          label: p.name || '',
+        });
+      }
+    }
+
+    // 2) หมวดหมู่/บริการทุกแพลตฟอร์ม (ไม่จำกัดแค่ current)
+    groupsByPlatform.forEach((grpArr, platId) => {
+      const platName = getPlatformNameById(platId);
+
+      grpArr.forEach(g => {
+        const gName = g?.name || '';
+        const gNameLower = gName.toLowerCase();
+
+        if (gNameLower.includes(q)) {
+          results.push({
+            kind: 'group',
+            platformId: String(platId),
+            groupId: String(g._id),
+            label: gName,
+            sub: platName || ''
+          });
+        }
+
+        const svcList = Array.isArray(g?.details?.services) ? g.details.services : [];
+        svcList.forEach(svc => {
+          const text = `${svc.id} ${svc.name || ''}`.toLowerCase();
+          if (text.includes(q)) {
+            results.push({
+              kind: 'service',
+              platformId: String(platId),
+              groupId: String(g._id),
+              serviceId: String(svc.id),
+              label: `ID: ${svc.id} — ${svc.name || ''}`,
+              sub: gName || platName || ''
+            });
+          }
+        });
+      });
+    });
+
+    if (!results.length) {
+      box.innerHTML = `<div class="sg-empty muted">ไม่พบผลลัพธ์ที่ตรงกับคำค้น</div>`;
+      box.hidden = false;
+      searchResults = [];
+      searchRendered = 0;
+      return;
+    }
+
+    // ✅ เก็บผลไว้ global แล้วให้ render ทีละก้อน
+    searchResults = results;
+    box.hidden = false;
+    renderSearchChunk(true);
+  }
+
+  function filterChildrenFromGlobal(){ renderChildList(); }
+  let effectiveRateCache = new Map();
+  const EFFECTIVE_RATE_CACHE_TTL = 6 * 60 * 60 * 1000;
+  const EFFECTIVE_RATE_LS_PREFIX = 'rtsmm:effective-rate:';
+  const effectiveRatePending = new Map();
+
+  function rateCacheKey(groupId, childId){
+    return `${groupId}:${childId}`;
+  }
+  function getCachedEffectiveRate(groupId, childId){
+    const key = rateCacheKey(groupId, childId);
+    if (effectiveRateCache.has(key)) return effectiveRateCache.get(key);
+    try {
+      const raw = localStorage.getItem(EFFECTIVE_RATE_LS_PREFIX + key);
+      if (!raw) return null;
+      const row = JSON.parse(raw);
+      if (!row || Date.now() - Number(row.ts || 0) > EFFECTIVE_RATE_CACHE_TTL) {
+        localStorage.removeItem(EFFECTIVE_RATE_LS_PREFIX + key);
+        return null;
+      }
+      const val = Number(row.rate);
+      if (!Number.isFinite(val)) return null;
+      effectiveRateCache.set(key, val);
+      return val;
+    } catch { return null; }
+  }
+  function setCachedEffectiveRate(groupId, childId, rate){
+    const val = Number(rate);
+    if (!Number.isFinite(val)) return;
+    const key = rateCacheKey(groupId, childId);
+    effectiveRateCache.set(key, val);
+    try { localStorage.setItem(EFFECTIVE_RATE_LS_PREFIX + key, JSON.stringify({ rate: val, ts: Date.now() })); } catch {}
+  }
+
+
+  document.addEventListener('click', async (e) => {
+    const box = document.getElementById('searchSuggest');
+    if (!box) return;
+
+    const btn = e.target.closest('.sg-opt');
+    if (btn && box.contains(btn)) {
+      const kind = btn.dataset.kind;
+      const platformId = btn.dataset.platform;
+      const groupId = btn.dataset.group;
+      const serviceId = btn.dataset.service;
+
+      // ซ่อน dropdown ก่อน
+      box.hidden = true;
+
+      if (kind === 'platform') {
+        await ensurePlatformSelected(platformId);
+        return;
+      }
+
+      if (kind === 'group') {
+        await ensurePlatformSelected(platformId);
+        const grpArr = groupsByPlatform.get(String(platformId)) || groups;
+        const gObj = grpArr.find(g => String(g._id) === String(groupId));
+        if (gObj) chooseGroup(gObj);
+        return;
+      }
+
+      if (kind === 'service') {
+        // ใช้ตัวช่วยเดิมที่มี already: autoPickByServiceId
+        if (serviceId) {
+          // จะวิ่งหา service ทุกแพลตฟอร์มให้เอง
+          await autoPickByServiceId(serviceId);
+        }
+        return;
+      }
+    } else {
+      // คลิกรอบนอก -> ปิด
+      if (!box.contains(e.target) && e.target.id !== 'searchAll') {
+        box.hidden = true;
+      }
+    }
+  });
+
+  /* ---------- ดึง effective rate (ถ้า endpoint มี) ---------- */
+  async function fetchEffectiveRateIfAvailable(groupId, childId, baseRate) {
+    const cached = getCachedEffectiveRate(groupId, childId);
+    if (cached != null) return cached;
+
+    try {
+      const url = `/api/pricing/effective-rate?serviceId=${encodeURIComponent(groupId)}&childId=${encodeURIComponent(childId)}`;
+      const data = await fetchCached(url);
+      if (!data || data.rate == null) return null;
+      setCachedEffectiveRate(groupId, childId, data.rate);
+      return Number(data.rate);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /* ---------- รายละเอียด/ฟอร์ม ---------- */
+  async function chooseChild(svc){
+    currentChild = svc;
+    currentUnitStep = Number(svc.rateUnit || 1000);
+
+    // ===============================
+    // 🔒 ตรวจว่าเป็น service ราคา/ชิ้น
+    // ===============================
+    isPerPieceService =
+      currentUnitStep === 1 &&
+      Number(svc.min) === 1 &&
+      Number(svc.max) === 1;
+
+    $('#childText').textContent = svc?.name || '—';
+    $('#providerServiceId').value = svc?.id || '';
+
+    // base rate
+    rate     = Number(svc?.rate || 0);
+    currency = svc?.currency || 'THB';
+    effectiveRate = null;
+    rateSource = 'base';
+    $('#rateNote').style.display = 'none';
+
+    const gid = $('#groupId').value;
+    const cid = String(svc?.id || '');
+    const er = await fetchEffectiveRateIfAvailable(gid, cid, Number(svc.rate || 0));
+    if (er !== null) {
+      effectiveRate = er;
+      rateSource = 'effective';
+      $('#rateNote').style.display = '';
+      $('#rateNote').textContent =
+        `อัตรานี้เป็นราคาหลังปรับตามกฎของบัญชีคุณ (ต่อ ${currentUnitStep.toLocaleString()} หน่วย)`;
+    }
+
+    const displayRate = rateSource==='effective' ? effectiveRate : rate;
+
+    const bits = [];
+    const unit = Number(svc.rateUnit || currentUnitStep || 1000);
+    bits.push(`อัตรา: ${fmt(displayRate)} ${currency} / ${unit.toLocaleString()}`);
+    bits.push(`ช่วง: ${svc.min||0}-${svc.max||0}${svc.step? ' | ขั้นละ '+svc.step: ''}`);
+    if (svc.average_delivery) bits.push(`เฉลี่ย: ${svc.average_delivery}`);
+    if (svc.dripfeed) bits.push('Dripfeed');
+    if (svc.refill)   bits.push('Refill');
+    if (svc.cancel)   bits.push('ยกเลิกได้');
+
+    $('#hdr').textContent  = svc?.name || '';
+    $('#meta').textContent = bits.join(' | ');
+    const rawDesc = svc?.description || currentGroup?.description || '';
+    $('#desc').innerHTML = sanitizeDesc(renderDescText(rawDesc));
+
+    const q    = $('#qty');
+    const min  = Math.max(1, Number(svc.min || 1));
+    const max  = Math.max(min, Number(svc.max || min));
+    const step = Number(svc.step || 1);
+
+    const qtyWrap = q.closest('.with-hint');
+
+    currentMin = min;
+    currentMax = max;
+
+    // ===== ราคา/ชิ้น → ล็อก qty =====
+    if (isPerPieceService) {
+      q.value = '1';
+      q.readOnly = true;
+      q.style.display = 'none';
+      if (qtyWrap) qtyWrap.style.display = 'none';
+    } else {
+      q.readOnly = false;
+      q.style.display = '';
+      if (qtyWrap) qtyWrap.style.display = '';
+      q.value = '';
+    }
+    // q.placeholder = `เช่น ${min.toLocaleString()} – ${max.toLocaleString()}`;
+
+    const minVal = $('#minVal'), maxVal = $('#maxVal');
+    if (minVal) minVal.textContent = min.toLocaleString();
+    if (maxVal) maxVal.textContent = max.toLocaleString();
+
+    const debouncedEstimate = debounce(() => {
+      // ราคา effective rate ถูก cache แยกแล้ว ปริมาณเปลี่ยนให้คำนวณยอดรวมบนหน้าเว็บเท่านั้น
+      updateEstimate();
+    }, 300);
+
+    q.removeEventListener('input', updateEstimate);
+    q.addEventListener('input', debouncedEstimate);
+
+    $('#drip').disabled = !svc.dripfeed;
+    $('#drip').checked  = !!svc.dripfeed;
+
+    // 👇 ตรวจชื่อ service เพื่อตัดสินว่าเป็น comments/SEO ไหม
+    const svcName = (svc?.name || "").toLowerCase();
+
+    isCommentService =
+      svcName.includes("custom comment") ||
+      svcName.includes("custom comments") ||
+      svcName.includes("comment package") ||
+      svcName.includes("comment reply") ||
+      (svc?.type && String(svc.type).toLowerCase().includes("comment"));
+
+    isSeoService =
+      svcName.includes("seo") ||
+      svcName.includes("keyword") ||
+      (svc?.type && String(svc.type).toLowerCase().includes("seo"));
+
+    const commentBoxEl = document.getElementById("commentBox");
+    const keywordBoxEl = document.getElementById("keywordBox");
+    const qtyLabelWrap = q.closest('.with-hint');
+
+    if (commentBoxEl) commentBoxEl.style.display = isCommentService ? "" : "none";
+    if (keywordBoxEl) keywordBoxEl.style.display = isSeoService ? "" : "none";
+
+    // 🔒 ถ้าเป็น service ที่ต้องกรอกข้อความ → lock ช่องปริมาณ + ให้ระบบคำนวณเอง
+    if (isCommentService || isSeoService) {
+      q.readOnly = true;
+      q.classList.add('auto-qty');
+      if (qtyLabelWrap) qtyLabelWrap.classList.add('auto-qty');
+      syncAutoQtyFromFields();       // ดึงจาก textarea ครั้งแรกเลย
+    } else {
+      q.readOnly = false;
+      q.classList.remove('auto-qty');
+      if (qtyLabelWrap) qtyLabelWrap.classList.remove('auto-qty');
+    }
+
+    updateEstimate();
+    $('#detailBox').style.display = '';
+    requestAnimationFrame(() => syncRightRailHeights?.());
+    setTimeout(() => syncRightRailHeights?.(), 80);
+
+    const note = document.getElementById('perPieceNote');
+    if (note) note.style.display = isPerPieceService ? '' : 'none';
+  }
+  function resetDetail(){ $('#childText').textContent='—'; $('#detailBox').style.display='none'; }
+  function clearAll(){
+    $('#groupText').textContent = '—';
+    $('#childText').textContent = '—';
+    $('#groupList').innerHTML = '';
+    $('#childList').innerHTML = '';
+    resetDetail();
+  }
+  function calcUnitRate(){
+    return rateSource==='effective' && Number.isFinite(effectiveRate) ? effectiveRate : rate;
+  }
+  function updateEstimate(){
+    const n = isPerPieceService ? 1 : Number($('#qty').value || 0);
+    const rateUsed = calcUnitRate(); // base หรือ effective
+    const unit = Number(currentChild?.rateUnit || 1000);
+
+    const price = Math.max(0, (n / unit) * rateUsed);
+
+    $('#est').value = `${fmt(price)} ${currency}`;
+  }
+
+  /* ---------- ส่งคำสั่งซื้อ ---------- */
+  async function submitOrder(ev){
+    ev.preventDefault();
+
+    // ก่อนส่ง ให้ sync จำนวนจาก textarea → qty อีกรอบ
+    syncAutoQtyFromFields();
+
+    const groupId = $('#groupId').value?.trim();
+    const childId = $('#providerServiceId').value?.trim();
+    const link    = $('#link').value?.trim();
+    const qty = isPerPieceService ? 1 : Number($('#qty').value || 0);
+
+    const commentsVal = document.getElementById('comments')?.value.trim() || '';
+    const keywordsVal = document.getElementById('keywords')?.value.trim() || '';
+
+    const errs = [];
+    if (!groupId) errs.push('ไม่พบรหัสกลุ่มบริการ (groupId)');
+    if (!childId) errs.push('ยังไม่ได้เลือก “บริการย่อย”');
+    if (!link)    errs.push('กรุณากรอกลิงก์/เป้าหมาย');
+    if (!(qty > 0)) errs.push('จำนวนต้องมากกว่า 0');
+
+    // ✅ บังคับให้อยู่ในช่วงขั้นต่ำ-สูงสุดของบริการ
+    if (!isPerPieceService && qty > 0 && (qty < currentMin || qty > currentMax)) {
+      errs.push(`จำนวนต้องอยู่ในช่วงขั้นต่ำ ${currentMin.toLocaleString()} ถึงสูงสุด ${currentMax.toLocaleString()}`);
+    }
+
+    if (isCommentService && !commentsVal) {
+      errs.push('บริการนี้ต้องกรอกคอมเมนต์ (1 บรรทัด = 1 คอมเมนต์)');
+    }
+    if (isSeoService && !keywordsVal) {
+      errs.push('บริการ SEO ต้องใส่ Keyword');
+    }
+
+    if (errs.length){
+      notify({
+        variant: 'warn',
+        title: 'ข้อมูลไม่ครบถ้วน',
+        text: errs.join(' • ')
+      });
+      return false;
+    }
+
+    const payload = {
+      groupId,
+      providerServiceId: childId,
+      link,
+      quantity: qty,
+      dripfeed: $('#drip').checked,
+      follow_system: $('#sys').checked
+    };
+
+    if (isCommentService) payload.comments = commentsVal;
+    if (isSeoService)    payload.keywords = keywordsVal;
+
+    const submitBtn = $('#orderForm button[type="submit"]');
+    submitBtn && (submitBtn.disabled = true);
+
+    try {
+      const res  = await fetch('/orders', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const ok = res.ok;
+      let data = {};
+      try { data = await res.json(); } catch {}
+
+      if (!ok || !data?.ok) {
+        const titleErr =
+          (typeof data?.error === 'string' && data.error.trim()) ||
+          `สั่งซื้อไม่สำเร็จ (${res.status})`;
+
+        const reason =
+          (typeof data?.detail === 'string' && data.detail) ||
+          (typeof data?.detail?.error === 'string' && data.detail.error) ||
+          (typeof data?.message === 'string' && data.message) ||
+          explainHttpStatus(res.status, '');
+
+        notify({
+          variant: 'error',
+          title: titleErr,
+          text: `เหตุผล: ${reason}`
+        });
+
+        // console.warn('ORDER ERROR => status:', res.status, 'reason:', titleErr, 'payload:', data);
+        return false;
+      }
+
+      notify({
+        variant: 'success',
+        title: 'สั่งซื้อสำเร็จ',
+        text: `สร้างคำสั่งซื้อแล้ว • Provider Order: ${data.providerOrderId || '-'}`
+      });
+
+      $('#qty').value  = '';
+      $('#link').value = '';
+      if (isCommentService) $('#comments').value = '';
+      if (isSeoService)     $('#keywords').value = '';
+      updateEstimate();
+      return false;
+
+    } catch (err) {
+      notify({
+        variant: 'error',
+        title: 'เครือข่ายมีปัญหา',
+        text: `ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (${err?.message || 'unknown'})`
+      });
+      // console.error('network error:', err);
+      return false;
+    } finally {
+      submitBtn && (submitBtn.disabled = false);
+    }
+  }
+  // =====================================================
+  // ✅ EXPORT ฟังก์ชัน/ค่าที่สคริปต์ด้านนอกต้องใช้
+  // =====================================================
+  window.RTSMM_ORDER_PAGE = window.RTSMM_ORDER_PAGE || {};
+
+  window.RTSMM_ORDER_PAGE.GROUP_ICON_MAP = GROUP_ICON_MAP;
+  window.RTSMM_ORDER_PAGE.syncAutoQtyFromFields = syncAutoQtyFromFields;
+  window.RTSMM_ORDER_PAGE.renderGroupList = renderGroupList;
+  window.RTSMM_ORDER_PAGE.onChip = onChip;
+  window.RTSMM_ORDER_PAGE.init = init;
+  window.RTSMM_ORDER_PAGE.submitOrder = submitOrder;
+
+  window.RTSMM_ORDER_PAGE.resetChipToAll = function resetChipToAll() {
+    currentChipId = "";
+
+    const bar = document.getElementById("chipBar");
+    if (!bar) return;
+
+    const chips = bar.querySelectorAll(".chip");
+    chips.forEach((chip, idx) => {
+      const isAll =
+        chip.dataset.chip === "" ||
+        chip.dataset.sub === "" ||
+        idx === 0;
+
+      chip.classList.toggle("active", isAll);
+    });
+
+    renderGroupList(true);
+  };
+
+  // ✅ รองรับโค้ดเดิมที่เรียกผ่าน window.*
+  window.onChip = onChip;
+  window.submitOrder = submitOrder;
+  window.init = init;
+  window.syncAutoQtyFromFields = syncAutoQtyFromFields;
+  window.renderGroupList = renderGroupList;
+  window.resetChipToAll = window.RTSMM_ORDER_PAGE.resetChipToAll;
+})();
+</script>
+
+<script>
+// — เพิ่มตรงสคริปต์ของหน้าเดียวกับ loadLatestUpdates() —
+const DIFF_TH = {
+  new: 'เพิ่มใหม่',
+  open: 'เปิดใช้งาน',
+  close: 'ปิดการใช้งาน',
+  removed: 'ลบออก',
+  updated: 'อัปเดต',
+  state: 'สถานะเริ่มต้น',
+};
+const STATUS_TH = {
+  new: 'เพิ่มใหม่',
+  open: 'เปิดใช้งาน',
+  active: 'เปิดใช้งาน',
+  close: 'ปิดการใช้งาน',
+  closed: 'ปิดการใช้งาน',
+  removed: 'ลบออก',
+  delete: 'ลบออก',
+  deleted: 'ลบออก',
+};
+
+function tDiff(s){ const k = String(s||'').toLowerCase(); return DIFF_TH[k] || s || '—'; }
+function tStatus(s){ const k = String(s||'').toLowerCase(); return STATUS_TH[k] || s || '—'; }
+
+// ===== ดึงอัปเดตของ "วันล่าสุด" ผ่าน API เดิมที่คุณมีอยู่แล้ว =====
+async function loadLatestUpdates(){
+  const el = document.getElementById('updatesList');
+  if (!el) return;
+
+  try {
+    const j = await fetchCached('/api/changes?latest=1&target=service&limit=300');
+
+    if (!j?.ok) {
+      el.innerHTML = '<div class="muted">โหลดข้อมูลไม่สำเร็จ</div>';
+      return;
+    }
+
+    const items = Array.isArray(j.items) ? j.items : [];
+
+    if (!items.length) {
+      el.innerHTML = '<div class="muted">วันนี้ยังไม่มีอัปเดต</div>';
+      return;
+    }
+
+    el.innerHTML = '';
+
+    items.forEach(x => {
+      const d = new Date(x.ts);
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+
+      const icon = getGroupIconByName(x.serviceName);
+
+      const row = document.createElement('div');
+      row.className = 'update-item';
+
+      row.innerHTML = `
+        <div class="update-head">
+          <span class="muted">${hh}:${mm}</span>
+          <div class="update-badges">
+            ${x.platform ? `<span class="badge">${escapeHtml(x.platform)}</span>` : ''}
+            ${x.categoryName ? `<span class="badge">${escapeHtml(x.categoryName)}</span>` : ''}
+            ${x.diff ? `<span class="badge">${escapeHtml(tDiff(x.diff))}</span>` : ''}
+            ${(x.oldStatus || x.newStatus)
+              ? `<span class="badge">${escapeHtml(tStatus(x.newStatus))}</span>`
+              : ''
+            }
+          </div>
+        </div>
+
+        <div class="update-title">
+          ${icon ? `<img class="up-icon" src="${icon}">` : ''}
+          <b>${escapeHtml(x.serviceName || '—')}</b>
+          <small class="muted">#${escapeHtml(x.providerServiceId||'')}</small>
+        </div>
+      `;
+
+      el.appendChild(row);
+    });
+
+    requestAnimationFrame(() => syncRightRailHeights?.());
+    setTimeout(() => syncRightRailHeights?.(), 80);
+
+  } catch (e) {
+    // console.error(e);
+    el.innerHTML = '<div class="muted">เครือข่ายมีปัญหา</div>';
+    requestAnimationFrame(() => syncRightRailHeights?.());
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ===== Right Rail Root Fix: ให้ 2 การ์ดฝั่งขวาติดกัน และรวมสูงเท่ากับฝั่งซ้าย =====
+function syncRightRailHeights(){
+  const left    = document.getElementById('detailBox');
+  const rail    = document.querySelector('.right-rail');
+  const stack   = document.querySelector('.right-rail-stack');
+  const updates = document.querySelector('.updates-panel');
+  const legend  = document.querySelector('.emoji-panel');
+  const updatesList = document.querySelector('.updates-list');
+  const legendList  = document.querySelector('.legend-list');
+
+  if (!rail || !stack || !updates || !legend) return;
+
+  const nodes = [rail, stack, updates, legend, updatesList, legendList].filter(Boolean);
+  const clearRightRailInline = () => {
+    nodes.forEach(el => {
+      [
+        '--rr-total','--rr-updates','--rr-emoji',
+        'height','min-height','max-height','overflow','display','flex-direction','gap',
+        'align-items','justify-content','flex','flex-basis','position','top','margin','padding'
+      ].forEach(prop => el.style.removeProperty(prop));
+    });
+  };
+
+  // Responsive: ไม่บังคับความสูงบนจอแคบ เพราะจะทำให้การ์ดซ้อน/โดนตัด
+  if (window.matchMedia('(max-width: 1100px)').matches) {
+    clearRightRailInline();
+    return;
+  }
+
+  const leftVisible = left && getComputedStyle(left).display !== 'none';
+  const leftHeight = leftVisible ? Math.ceil(left.getBoundingClientRect().height || left.offsetHeight || 0) : 0;
+  const gap = 14;
+
+  // บังคับโครงสร้างจริง: aside เป็น sticky shell, stack เป็น flex column ตัวเดียว
+  rail.style.setProperty('display', 'block', 'important');
+  rail.style.setProperty('position', 'sticky', 'important');
+  rail.style.setProperty('top', '16px', 'important');
+  rail.style.setProperty('margin', '0', 'important');
+  rail.style.setProperty('padding', '0', 'important');
+  rail.style.setProperty('overflow', 'visible', 'important');
+  rail.style.setProperty('min-height', '0', 'important');
+
+  stack.style.setProperty('display', 'flex', 'important');
+  stack.style.setProperty('flex-direction', 'column', 'important');
+  stack.style.setProperty('align-items', 'stretch', 'important');
+  stack.style.setProperty('justify-content', 'flex-start', 'important');
+  stack.style.setProperty('gap', `${gap}px`, 'important');
+  stack.style.setProperty('margin', '0', 'important');
+  stack.style.setProperty('padding', '0', 'important');
+  stack.style.setProperty('overflow', 'visible', 'important');
+  stack.style.setProperty('min-height', '0', 'important');
+
+  // ก่อนเลือกบริการ: ให้ขวาเรียงติดกันตามเนื้อหาจริง ไม่ต้องยืดตามซ้าย
+  if (!leftHeight) {
+    rail.style.setProperty('height', 'auto', 'important');
+    stack.style.setProperty('height', 'auto', 'important');
+
+    [updates, legend].forEach(card => {
+      card.style.setProperty('margin', '0', 'important');
+      card.style.setProperty('height', 'auto', 'important');
+      card.style.setProperty('min-height', '0', 'important');
+      card.style.setProperty('max-height', 'none', 'important');
+      card.style.setProperty('overflow', 'hidden', 'important');
+      card.style.setProperty('display', 'flex', 'important');
+      card.style.setProperty('flex-direction', 'column', 'important');
+      card.style.setProperty('flex', '0 0 auto', 'important');
+    });
+
+    if (updatesList) {
+      updatesList.style.setProperty('max-height', '220px', 'important');
+      updatesList.style.setProperty('overflow', 'auto', 'important');
+      updatesList.style.setProperty('min-height', '0', 'important');
+    }
+    if (legendList) {
+      legendList.style.setProperty('max-height', '340px', 'important');
+      legendList.style.setProperty('overflow', 'auto', 'important');
+      legendList.style.setProperty('min-height', '0', 'important');
+    }
+    return;
+  }
+
+  // หลังเลือกบริการ: รวมความสูงขวา = ซ้าย, gap คงที่ 14px
+  const total = Math.max(520, leftHeight);
+  const usable = Math.max(0, total - gap);
+
+  // อัปเดตวันนี้มีเนื้อหาเยอะ ให้พื้นที่เยอะกว่าครึ่งนิด ๆ แต่ไม่กินการ์ดล่างจนอ่านยาก
+  const minUpdates = 245;
+  const minLegend = 245;
+  let updatesH = Math.round(usable * 0.50);
+  updatesH = Math.max(minUpdates, Math.min(updatesH, usable - minLegend));
+  let legendH = usable - updatesH;
+
+  // fallback กรณีซ้ายเตี้ยผิดปกติ
+  if (legendH < minLegend) {
+    legendH = Math.max(180, minLegend);
+    updatesH = Math.max(180, usable - legendH);
+  }
+
+  rail.style.setProperty('--rr-total', `${total}px`);
+  rail.style.setProperty('--rr-updates', `${updatesH}px`);
+  rail.style.setProperty('--rr-emoji', `${legendH}px`);
+  rail.style.setProperty('height', `${total}px`, 'important');
+  rail.style.setProperty('max-height', 'none', 'important');
+
+  stack.style.setProperty('height', `${total}px`, 'important');
+  stack.style.setProperty('max-height', 'none', 'important');
+
+  updates.style.setProperty('margin', '0', 'important');
+  updates.style.setProperty('height', `${updatesH}px`, 'important');
+  updates.style.setProperty('min-height', '0', 'important');
+  updates.style.setProperty('max-height', `${updatesH}px`, 'important');
+  updates.style.setProperty('overflow', 'hidden', 'important');
+  updates.style.setProperty('display', 'flex', 'important');
+  updates.style.setProperty('flex-direction', 'column', 'important');
+  updates.style.setProperty('flex', `0 0 ${updatesH}px`, 'important');
+
+  legend.style.setProperty('margin', '0', 'important');
+  legend.style.setProperty('height', `${legendH}px`, 'important');
+  legend.style.setProperty('min-height', '0', 'important');
+  legend.style.setProperty('max-height', `${legendH}px`, 'important');
+  legend.style.setProperty('overflow', 'hidden', 'important');
+  legend.style.setProperty('display', 'flex', 'important');
+  legend.style.setProperty('flex-direction', 'column', 'important');
+  legend.style.setProperty('flex', `0 0 ${legendH}px`, 'important');
+
+  if (updatesList) {
+    updatesList.style.setProperty('flex', '1 1 auto', 'important');
+    updatesList.style.setProperty('min-height', '0', 'important');
+    updatesList.style.setProperty('max-height', 'none', 'important');
+    updatesList.style.setProperty('overflow', 'auto', 'important');
+    updatesList.style.setProperty('overscroll-behavior', 'contain');
+  }
+  if (legendList) {
+    legendList.style.setProperty('flex', '1 1 auto', 'important');
+    legendList.style.setProperty('min-height', '0', 'important');
+    legendList.style.setProperty('max-height', 'none', 'important');
+    legendList.style.setProperty('overflow', 'auto', 'important');
+    legendList.style.setProperty('overscroll-behavior', 'contain');
+  }
+}
+
+function initHeightSync(){
+  syncRightRailHeights();
+  window.addEventListener('resize', syncRightRailHeights);
+
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => syncRightRailHeights());
+    ['detailBox', 'updatesList'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) ro.observe(el);
+    });
+    const rail = document.querySelector('.right-rail-stack');
+    if (rail) ro.observe(rail);
+  }
+
+  // กันฟอนต์/รูปโหลดทีหลังทำให้ขนาดเปลี่ยน
+  setTimeout(syncRightRailHeights, 80);
+  setTimeout(syncRightRailHeights, 350);
+}
+
+
+// ===== เปิด/ปิด dropdown ของ .select =====
+function bindSelectToggle(selId) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+
+  const btn = sel.querySelector('.select-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // กันไม่ให้ event หลุดไปถึงตัวที่ปิดทั้งหมด
+
+    const isOpen = sel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // กัน init ซ้ำแบบ production-safe
+  if (!window.__RTSMM_ORDER_PAGE_INITED__) {
+    window.__RTSMM_ORDER_PAGE_INITED__ = true;
+
+    if (typeof window.init === "function") {
+      window.init();
+    }
+  }
+
+  // เปิด/ปิด dropdown หมวดหมู่ + บริการ
+  bindSelectToggle('groupSel');
+  bindSelectToggle('childSel');
+
+  if (typeof loadLatestUpdates === "function") {
+    loadLatestUpdates();
+  }
+
+  if (typeof initHeightSync === "function") {
+    initHeightSync();
+  }
+
+  // ผูก auto-qty กับการพิมพ์คอมเมนต์/คีย์เวิร์ด
+  const cmtEl = document.getElementById('comments');
+  const kwEl  = document.getElementById('keywords');
+
+  if (cmtEl) {
+    cmtEl.addEventListener('input', () => {
+      window.RTSMM_ORDER_PAGE?.syncAutoQtyFromFields?.();
+    });
+  }
+
+  if (kwEl) {
+    kwEl.addEventListener('input', () => {
+      window.RTSMM_ORDER_PAGE?.syncAutoQtyFromFields?.();
+    });
+  }
+
+  const box = document.getElementById('searchSuggest');
+  if (box && typeof renderSearchChunk === "function") {
+    box.addEventListener('scroll', () => {
+      if (box.hidden) return;
+
+      const nearBottom =
+        box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
+
+      if (nearBottom) {
+        renderSearchChunk(false);
+      }
+    });
+  }
+});
+
+function getGroupIconByName(name){
+  const n = String(name || "").toLowerCase();
+
+  const map =
+    window.RTSMM_ORDER_PAGE?.GROUP_ICON_MAP ||
+    window.GROUP_ICON_MAP ||
+    [];
+
+  for (const g of map) {
+    for (const kw of (g.match || [])) {
+      if (n.includes(String(kw).toLowerCase())) {
+        return g.icon;
+      }
+    }
+  }
+
+  return null;
+}
+</script>
+
+<script>
+(function(){
+  const updateStats = () => {
+    const p = document.querySelectorAll('#platformGrid > *').length;
+    const g = document.querySelectorAll('#groupList > *').length;
+    const pe = document.getElementById('oePlatformCount');
+    const ge = document.getElementById('oeGroupCount');
+    if (pe && p) pe.textContent = p.toLocaleString('th-TH');
+    if (ge && g) ge.textContent = g.toLocaleString('th-TH');
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    const targets = ['platformGrid','groupList'];
+    targets.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) new MutationObserver(updateStats).observe(el, { childList:true, subtree:false });
+    });
+  });
+})();
+</script>
+<style>
+/* =========================================================
+   RTSMM Orders Enterprise UI — theme-aware high-end skin
+   Uses layout variables: --page, --card, --text, --muted, --border, --accent
+========================================================= */
+.orders-enterprise{
+  --oe-page: var(--page, #08090d);
+  --oe-card: var(--card, #12141b);
+  --oe-card-2: color-mix(in srgb, var(--card, #12141b) 88%, #ffffff 5%);
+  --oe-text: var(--text, #f6f2e8);
+  --oe-muted: var(--muted, #9aa1ad);
+  --oe-border: var(--border, rgba(255,255,255,.10));
+  --oe-accent: var(--accent, #e8bc53);
+  --oe-accent-2:#ffe08a;
+  --oe-green:#41d98d;
+  --oe-red:#ff6262;
+  --oe-blue:#70a7ff;
+  --oe-warn:#ffd36a;
+  --oe-soft:rgba(255,255,255,.055);
+  --oe-shadow:rgba(0,0,0,.34);
+  color:var(--oe-text);
+  position:relative;
+  isolation:isolate;
+  padding:clamp(12px,2vw,24px) 0 38px;
+}
+:where(html[data-theme="light"], html.light, body.light, [data-theme="light"]) .orders-enterprise{
+  --oe-page:var(--page,#f6f7fb);
+  --oe-card:var(--card,#ffffff);
+  --oe-card-2:#fbfcff;
+  --oe-text:var(--text,#151820);
+  --oe-muted:var(--muted,#667085);
+  --oe-border:var(--border,rgba(15,23,42,.12));
+  --oe-soft:rgba(15,23,42,.045);
+  --oe-shadow:rgba(15,23,42,.12);
+}
+.orders-enterprise *, .orders-enterprise *::before, .orders-enterprise *::after{ box-sizing:border-box; }
+.orders-enterprise button,.orders-enterprise input,.orders-enterprise textarea,.orders-enterprise select{ font:inherit; }
+
+.oe-hero{
+  position:relative; overflow:hidden; border:1px solid var(--oe-border); border-radius:30px; padding:clamp(22px,3vw,42px); margin-bottom:18px;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--oe-accent) 24%, transparent) 0%, transparent 34%),
+    radial-gradient(circle at 86% 10%, rgba(255,255,255,.12) 0%, transparent 32%),
+    linear-gradient(135deg, color-mix(in srgb, var(--oe-card) 82%, #000 18%), var(--oe-card-2));
+  box-shadow:0 24px 70px var(--oe-shadow), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.oe-hero::before,.oe-hero::after{ content:""; position:absolute; border-radius:999px; pointer-events:none; filter:blur(8px); animation:oeFloat 8s ease-in-out infinite; }
+.oe-hero::before{ width:220px;height:220px;right:7%;top:-95px;background:color-mix(in srgb,var(--oe-accent) 32%,transparent); }
+.oe-hero::after{ width:150px;height:150px;left:10%;bottom:-80px;background:rgba(99,102,241,.18);animation-delay:-2.4s; }
+@keyframes oeFloat{ 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,14px,0) scale(1.05)} }
+.oe-hero-inner{ position:relative; display:flex; align-items:flex-end; justify-content:space-between; gap:28px; z-index:1; }
+.oe-eyebrow{ display:inline-flex;align-items:center;gap:10px;color:var(--oe-accent-2);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;margin-bottom:12px; }
+.oe-eyebrow i{ width:9px;height:9px;border-radius:50%;background:var(--oe-accent);box-shadow:0 0 18px var(--oe-accent); }
+.oe-hero h1{ margin:0;font-size:clamp(28px,4vw,48px);letter-spacing:-.045em;line-height:1.04; }
+.oe-hero p{ margin:12px 0 0;color:var(--oe-muted);max-width:760px;line-height:1.65; }
+.oe-metrics{ display:grid; grid-template-columns:repeat(3,minmax(95px,1fr)); gap:10px; min-width:min(430px,100%); }
+.oe-metric{ padding:14px 16px;border:1px solid var(--oe-border);border-radius:18px;background:rgba(255,255,255,.05);backdrop-filter:blur(12px); }
+.oe-metric small{ display:block;color:var(--oe-muted);font-size:12px;margin-bottom:4px; }
+.oe-metric b{ display:block;font-size:23px;color:var(--oe-text); }
+
+.orders-enterprise > .tabs,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs){
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  padding:6px;
+  border-radius:18px;
+  margin:0 0 14px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.014)),
+    color-mix(in srgb,var(--oe-card) 88%,transparent);
+  border:1px solid var(--oe-border);
+  box-shadow:
+    0 10px 24px var(--oe-shadow),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter:blur(12px);
+}
+
+.orders-enterprise > .tabs .tab,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab{
+  position:relative;
+  width:100%;
+  min-height:48px;
+  border:0;
+  border-radius:14px;
+  padding:8px 12px;
+  cursor:pointer;
+  color:var(--oe-muted);
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:13px;
+  line-height:1.15;
+  font-weight:700;
+  transition:
+    transform .18s ease,
+    color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.orders-enterprise > .tabs .tab:hover,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab:hover{
+  transform:translateY(-1px);
+  color:var(--oe-text);
+  background:color-mix(in srgb,var(--oe-soft) 78%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.orders-enterprise > .tabs .tab.active,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab.active{
+  color:#17130a;
+  background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);
+  box-shadow:
+    0 8px 18px color-mix(in srgb,var(--oe-accent) 22%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.48);
+  transform:none;
+}
+
+.orders-enterprise > .tabs .tab.active:hover,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab.active:hover{
+  transform:translateY(-1px);
+  filter:saturate(1.04);
+}
+
+/* icon ในแท็บให้เล็กลง */
+.orders-enterprise > .tabs .tab img,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab img,
+.orders-enterprise > .tabs .tab .icon,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab .icon,
+.orders-enterprise > .tabs .tab .tab-ico,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab .tab-ico{
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  display:inline-grid;
+  place-items:center;
+  object-fit:contain;
+}
+
+/* กัน layout เก่าที่ทำ icon/text เรียงแนวตั้ง */
+.orders-enterprise > .tabs .tab,
+.orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab{
+  flex-direction:row!important;
+}
+
+.orders-enterprise .tab::after,
+.orders-enterprise .tab.active::after{
+  display:none!important;
+  content:none!important;
+}
+
+.orders-enterprise .card,
+.orders-enterprise .table-wrap,
+.orders-enterprise .o-card,
+.orders-enterprise .filters,
+.orders-enterprise .pager-wrap,
+.orders-enterprise .right-rail .card,
+.orders-enterprise .shmd-container{
+  border:1px solid var(--oe-border)!important;border-radius:26px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--oe-card) 92%,#fff 3%),var(--oe-card))!important;
+  box-shadow:0 20px 54px var(--oe-shadow),inset 0 1px 0 rgba(255,255,255,.055)!important;
+}
+.orders-enterprise .card{ padding:clamp(16px,2vw,22px); margin-bottom:16px; }
+.orders-enterprise .card.soft{ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018))!important; }
+.orders-enterprise .title,.orders-enterprise h1,.orders-enterprise h2,.orders-enterprise h3{ color:var(--oe-text);letter-spacing:-.025em; }
+.orders-enterprise .muted{ color:var(--oe-muted)!important; }
+
+/* New order page */
+.order-new-enterprise #platformGrid.grid{ display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px; }
+.order-new-enterprise #platformGrid .platform,
+.order-new-enterprise #platformGrid button,
+.order-new-enterprise .platform-card{
+  min-height:96px;border:1px solid var(--oe-border)!important;border-radius:22px!important;background:var(--oe-soft)!important;color:var(--oe-text)!important;
+  transition:transform .22s ease,border .22s ease,box-shadow .22s ease,background .22s ease;overflow:hidden;position:relative;
+}
+.order-new-enterprise #platformGrid .platform:hover,
+.order-new-enterprise #platformGrid button:hover,
+.order-new-enterprise .platform-card:hover{ transform:translateY(-3px);border-color:color-mix(in srgb,var(--oe-accent) 36%,var(--oe-border))!important;box-shadow:0 14px 30px color-mix(in srgb,var(--oe-accent) 12%,transparent); }
+.order-new-enterprise #platformGrid .active,
+.order-new-enterprise #platformGrid button.active{ background:linear-gradient(135deg,color-mix(in srgb,var(--oe-accent) 18%,transparent),var(--oe-soft))!important;border-color:color-mix(in srgb,var(--oe-accent) 42%,var(--oe-border))!important; }
+.orders-enterprise .row{ gap:12px; }
+.orders-enterprise .search-all-wrap{ position:relative; min-width:min(520px,100%); flex:1; }
+.orders-enterprise .input,
+.orders-enterprise input:not([type="checkbox"]):not([type="radio"]),
+.orders-enterprise textarea,
+.orders-enterprise .select-btn,
+.orders-enterprise .pp-select{
+  border:1px solid color-mix(in srgb,var(--oe-border) 82%,var(--oe-accent) 12%)!important;border-radius:18px!important;background:color-mix(in srgb,var(--oe-page) 52%,var(--oe-card))!important;color:var(--oe-text)!important;
+  padding:12px 14px;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:border .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.orders-enterprise .input:focus,
+.orders-enterprise input:focus,
+.orders-enterprise textarea:focus,
+.orders-enterprise .select.open .select-btn{ border-color:color-mix(in srgb,var(--oe-accent) 55%,var(--oe-border))!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--oe-accent) 14%,transparent),inset 0 1px 0 rgba(255,255,255,.05)!important; }
+.orders-enterprise .chips{ display:flex;flex-wrap:wrap;gap:8px; }
+.orders-enterprise .chip{ border:1px solid var(--oe-border);border-radius:999px;background:var(--oe-soft);color:var(--oe-muted);padding:9px 13px;font-weight:800;cursor:pointer;transition:.2s ease; }
+.orders-enterprise .chip:hover,.orders-enterprise .chip.active{ color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53);border-color:transparent;transform:translateY(-1px); }
+.orders-enterprise .sel-grid{ display:grid;grid-template-columns:1fr 1.35fr;gap:16px; }
+.orders-enterprise .sel label,.orders-enterprise .form label,.orders-enterprise .form-label{ color:var(--oe-text);font-weight:800;margin-bottom:8px;display:block; }
+.orders-enterprise .select{ position:relative; }
+.orders-enterprise .select-menu,
+.orders-enterprise .search-suggest{ border:1px solid var(--oe-border)!important;border-radius:20px!important;background:color-mix(in srgb,var(--oe-card) 96%,#000 4%)!important;box-shadow:0 18px 50px rgba(0,0,0,.34)!important;backdrop-filter:blur(14px);z-index:80!important; }
+.orders-enterprise .select-menu .list{ max-height:360px;overflow:auto; }
+.orders-enterprise .list .item,
+.orders-enterprise .select-menu button,
+.orders-enterprise .search-suggest .item{ border-radius:14px!important;transition:background .18s ease,transform .18s ease; }
+.orders-enterprise .list .item:hover,
+.orders-enterprise .select-menu button:hover,
+.orders-enterprise .search-suggest .item:hover{ background:var(--oe-soft)!important;transform:translateX(2px); }
+.orders-enterprise .detail-grid{ display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.8fr);gap:18px;align-items:start; }
+.orders-enterprise #detailBox{ animation:oeFadeUp .32s ease both; }
+.orders-enterprise .hdr{ font-size:clamp(18px,2vw,26px);font-weight:900; }
+.orders-enterprise .meta{ display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;color:var(--oe-muted); }
+.orders-enterprise details{ border:1px solid var(--oe-border);border-radius:18px;padding:12px 14px;background:var(--oe-soft); }
+.orders-enterprise summary{ cursor:pointer;font-weight:900;color:var(--oe-accent-2); }
+.orders-enterprise .row2{ display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.orders-enterprise .full-row{ grid-column:1/-1; }
+.orders-enterprise .hintline{ display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;color:var(--oe-muted); }
+.orders-enterprise .input-group{ display:flex;align-items:center;gap:8px; }
+.orders-enterprise .input-prefix{ color:var(--oe-accent);font-weight:900;font-size:20px; }
+.orders-enterprise .toggle{ border:1px solid var(--oe-border);border-radius:20px;background:var(--oe-soft);padding:14px;cursor:pointer; }
+.orders-enterprise .toggle .lbl{ font-weight:900;display:block; }
+.orders-enterprise .toggle .hint{ color:var(--oe-muted);display:block;margin-top:4px; }
+.orders-enterprise .btn.primary,
+.orders-enterprise .btn.primary.block,
+.orders-enterprise button.btn.primary{
+  position:relative;overflow:hidden;border:0!important;border-radius:18px!important;min-height:52px;background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#b98626)!important;color:#17130a!important;font-weight:950!important;
+  box-shadow:0 16px 32px color-mix(in srgb,var(--oe-accent) 22%,transparent),inset 0 1px 0 rgba(255,255,255,.58)!important;transition:transform .2s ease,filter .2s ease;
+}
+.orders-enterprise .btn.primary:hover{ transform:translateY(-2px);filter:saturate(1.08); }
+.orders-enterprise .btn.primary::before{ content:"";position:absolute;inset:-60% auto -60% -45%;width:40%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent);animation:oeShine 3.8s ease-in-out infinite; }
+@keyframes oeShine{ 0%,45%{left:-50%} 70%,100%{left:120%} }
+.orders-enterprise .right-rail{ display:grid;gap:16px;position:sticky;top:16px; }
+.orders-enterprise .legend-head{ display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px; }
+.orders-enterprise .legend-title{ color:var(--oe-text);font-weight:950;font-size:17px; }
+.orders-enterprise .updates-list,.orders-enterprise .legend-list{ display:grid;gap:10px; }
+.orders-enterprise .legend-item{ display:grid;grid-template-columns:minmax(80px,auto) 1fr;gap:12px;align-items:center;border:1px solid var(--oe-border);border-radius:18px;background:var(--oe-soft);padding:11px 12px;transition:transform .2s ease,border .2s ease; }
+.orders-enterprise .legend-item:hover{ transform:translateY(-2px);border-color:color-mix(in srgb,var(--oe-accent) 28%,var(--oe-border)); }
+.orders-enterprise .legend-emoji{ color:var(--oe-accent-2);font-weight:900; }
+
+/* History page */
+.order-history-enterprise .page-head{ display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:2px 0 16px; }
+.order-history-enterprise .page-title h1{ margin:0;font-size:clamp(26px,3vw,40px); }
+.order-history-enterprise .alert{ border:1px solid var(--oe-border);border-radius:20px;padding:13px 16px;margin:0 0 16px;background:var(--oe-soft);box-shadow:inset 0 1px 0 rgba(255,255,255,.04); }
+.order-history-enterprise .alert.info{ color:var(--oe-accent-2); }
+.order-history-enterprise .alert.error{ color:var(--oe-red); }
+.order-history-enterprise #statusTabs.orders-history.tabs{ display:flex;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid var(--oe-border);border-radius:22px;background:var(--oe-soft);margin-bottom:16px; }
+.order-history-enterprise #statusTabs .tab{ border:1px solid transparent;border-radius:999px;background:transparent;color:var(--oe-muted);padding:10px 13px;font-weight:900;cursor:pointer;transition:.2s ease; }
+.order-history-enterprise #statusTabs .tab:hover,.order-history-enterprise #statusTabs .tab.active{ background:linear-gradient(135deg,#ffe28a,#e8bc53);color:#17130a;border-color:transparent;transform:translateY(-1px); }
+.order-history-enterprise .filters.card{ padding:16px!important; }
+.order-history-enterprise .filters .row.wrap{ display:flex;align-items:flex-end;gap:12px; }
+.order-history-enterprise .inline{ display:grid;gap:8px; }
+.order-history-enterprise .inline.grow{ flex:1;min-width:220px; }
+.order-history-enterprise .searchbox{ display:flex;align-items:center;gap:8px; }
+.order-history-enterprise .pager-wrap{ display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;margin:16px 0!important; }
+.order-history-enterprise .pager-left,.order-history-enterprise .pager-right{ display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.order-history-enterprise .page-btn{ border:1px solid var(--oe-border);border-radius:13px;padding:9px 11px;color:var(--oe-text);background:var(--oe-soft);text-decoration:none;font-weight:800;transition:.2s ease; }
+.order-history-enterprise .page-btn:hover,.order-history-enterprise .page-btn.active{ color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53);border-color:transparent;transform:translateY(-1px); }
+.order-history-enterprise .page-btn.disabled{ opacity:.45;pointer-events:none; }
+.order-history-enterprise .table-wrap.card{ padding:0!important;overflow:hidden; }
+.order-history-enterprise .order-table{ width:100%;border-collapse:separate;border-spacing:0;background:var(--oe-card); }
+.order-history-enterprise .order-table th,.order-history-enterprise .order-table td{ border-bottom:1px solid var(--oe-border);padding:15px 16px;vertical-align:top; }
+.order-history-enterprise .order-table th{ background:var(--oe-soft);color:var(--oe-muted);font-size:13px;font-weight:900;text-align:left; }
+.order-history-enterprise .order-table tbody tr{ transition:background .2s ease,transform .2s ease; }
+.order-history-enterprise .order-table tbody tr:hover{ background:var(--oe-soft); }
+.orders-enterprise .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+.orders-enterprise .badge{ display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:900;border:1px solid var(--oe-border);background:var(--oe-soft);color:var(--oe-text); }
+.orders-enterprise .badge.soft{ color:var(--oe-accent-2); }
+.orders-enterprise .badge.blue{ color:var(--oe-blue); }
+.orders-enterprise .badge.warn{ color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53);border:0; }
+.orders-enterprise .svc-name{ display:flex;flex-wrap:wrap;gap:8px;align-items:center; }
+.orders-enterprise .svc-name b{ line-height:1.4; }
+.orders-enterprise .link{ margin-top:8px;display:flex;gap:8px;align-items:center;min-width:0; }
+.orders-enterprise .link a{ color:var(--oe-muted);text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.orders-enterprise .link a:hover{ color:var(--oe-accent-2); }
+.orders-enterprise .pill.long,
+.orders-enterprise .pill.progress{ position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:38px;border-radius:999px;border:1px solid var(--oe-border);background:var(--oe-soft);color:var(--oe-text);font-weight:900;padding:8px 12px; }
+.orders-enterprise .pill.long .bar{ position:absolute;left:0;top:0;bottom:0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--oe-accent) 35%,transparent),color-mix(in srgb,var(--oe-accent) 64%,transparent));opacity:.75; }
+.orders-enterprise .pill.long .label{ position:relative;z-index:1;display:flex;align-items:center;gap:7px; }
+.orders-enterprise .pill.ok,.orders-enterprise .pill.long.ok{ background:linear-gradient(145deg,rgba(14,92,67,.86),rgba(9,58,47,.92));border-color:rgba(74,222,128,.28); }
+.orders-enterprise .pill.warn,.orders-enterprise .pill.long.warn{ background:linear-gradient(145deg,rgba(115,83,23,.86),rgba(67,49,17,.92));border-color:rgba(255,211,106,.32); }
+.orders-enterprise .pill.danger,.orders-enterprise .pill.long.danger{ background:linear-gradient(145deg,rgba(117,31,31,.88),rgba(73,15,16,.94));border-color:rgba(255,98,98,.32); }
+.orders-enterprise .st-actions,.orders-enterprise .st-actions.under{ margin-top:9px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap; }
+.orders-enterprise .xbtn{ width:38px;height:38px;border:1px solid var(--oe-border);border-radius:14px;background:var(--oe-soft);display:inline-grid;place-items:center;cursor:pointer;transition:.2s ease; }
+.orders-enterprise .xbtn:hover{ transform:translateY(-2px);border-color:color-mix(in srgb,var(--oe-accent) 32%,var(--oe-border));box-shadow:0 10px 20px var(--oe-shadow); }
+.orders-enterprise .xbtn .icon{ width:21px;height:21px;object-fit:contain; }
+.orders-enterprise .order-cards{ display:none; }
+.orders-enterprise .o-card{ padding:0!important;overflow:hidden;margin-bottom:12px; }
+.orders-enterprise .o-head{ display:grid;grid-template-columns:1fr auto 36px;gap:10px;align-items:center;padding:14px;cursor:pointer; }
+.orders-enterprise .o-toggle{ border:0;border-radius:12px;background:var(--oe-soft);color:var(--oe-text);width:34px;height:34px; }
+.orders-enterprise .o-body{ padding:0 14px 14px;border-top:1px dashed var(--oe-border); }
+.orders-enterprise .o-row{ display:grid;grid-template-columns:110px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--oe-border); }
+.orders-enterprise .o-row:last-child{ border-bottom:0; }
+.orders-enterprise .o-label{ color:var(--oe-muted); }
+.orders-enterprise .o-val{ min-width:0; }
+
+/* Detail modal skin */
+.orders-enterprise .shmd-modal{ backdrop-filter:blur(8px); }
+.orders-enterprise .shmd-backdrop{ background:rgba(0,0,0,.64)!important; }
+.orders-enterprise .shmd-container{ color:var(--oe-text)!important;overflow:hidden; }
+.orders-enterprise .shmd-header{ background:linear-gradient(135deg,color-mix(in srgb,var(--oe-accent) 20%,transparent),var(--oe-soft))!important;border-bottom:1px solid var(--oe-border)!important; }
+.orders-enterprise .shmd-badge{ color:var(--oe-accent-2)!important;font-weight:900;letter-spacing:.12em;text-transform:uppercase; }
+.orders-enterprise .shmd-card,.orders-enterprise .shmd-section,.orders-enterprise .shmd-info-item,.orders-enterprise .shmd-progress-container{ border:1px solid var(--oe-border)!important;border-radius:20px!important;background:var(--oe-soft)!important; }
+.orders-enterprise .shmd-btn-primary{ background:linear-gradient(135deg,#ffe28a,#e8bc53)!important;color:#17130a!important;border:0!important;border-radius:16px!important;font-weight:900!important; }
+.orders-enterprise .shmd-btn-secondary{ background:var(--oe-soft)!important;color:var(--oe-text)!important;border:1px solid var(--oe-border)!important;border-radius:16px!important; }
+
+@keyframes oeFadeUp{ from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+.orders-enterprise .card,.orders-enterprise .table-wrap,.orders-enterprise .o-card,.orders-enterprise .pager-wrap,.orders-enterprise .alert{ animation:oeFadeUp .34s ease both; }
+.orders-enterprise .card:nth-of-type(2){ animation-delay:.04s; }
+.orders-enterprise .card:nth-of-type(3){ animation-delay:.08s; }
+
+@media (max-width:1100px){
+  .orders-enterprise .detail-grid{ grid-template-columns:1fr; }
+  .orders-enterprise .right-rail{ position:relative;top:auto; }
+  .orders-enterprise .sel-grid{ grid-template-columns:1fr; }
+  .oe-hero-inner{ flex-direction:column;align-items:stretch; }
+}
+@media (max-width:760px){
+  .orders-enterprise{ padding-top:8px; }
+  .oe-hero{ border-radius:24px;padding:22px; }
+  .oe-metrics{ grid-template-columns:1fr; }
+  .orders-enterprise > .tabs,
+  .orders-enterprise .tabs:not(.orders-history):not(#statusTabs){ gap:8px;padding:6px;border-radius:20px; }
+  .orders-enterprise > .tabs .tab,
+  .orders-enterprise .tabs:not(.orders-history):not(#statusTabs) .tab{ padding:13px 10px;border-radius:15px;font-size:14px; }
+  .orders-enterprise .card,.orders-enterprise .table-wrap,.orders-enterprise .filters,.orders-enterprise .pager-wrap{ border-radius:22px!important;padding:14px!important; }
+  .orders-enterprise .row2{ grid-template-columns:1fr; }
+  .orders-enterprise .filters .row.wrap,.order-history-enterprise .pager-wrap{ flex-direction:column;align-items:stretch; }
+  .order-history-enterprise .order-desktop{ display:none!important; }
+  .orders-enterprise .order-cards{ display:block; }
+  .orders-enterprise .o-row{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion:reduce){
+  .orders-enterprise *, .orders-enterprise *::before, .orders-enterprise *::after{ animation:none!important;transition:none!important;scroll-behavior:auto!important; }
+}
+
+
+/* =========================================================
+   Layer + Responsive Fix: dropdown above panels, mobile platform 4 columns
+========================================================= */
+.order-new-enterprise .card,
+.order-new-enterprise .sel-grid,
+.order-new-enterprise .sel,
+.order-new-enterprise .search-all-wrap{
+  overflow: visible !important;
+}
+.order-new-enterprise .sel{ position:relative; z-index:30; }
+.order-new-enterprise .sel:has(.select.open){ z-index:9999; }
+.order-new-enterprise .select{ position:relative; z-index:20; }
+.order-new-enterprise .select.open{ z-index:10000 !important; }
+.order-new-enterprise .select-menu{
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  top:calc(100% + 10px) !important;
+  display:none;
+  max-height:min(430px, 58vh) !important;
+  overflow:hidden !important;
+  z-index:10050 !important;
+}
+.order-new-enterprise .select.open .select-menu{ display:block !important; }
+.order-new-enterprise .select-menu .list{
+  max-height:min(340px, 46vh) !important;
+  overflow:auto !important;
+  padding:6px !important;
+}
+.order-new-enterprise .search-suggest{
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  top:calc(100% + 10px) !important;
+  max-height:min(430px, 58vh) !important;
+  overflow:auto !important;
+  z-index:10040 !important;
+}
+.order-new-enterprise .select-search{ padding:10px; position:sticky; top:0; z-index:2; background:color-mix(in srgb,var(--oe-card) 94%,#000 6%); }
+.order-new-enterprise .select-search input{ width:100%; }
+
+@media (max-width:760px){
+  .order-new-enterprise #platformGrid.grid{
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:10px !important;
+  }
+  .order-new-enterprise #platformGrid .platform,
+  .order-new-enterprise #platformGrid button,
+  .order-new-enterprise .platform-card,
+  .order-new-enterprise #platformGrid .p-tile{
+    min-height:74px !important;
+    border-radius:18px !important;
+    padding:10px 6px !important;
+  }
+  .order-new-enterprise #platformGrid img,
+  .order-new-enterprise #platformGrid .p-icon img{
+    width:34px !important;
+    height:34px !important;
+    object-fit:contain !important;
+  }
+  .order-new-enterprise #platformGrid .platform span,
+  .order-new-enterprise #platformGrid button span,
+  .order-new-enterprise #platformGrid .p-name{
+    font-size:11px !important;
+    line-height:1.15 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+  .order-new-enterprise .select-menu,
+  .order-new-enterprise .search-suggest{
+    max-height:62vh !important;
+  }
+}
+
+
+
+/* =========================================================
+   FINAL Layer Fix — keep dropdown above every card/panel
+   Fixes: group/service dropdown hidden behind detail layer
+========================================================= */
+.order-new-enterprise,
+.order-new-enterprise #tab-order,
+.order-new-enterprise .tabpane,
+.order-new-enterprise .sel-grid,
+.order-new-enterprise .sel,
+.order-new-enterprise .select,
+.order-new-enterprise .search-all-wrap{
+  overflow: visible !important;
+}
+.order-new-enterprise .card{
+  position: relative !important;
+  overflow: visible !important;
+  isolation: auto !important;
+}
+.order-new-enterprise .card.dropdown-card-open,
+.order-new-enterprise .card:has(.select.open),
+.order-new-enterprise .card:has(.search-suggest:not([hidden])){
+  z-index: 2147483000 !important;
+}
+.order-new-enterprise .sel.dropdown-sel-open,
+.order-new-enterprise .sel:has(.select.open),
+.order-new-enterprise .select.open{
+  z-index: 2147483001 !important;
+}
+.order-new-enterprise .select-menu,
+.order-new-enterprise .search-suggest{
+  z-index: 2147483002 !important;
+  pointer-events: auto !important;
+  transform: translateZ(0);
+}
+.order-new-enterprise .detail-grid,
+.order-new-enterprise .right-rail,
+.order-new-enterprise #detailBox{
+  position: relative !important;
+  z-index: 1 !important;
+}
+.order-new-enterprise.dropdown-any-open .detail-grid,
+.order-new-enterprise.dropdown-any-open .right-rail,
+.order-new-enterprise.dropdown-any-open #detailBox{
+  z-index: 0 !important;
+}
+
+/* =========================================================
+   RIGHT RAIL ROOT FIX — แก้ gap ใหญ่แบบหายขาด
+   หลักการ: aside เป็น sticky shell, .right-rail-stack เป็นตัวเรียงการ์ดจริง
+========================================================= */
+@media (min-width:1101px){
+  .orders-enterprise .detail-grid{
+    align-items:start !important;
+  }
+
+  .orders-enterprise .right-rail{
+    display:block !important;
+    position:sticky !important;
+    top:16px !important;
+    align-self:start !important;
+    height:var(--rr-total, auto) !important;
+    min-height:0 !important;
+    max-height:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    gap:0 !important;
+    row-gap:0 !important;
+    justify-content:flex-start !important;
+    align-content:start !important;
+  }
+
+  .orders-enterprise .right-rail-stack{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    justify-content:flex-start !important;
+    gap:14px !important;
+    row-gap:14px !important;
+    column-gap:0 !important;
+    height:100% !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  .orders-enterprise .right-rail-stack > .card,
+  .orders-enterprise .updates-card,
+  .orders-enterprise .emoji-legend{
+    margin:0 !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+    transform:none !important;
+  }
+
+  .orders-enterprise .right-rail-stack > .card + .card{
+    margin-top:0 !important;
+  }
+
+  .orders-enterprise .updates-card{
+    height:var(--rr-updates, auto) !important;
+    flex:0 0 var(--rr-updates, auto) !important;
+  }
+
+  .orders-enterprise .emoji-legend{
+    height:var(--rr-emoji, auto) !important;
+    flex:0 0 var(--rr-emoji, auto) !important;
+  }
+
+  .orders-enterprise .updates-card .legend-head,
+  .orders-enterprise .emoji-legend .legend-head{
+    flex:0 0 auto !important;
+  }
+
+  .orders-enterprise .updates-card .updates-list,
+  .orders-enterprise .emoji-legend .legend-list{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:auto !important;
+    overscroll-behavior:contain;
+  }
+}
+
+@media (max-width:1100px){
+  .orders-enterprise .right-rail{
+    display:block !important;
+    position:relative !important;
+    top:auto !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  .orders-enterprise .right-rail-stack{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:14px !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  .orders-enterprise .updates-card,
+  .orders-enterprise .emoji-legend{
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  .orders-enterprise .updates-card .updates-list{
+    max-height:260px !important;
+    overflow:auto !important;
+  }
+
+  .orders-enterprise .emoji-legend .legend-list{
+    max-height:360px !important;
+    overflow:auto !important;
+  }
+}
+
+</style>
+
+<script>
+/* FINAL Dropdown Layer Controller: adds high-z classes while dropdown is open */
+(() => {
+  const root = document.querySelector('.order-new-enterprise');
+  if (!root || root.dataset.layerFixReady === '1') return;
+  root.dataset.layerFixReady = '1';
+
+  function syncOrderDropdownLayers(){
+    const opened = Array.from(root.querySelectorAll('.select.open'));
+
+    root.querySelectorAll('.dropdown-card-open').forEach(el => el.classList.remove('dropdown-card-open'));
+    root.querySelectorAll('.dropdown-sel-open').forEach(el => el.classList.remove('dropdown-sel-open'));
+
+    opened.forEach(sel => {
+      sel.closest('.card')?.classList.add('dropdown-card-open');
+      sel.closest('.sel')?.classList.add('dropdown-sel-open');
+    });
+
+    root.classList.toggle('dropdown-any-open', opened.length > 0);
+  }
+
+  document.addEventListener('click', () => requestAnimationFrame(syncOrderDropdownLayers), true);
+  document.addEventListener('keydown', () => requestAnimationFrame(syncOrderDropdownLayers), true);
+
+  const observer = new MutationObserver(syncOrderDropdownLayers);
+  root.querySelectorAll('.select').forEach(sel => observer.observe(sel, { attributes:true, attributeFilter:['class'] }));
+
+  syncOrderDropdownLayers();
+})();
+</script>

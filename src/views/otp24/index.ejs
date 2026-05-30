@@ -1,0 +1,5137 @@
+<%
+// code ธงตาม ct ของ API
+const CT2CODE = {
+  52:'th',187:'us',16:'gb',6:'id',10:'vn',5:'mm',1:'ua',19:'ng',62:'tr',
+  3:'cn',4:'ph',24:'kh',25:'la',7:'my',21:'eg'
+};
+const HAS_FLAG = id => !!CT2CODE[id];
+const FLAGURL  = id => HAS_FLAG(id) ? `/static/assets/otp24/${CT2CODE[id]}.png` : '';
+
+// path รูปธง
+const FLAGIMG = (id) => `/static/assets/otp24/${CT2CODE[id] || 'xx'}.png`;
+
+// (คง FLAG เดิมไว้เผื่อใช้ที่อื่น)
+const FLAG = id => ({
+  52:'🇹🇭',187:'🇺🇸',16:'🇬🇧',6:'🇮🇩',10:'🇻🇳',5:'🇲🇲',1:'🇺🇦',19:'🇳🇬',62:'🇹🇷',
+  3:'🇨🇳',4:'🇵🇭',24:'🇰🇭',25:'🇱🇦',7:'🇲🇾',21:'🇪🇬'
+}[id] || '🏳️');
+
+// แท็บแรกที่ควรแสดงตั้งแต่ SSR เพื่อลด FOUC ตอนเข้าหน้า /otp24?tab=orders
+const OTP_INITIAL_TAB = (() => {
+  try {
+    const v =
+      (typeof tab !== 'undefined' ? tab : '') ||
+      (typeof query !== 'undefined' && query ? query.tab : '') ||
+      (typeof req !== 'undefined' && req?.query ? req.query.tab : '');
+    return String(v || '').toLowerCase() === 'orders' ? 'orders' : 'shop';
+  } catch (_) {
+    return 'shop';
+  }
+})();
+
+// ตัวช่วยเช็ค OTP
+const HAS_OTP = (v) => {
+  try{
+    const s = String(v ?? '').trim();
+    return !!(s && !/^0+$/.test(s));   // ว่างหรือศูนย์ล้วน = ไม่มี
+  }catch{ return false; }
+};
+%>
+
+<script>
+(function(){
+  try{
+    var u = new URL(location.href);
+    if (u.searchParams.get('tab') === 'orders' || location.hash.replace('#','') === 'orders') {
+      document.documentElement.classList.add('otp24-start-orders');
+    }
+  }catch(_){ }
+})();
+</script>
+
+<style id="otp24-critical">
+  /* Critical CSS ต้องอยู่ก่อน markup เพื่อกันภาพแตก/ตารางยืดก่อน style หลักโหลด */
+  .otp24{ opacity:1; transition:opacity .18s ease; }
+  .otp24 .tabpane{ display:none; }
+  .otp24 .tabpane.show{ display:block; }
+  html.otp24-start-orders .otp24 #section-shop{ display:none !important; }
+  html.otp24-start-orders .otp24 #section-orders{ display:block !important; }
+  html.otp24-start-orders .otp24 .tab[data-target="shop"]{ color:var(--otp-muted,#8b949e); background:transparent; box-shadow:none; }
+  html.otp24-start-orders .otp24 .tab[data-target="shop"]::after{ transform:scaleX(0); }
+  html.otp24-start-orders .otp24 .tab[data-target="orders"]{ color:color-mix(in srgb, var(--otp-accent,#f5c451) 88%, #fff); }
+  .otp24.tab-switching .tabpane.show{ animation:otp24SmoothIn .32s cubic-bezier(.2,.8,.2,1) both; }
+  body.otp24-navigating{ cursor:progress; }
+  body.otp24-navigating .otp24{ pointer-events:none; }
+  .otp24-route-loader{ position:fixed; inset:0; z-index:9998; display:grid; place-items:center; opacity:0; pointer-events:none; background:rgba(5,7,12,.56); backdrop-filter:blur(14px); transition:opacity .18s ease; }
+  body.otp24-navigating .otp24-route-loader{ opacity:1; pointer-events:auto; }
+  .otp24-route-loader__box{ min-width:220px; border:1px solid rgba(245,196,81,.28); border-radius:24px; padding:18px 22px; text-align:center; background:linear-gradient(180deg,rgba(22,24,32,.92),rgba(12,14,20,.92)); color:#fff2c7; box-shadow:0 24px 80px rgba(0,0,0,.42); }
+  .otp24-route-loader__ring{ width:34px; height:34px; margin:0 auto 10px; border-radius:999px; border:3px solid rgba(245,196,81,.22); border-top-color:#f5c451; animation:otp24Spin .8s linear infinite; }
+  @keyframes otp24Spin{ to{ transform:rotate(360deg); } }
+  @keyframes otp24SmoothIn{ from{ opacity:0; transform:translateY(10px) scale(.992); filter:blur(6px); } to{ opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
+
+
+/* HOTFIX — เรียง/แสดงสินค้าที่ถูกซื้อบ่อยสุด */
+.popular-badge{
+  position:absolute;
+  top:8px;
+  left:8px;
+  z-index:4;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--otp-gold, #f7d774) 46%, transparent);
+  background:linear-gradient(135deg, rgba(247,215,116,.22), rgba(196,139,36,.10));
+  color:color-mix(in srgb, var(--otp-gold, #f7d774) 88%, #fff);
+  font-size:11px;
+  font-weight:800;
+  line-height:1;
+  box-shadow:0 10px 26px rgba(247,215,116,.12), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(10px);
+  pointer-events:none;
+}
+@media(max-width:760px){
+  .popular-badge{top:6px;left:6px;font-size:10px;padding:3px 8px;min-height:24px;}
+}
+
+
+
+/* ==========================================================
+   FINAL TUNE — OTP24 app cards compact & balanced
+   ลดความสูง/ขนาดการ์ดให้พอดีกับโลโก้ โดยยังคง badge อยู่แนวเดียวกัน
+========================================================== */
+.otp24 #appsGrid.grid.cards{
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;
+  gap:14px!important;
+  align-items:stretch!important;
+}
+.otp24 .card.app{
+  min-height:188px!important;
+  padding:13px 12px 12px!important;
+  border-radius:22px!important;
+  gap:8px!important;
+  justify-content:center!important;
+}
+.otp24 .card.app:hover{
+  transform:translateY(-5px) scale(1.01)!important;
+}
+.otp24 .app-icon{
+  width:78px!important;
+  height:78px!important;
+  border-radius:24px!important;
+  margin-top:8px!important;
+}
+.otp24 .app-icon img{
+  width:58px!important;
+  height:58px!important;
+  border-radius:18px!important;
+}
+.otp24 .app-name{
+  font-size:14.5px!important;
+  line-height:1.22!important;
+  min-height:auto!important;
+  margin-top:2px!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+.otp24 .popular-badge,
+.otp24 .price-badge{
+  top:10px!important;
+  min-height:28px!important;
+  height:28px!important;
+  padding:0 10px!important;
+  font-size:10.5px!important;
+}
+.otp24 .popular-badge{left:9px!important;}
+.otp24 .price-badge{right:9px!important;}
+@media(max-width:760px){
+  .otp24 #appsGrid.grid.cards{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+  }
+  .otp24 .card.app{
+    min-height:166px!important;
+    padding:11px 10px 10px!important;
+    border-radius:20px!important;
+    gap:7px!important;
+  }
+  .otp24 .app-icon{
+    width:66px!important;
+    height:66px!important;
+    border-radius:20px!important;
+    margin-top:7px!important;
+  }
+  .otp24 .app-icon img{
+    width:50px!important;
+    height:50px!important;
+    border-radius:16px!important;
+  }
+  .otp24 .app-name{
+    font-size:13px!important;
+  }
+  .otp24 .popular-badge,
+  .otp24 .price-badge{
+    top:8px!important;
+    height:25px!important;
+    min-height:25px!important;
+    padding:0 8px!important;
+    font-size:9.5px!important;
+  }
+}
+</style>
+
+<section class="page container otp24">
+    <div class="otp-enterprise-hero" aria-label="OTP24 Hero">
+      <div class="otp-hero-glow otp-hero-glow-a"></div>
+      <div class="otp-hero-glow otp-hero-glow-b"></div>
+      <div class="otp-hero-content">
+        <span class="otp-kicker">OTP24 Service Center</span>
+        <h1>เช่าเบอร์ OTP พรีเมียม</h1>
+        <p>รับเบอร์ยืนยันตัวตนได้ทันทีในไม่กี่คลิก รองรับหลายแอปและหลายประเทศ ติดตาม OTP แบบเรียลไทม์ ใช้งานง่าย ปลอดภัย</p>
+      </div>
+      <div class="otp-hero-stats" aria-label="สรุปบริการ">
+        <div><b><%= (products || []).length || 0 %></b><span>บริการ</span></div>
+        <div><b>Realtime</b><span>ติดตาม OTP</span></div>
+        <div><b>Secure</b><span>คืนเครดิตอัตโนมัติ</span></div>
+      </div>
+    </div>
+    <div class="tabs">
+        <button class="tab <%= OTP_INITIAL_TAB === 'shop' ? 'active' : '' %>" style="width: 100%;" data-target="shop"><span class="tab-ico">🛒</span><span>สั่งซื้อ OTP</span></button>
+        <button class="tab <%= OTP_INITIAL_TAB === 'orders' ? 'active' : '' %>" style="width: 100%;" data-target="orders"><span class="tab-ico">📜</span><span>ประวัติการสั่งซื้อ</span></button>
+    </div>
+
+    <div class="otp24-route-loader" aria-hidden="true">
+      <div class="otp24-route-loader__box">
+        <div class="otp24-route-loader__ring"></div>
+        <div>กำลังเปิดประวัติการสั่งซื้อ…</div>
+      </div>
+    </div>
+
+    <!-- ============ SECTION 1: สั่งซื้อ OTP ============ -->
+    <section id="section-shop" class="tabpane <%= OTP_INITIAL_TAB === 'shop' ? 'show' : '' %>">
+        <div class="row mt">
+          <input id="otpSearch" class="input" placeholder="ค้นหาแอพ…" autocomplete="off" />
+        </div>
+        
+        <%
+          // key ที่ใช้ตัดสินใจว่า “ถือว่าอันเดียวกัน”
+          const keyOf = p => `${(p.alias || p.name || '').trim().toLowerCase()}|${Number(p.price||0)}`;
+          const seen = new Set();
+          const uniqueProducts = [];
+          (products || []).forEach(p => {
+            const k = keyOf(p);
+            if (!seen.has(k)) { seen.add(k); uniqueProducts.push(p); }
+          });
+        %>
+        <!-- เดิม: <div class="grid cards mt-lg"> ... มีปุ่มเช่าในแต่ละการ์ด -->
+        <div class="grid cards mt-lg" id="appsGrid">
+        <% uniqueProducts.forEach(p => { %>
+            <section class="card app"
+            data-id="<%= p._id %>"
+            data-name="<%= p.name %>"
+            data-price="<%= p.price %>"
+            role="button"
+            tabindex="0"
+            aria-label="เช่า OTP สำหรับ <%= p.name %> ราคา <%= p.price.toFixed(2) %> บาท">
+            <div class="price-badge">฿ <%= p.price.toFixed(2) %></div>
+            <% if (Number(p.freq || 0) > 0) { %>
+              <div class="popular-badge">ซื้อ <%= Number(p.freq || 0).toLocaleString('th-TH') %> ครั้ง</div>
+            <% } %>
+            <div class="app-icon">
+                <% if (p.icon) { %>
+                <img src="<%= p.icon %>" alt="<%= p.name %>" loading="lazy"/>
+                <% } else { %>
+                <div class="placeholder"><%= p.name?.[0] || '?' %></div>
+                <% } %>
+            </div>
+            <div class="app-name"><%= p.name %></div>
+            <!-- ตัดปุ่มเช่าออก -->
+            </section>
+        <% }) %>
+        </div>
+    </section>
+
+    <!-- ============ SECTION 2: ประวัติ OTP (แบบภาพตัวอย่าง #3) ============ -->
+    <section id="section-orders" class="tabpane <%= OTP_INITIAL_TAB === 'orders' ? 'show' : '' %>">
+        <!-- Controls: per page + pager -->
+        <div class="orders-controls" id="ordersControlsDesktop">
+            <div class="left">
+                แสดง
+                <select id="perPageSelect">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                </select>
+                รายการ/หน้า
+            </div>
+            <div class="right pager">
+                <button class="pg-btn" data-act="first" aria-label="หน้าแรก">«</button>
+                <button class="pg-btn" data-act="prev" aria-label="ก่อนหน้า">‹</button>
+                <span id="pageInfo">หน้า 1/1</span>
+                <button class="pg-btn" data-act="next" aria-label="ถัดไป">›</button>
+                <button class="pg-btn" data-act="last" aria-label="หน้าสุดท้าย">»</button>
+            </div>
+        </div>
+        <div class="orders-wrap">
+        <table class="tbl">
+            <thead>
+            <tr>
+                <th>เลขออเดอร์</th>
+                <th>แอป</th>
+                <th>เบอร์</th>
+                <th>OTP / เวลา</th>
+                <th class="center">ราคา</th>
+                <th class="right">สถานะ</th>
+            </tr>
+            </thead>
+            <tbody id="ordersBody">
+            <% (orders||[]).forEach(o => {
+            const rawSt = String(o.status || 'processing').toLowerCase();
+            const st = (rawSt === 'success' && !HAS_OTP(o.otp)) ? 'processing' : rawSt;
+            const createdAtStr = new Date(o.createdAt).toISOString().replace('T',' ').slice(0,19);
+            %>
+            <tr data-orderid="<%= o.orderId %>" data-ct="<%= Number(o.countryId||0) %>" data-expires="<%= o.expiresAt ? new Date(o.expiresAt).toISOString() : '' %>">
+                <td class="mono"><%= o.orderId || '-' %></td>
+                <td>
+                <span class="badge app"><%= o.appName || '—' %></span>
+                </td>
+                <td>
+                  <div class="mono phone-cell">
+                    <% 
+                      const phoneStrTable = (o.displayPhone || o.phone)
+                        ? (o.displayPhone || (Number(o.countryId)===52 ? String(o.phone).replace(/[^0-9]/g,'').replace(/^66/,'0') : String(o.phone)))
+                        : '-';
+                    %>
+                    <span class="flag"><img src="<%= FLAGIMG(Number(o.countryId||0)) %>" alt="" /></span>
+                    <span class="v"><%= phoneStrTable %></span>
+                    <% if (o.phone) { %>
+                      <button class="copy" data-copy="<%= phoneStrTable %>" aria-label="คัดลอกเบอร์">
+                        <img src="/static/assets/otp24/copy.png" alt="">
+                      </button>
+                    <% } %>
+                  </div>
+                </td>
+
+                <td>
+                <% if (HAS_OTP(o.otp)) { %>
+                  <div class="otp">OTP : <b><%= String(o.otp).trim() %></b>
+                    <button class="copy" data-copy="<%= String(o.otp).trim() %>" aria-label="คัดลอก OTP">
+                      <img src="/static/assets/otp24/copy.png" alt="" />
+                    </button>
+                  </div>
+                <% } else { %>
+                  <div class="otp none">OTP : <span class="muted">ไม่พบข้อความ</span></div>
+                <% } %>
+                <div class="ts">
+                  <%= new Intl.DateTimeFormat('sv-SE', {
+                        timeZone: 'Asia/Bangkok',
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        hour12: false
+                      }).format(new Date(o.createdAt)) %>
+                </div>
+                </td>
+
+                <td class="center">฿ <%= Number(o.salePrice||0).toFixed(2) %></td>
+
+                <td class="right">
+                  <div class="status-stack">
+                    <span class="pill <%= st %>">
+                      <%= st==='success'   ? 'สำเร็จ'
+                      : st==='refunded'  ? 'คืนเครดิต'
+                      : st==='timeout'   ? 'คืนเครดิต'
+                      : st==='failed'    ? 'คืนเครดิต'
+                      : 'กำลังรอ OTP' %>
+                    </span>
+
+                    <!-- <% if (st==='success') { %>
+                      <button
+                        class="pill warn btn-reuse"
+                        data-orderid="<%= o.orderId %>"
+                        data-app="<%= o.appName %>"
+                        data-number="<%= o.phone %>"
+                        data-price="<%= (Number(o.providerPrice || 0) * 2.7).toFixed(2) %>"
+                        data-ct="<%= Number(o.countryId||0) %>">
+                        ใช้เบอร์เดิม
+                      </button>
+                    <% } %> -->
+
+                    <% if (st==='processing') { %>
+                      <div class="countdown">
+                        ไม่ได้รับ OTP ใน 10 นาที ระบบคืนเครดิตอัตโนมัติ
+                      </div>
+                    <% } %>
+                  </div>
+                </td>
+            </tr>
+            <% }) %>
+            </tbody>
+        </table>
+        </div>
+
+        <!-- ── Mobile: pagination controls (inside section-orders) ── -->
+        <div class="orders-controls mobile-only" id="ordersControlsMobile">
+        <div class="left">
+            แสดง
+            <select id="perPageSelectMobile">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            </select>
+            รายการ/หน้า
+        </div>
+        <div class="right pager">
+            <button class="pg-btn" data-act="first">«</button>
+            <button class="pg-btn" data-act="prev">‹</button>
+            <span id="pageInfoMobile">หน้า 1/1</span>
+            <button class="pg-btn" data-act="next">›</button>
+            <button class="pg-btn" data-act="last">»</button>
+        </div>
+    </div>
+    <!-- ลิสต์แบบมือถือ (แสดงเฉพาะจอเล็ก) -->
+    <div id="mOrders" class="m-orders">
+    <% (orders||[]).forEach(o => { 
+        const rawSt = String(o.status || 'processing').toLowerCase();
+        const st = (rawSt === 'success' && !HAS_OTP(o.otp)) ? 'processing' : rawSt;
+        const createdStr = new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'Asia/Bangkok',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false
+        }).format(new Date(o.createdAt));
+        const phoneStr = o.phone
+        ? (Number(o.countryId)===52 ? String(o.phone).replace(/^\+?66/,'0') : String(o.phone))
+        : '-';
+    %>
+    <div class="m-item collapsed"
+        data-orderid="<%= o.orderId %>"
+        data-ct="<%= Number(o.countryId||0) %>"
+        data-expires="<%= o.expiresAt ? new Date(o.expiresAt).toISOString() : '' %>">
+        <!-- หัวการ์ด: แตะตรงไหนก็พับ/กาง -->
+        <div class="m-head">
+          <div class="row1">
+              <div class="oid mono"><%= o.orderId %></div>
+              <div class="when mono"><%= createdStr %></div>
+              <button class="toggle" aria-label="toggle" type="button">+</button>
+          </div>
+          <div class="row2">
+            <div class="appmobile">
+              แอป: <span class="v"><%= o.appName || '—' %></span>
+            </div>
+
+            <div class="phone mono">
+              เบอร์: <span class="v"><%= phoneStr %></span>
+              <% if (o.phone) { %>
+                <button class="copy" data-copy="<%= phoneStr %>" aria-label="คัดลอกเบอร์">
+                  <img src="/static/assets/otp24/copy.png" alt="">
+                </button>
+              <% } %>
+            </div>
+
+            <% if (HAS_OTP(o.otp)) { %>
+              <div class="otp">OTP: <b class="v"><%= String(o.otp).trim() %></b>
+                <button class="copy" data-copy="<%= String(o.otp).trim() %>" aria-label="คัดลอก OTP">
+                  <img src="/static/assets/otp24/copy.png" alt="">
+                </button>
+              </div>
+            <% } else { %>
+              <div class="otp none">OTP: <span class="muted v">ไม่พบข้อความ</span></div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- เนื้อหาเมื่อกาง -->
+        <div class="m-body">
+          <div class="pair">
+            <span>สถานะ</span>
+            <span>
+              <div class="status-stack">
+                <span class="pill <%= st %>">
+                  <%= st==='success'   ? 'เสร็จสิ้น'
+                  : st==='refunded'  ? 'คืนเครดิต'
+                  : st==='timeout'   ? 'คืนเครดิต'
+                  : st==='failed'    ? 'คืนเครดิต'
+                  : 'กำลังรอ OTP' %>
+                </span>
+
+                <!-- <% if (st==='success') { %>
+                  <button
+                    class="pill warn btn-reuse"
+                    data-orderid="<%= o.orderId %>"
+                    data-app="<%= o.appName %>"
+                    data-number="<%= o.phone %>"
+                    data-price="<%= (Number(o.providerPrice || 0) * 2.7).toFixed(2) %>"
+                    data-ct="<%= Number(o.countryId||0) %>">
+                    ใช้เบอร์เดิม
+                  </button>
+                <% } %> -->
+
+                <% if (st==='processing') { %>
+                  <div class="countdown">
+                    ไม่ได้รับ OTP ใน 10 นาที ระบบคืนเครดิตอัตโนมัติ
+                  </div>
+                <% } %>
+              </div>
+            </span>
+          </div>
+        </div>
+    </div>
+    <% }) %>
+    </div>
+    </section>
+
+</section>
+
+<dialog id="reuseModal">
+  <form method="dialog" class="modal modal-reuse">
+    <h2 class="modal-title">คุณขอ OTP เบอร์เดิม อีกครั้ง ?</h2>
+    <div class="modal-divider"></div>
+
+    <div class="kv">
+      <div class="k">APP :</div>
+      <div class="v" id="reuseApp">—</div>
+
+      <div class="k">เบอร์ :</div>
+      <div class="v mono phone-line">
+          <span id="reuseNumber">—</span>
+          <img id="reuseFlag" alt="" style="width:20px;height:14px;border-radius:3px;vertical-align:middle;display:none;">
+        </span>
+      </div>
+
+      <div class="k">ราคา :</div>
+      <div class="v"><span id="reusePrice">—</span> บาท</div>
+    </div>
+
+    <div class="actions">
+      <button id="btnReuseConfirm" class="btn modal-primary" style="box-shadow: none;" value="ok">ตกลง</button>
+      <button class="btn modal-secondary" style="background: #e01616; box-shadow: none;" value="cancel">ยกเลิก</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ================= TERMS MODAL ================= -->
+<div id="termsModal" class="bt-terms-modal hidden">
+  <div class="bt-terms-backdrop"></div>
+
+  <div class="bt-terms-dialog">
+    <h3 class="bt-terms-title">เงื่อนไขการใช้บริการเช่าเบอร์ OTP</h3>
+
+    <div class="bt-terms-body">
+      <p><strong>การให้บริการทางร้าน</strong><br>
+      ระบบนี้ให้บริการเช่าเบอร์โทรศัพท์ชั่วคราวเพื่อรับรหัส OTP จากแอปหรือเว็บไซต์ที่ผู้ใช้เลือกเท่านั้น  
+      ผู้ใช้ต้องตรวจสอบให้แน่ใจว่าบริการนั้นอนุญาตให้ใช้เบอร์ชั่วคราวตามกฎของแอปนั้น ๆ หรือไม่</p>
+
+      <p><strong>การใช้งานอย่างถูกต้อง</strong><br>
+      ห้ามใช้เบอร์ OTP เพื่อวัตถุประสงค์ที่ผิดกฎหมาย เช่น สร้างบัญชีปลอม หลอกลวง หรือการกระทำใด ๆ ที่ผิดกฎหมาย</p>
+
+      <p><strong>ความรับผิดชอบของผู้ใช้</strong><br>
+      ผู้ใช้รับผิดชอบผลลัพธ์ทั้งหมด หากเกิดปัญหากฎหมาย ผู้ให้บริการไม่มีส่วนรับผิดชอบ  
+      การละเมิดกฎหมายจะถูกระงับบัญชีและดำเนินคดีตามกฎหมาย</p>
+
+      <p><strong>การคืนเครดิต</strong><br>
+      หาก OTP ไม่เข้า ระบบจะคืนเครดิตอัตโนมัติภายใน 15 นาที</p>
+
+      <label class="accept-row">
+        <input type="checkbox" id="termsAccept">
+        ข้าพเจ้าได้อ่านและยอมรับเงื่อนไขทั้งหมด
+      </label>
+    </div>
+
+    <div class="bt-terms-actions">
+      <button id="termsConfirm" class="btn-primary" disabled>ยืนยัน</button>
+      <button id="termsCancel" class="btn-secondary">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ซื้อ -->
+<dialog id="buyModal">
+  <form method="dialog" class="modal modal-otp24">
+    <h2 class="modal-title">คุณต้องการเช่าเบอร์ OTP ?</h2>
+
+    <div class="modal-sub">
+      <div id="selApp">รายการ : —</div>
+      <div id="selPrice">ราคา : — บาท</div>
+    </div>
+
+    <div class="modal-label">กรุณาเลือกประเทศ</div>
+    <div class="modal-divider"></div>
+
+    <div class="flags-grid">
+        <%
+            // จัดลำดับ: ไทย (52) ก่อน เสมอ ที่เหลือเรียงตามชื่อ
+            const FLAG_LIST = Object.entries(countries)
+            .map(([id, name]) => ({ id: Number(id), name }))
+            .sort((a, b) => (a.id === 52 ? -1 : b.id === 52 ? 1 : a.name.localeCompare(b.name, 'th')));
+
+            FLAG_LIST.forEach(c => { %>
+            <button type="button" class="flag-btn" data-ct="<%= c.id %>" title="<%= c.name %>">
+                <img src="<%= FLAGIMG(c.id) %>" alt="<%= c.name %>" loading="lazy">
+            </button>
+        <% }); %>
+    </div>
+
+    <div class="actions">
+      <button class="btn modal-primary" id="btnConfirm" disabled>ตกลง</button>
+      <button class="btn modal-secondary" style="background: rgb(231, 11, 11); box-shadow: none;" value="close">ยกเลิก</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- otp Notice Modal -->
+<dialog id="otpNoticeModal" class="toast-modal otp-enterprise-notice" aria-labelledby="otpNoticeTitle" aria-describedby="otpNoticeText">
+  <div class="otp-notice-card toast-card" role="alertdialog">
+    <div class="otp-notice-orb otp-notice-orb-a" aria-hidden="true"></div>
+    <div class="otp-notice-orb otp-notice-orb-b" aria-hidden="true"></div>
+
+    <div class="otp-notice-head toast-headbar">
+      <div class="otp-notice-badge toast-badge" aria-hidden="true">
+        <span class="otp-notice-badge-glow"></span>
+        <span class="otp-notice-badge-icon">⚠️</span>
+      </div>
+      <div class="otp-notice-headtxt toast-headtxt">
+        <span class="otp-notice-kicker">OTP24 Notice</span>
+        <h3 class="otp-notice-title toast-title" id="otpNoticeTitle">แจ้งเตือนก่อนใช้บริการ</h3>
+        <p class="otp-notice-sub" id="otpNoticeText">โปรดอ่านข้อมูลสำคัญก่อนเช่าเบอร์ OTP เพื่อให้ระบบทำงานถูกต้อง</p>
+      </div>
+    </div>
+
+    <div class="otp-notice-body toast-body">
+      <div class="otp-notice-list" aria-label="ข้อมูลสำคัญก่อนใช้บริการ OTP">
+        <div class="otp-notice-item">
+          <span class="otp-notice-no">01</span>
+          <div>
+            <b>คืนเครดิตอัตโนมัติ</b>
+            <small>หากไม่ได้รับ OTP ภายใน 10 นาที ระบบจะคืนเครดิตให้อัตโนมัติ</small>
+          </div>
+        </div>
+        <div class="otp-notice-item">
+          <span class="otp-notice-no">02</span>
+          <div>
+            <b>รองรับการซื้อเบอร์เดิม</b>
+            <small>สามารถซื้อเบอร์เดิมได้ หากเบอร์นั้นยังอยู่ในระบบผู้ให้บริการ</small>
+          </div>
+        </div>
+        <div class="otp-notice-item is-warning">
+          <span class="otp-notice-no">03</span>
+          <div>
+            <b>พบปัญหาให้แจ้งแอดมินทันที</b>
+            <small>หาก OTP ไม่เข้า หรือสถานะผิดปกติ ให้ติดต่อแอดมินเพื่อช่วยตรวจสอบ</small>
+          </div>
+        </div>
+      </div>
+
+      <label class="otp-notice-toggle-row" for="otpNoticeDontShow">
+        <input id="otpNoticeDontShow" type="checkbox"/>
+        <span class="otp-notice-switch" aria-hidden="true"></span>
+        <span class="otp-notice-toggle-text">
+          <b>ไม่แสดงอีกใน 7 วัน</b>
+          <small>ระบบจะจำตัวเลือกนี้ไว้เฉพาะเบราว์เซอร์นี้</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="otp-notice-actions toast-actions">
+      <button class="otp-notice-accept pill primary" id="otpNoticeClose" type="button">
+        <span class="btn-shine" aria-hidden="true"></span>
+        <span>ปิดและยอมรับ</span>
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  const KEY = 'otp_notice_suppress_until_v1'; // localStorage key
+  const modal = document.getElementById('otpNoticeModal');
+  const chk = document.getElementById('otpNoticeDontShow');
+  const btnClose = document.getElementById('otpNoticeClose');
+
+  function shouldShow(){
+    try {
+      const v = localStorage.getItem(KEY);
+      if (!v) return true;
+      const ts = Number(v);
+      if (!Number.isFinite(ts)) return true;
+      return Date.now() > ts; // show if now past expiry
+    } catch(e){
+      return true;
+    }
+  }
+
+  function setSuppressFor1Day(){
+    const until = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    try { localStorage.setItem(KEY, String(until)); } catch(e){ /* ignore */ }
+  }
+
+  // show modal on DOM ready if needed
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try {
+      if (shouldShow()) {
+        // wait a tick so dialog styles/backdrop applied nicely
+        setTimeout(()=> {
+          if (!modal.open) modal.showModal();
+        }, 120);
+      }
+    } catch(e){}
+  });
+
+  function closeWithAnimation(){
+    if (!modal) return;
+    try {
+      if (!modal.open) return;
+      modal.classList.add('is-closing');
+      window.setTimeout(() => {
+        try { modal.close(); } catch(e){}
+        modal.classList.remove('is-closing');
+      }, 220);
+    } catch(e){
+      try { modal.close(); } catch(_){}
+    }
+  }
+
+  btnClose?.addEventListener('click', ()=>{
+    if (chk && chk.checked) setSuppressFor1Day();
+    closeWithAnimation();
+  });
+
+  // allow Escape/cancel to close as well but don't set suppression
+  modal?.addEventListener('cancel', (ev)=> {
+    ev.preventDefault();
+    closeWithAnimation();
+  });
+})();
+</script>
+
+<script>
+// helper: notify
+function notify(title, text, variant='error'){
+  if (window.showMsg) {
+    window.showMsg({ variant, title, text });
+  } else {
+    alert(`${title}\n${text}`);
+  }
+}
+
+/* ----- OTP ----- */
+function normalizeOtp(v){
+  const s = String(v ?? '').trim();
+  if (!s || /^0+$/.test(s)) return null;  // ว่าง / ศูนย์ล้วน = ไม่มี
+  return s;
+}
+
+/* ----- Tabs: Smooth switch + กัน FOUC ----- */
+function setOtpTab(target, opts = {}){
+  const next = String(target || 'shop').toLowerCase() === 'orders' ? 'orders' : 'shop';
+  const tabs = document.querySelectorAll('.tab');
+  const panes = document.querySelectorAll('.tabpane');
+  const nextPane = document.getElementById('section-' + next);
+  if (!nextPane) return;
+
+  const currentPane = document.querySelector('.tabpane.show');
+  const already = currentPane === nextPane;
+
+  document.documentElement.classList.toggle('otp24-start-orders', next === 'orders');
+  tabs.forEach(x => x.classList.toggle('active', x.dataset.target === next));
+
+  const apply = () => {
+    panes.forEach(x => x.classList.remove('show'));
+    nextPane.classList.add('show');
+    const root = document.querySelector('.otp24');
+    if (root && !already) {
+      root.classList.remove('tab-switching');
+      void root.offsetWidth;
+      root.classList.add('tab-switching');
+      setTimeout(() => root.classList.remove('tab-switching'), 360);
+    }
+    if (typeof applyPagination === 'function') requestAnimationFrame(applyPagination);
+  };
+
+  apply();
+
+  if (opts.push) {
+    const u = new URL(location.href);
+    if (next === 'orders') u.searchParams.set('tab', 'orders');
+    else u.searchParams.delete('tab');
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', () => setOtpTab(t.dataset.target, { push:true }));
+});
+
+requestAnimationFrame(() => {
+  const u = new URL(location.href);
+  if (u.searchParams.get('tab') === 'orders' || location.hash.replace('#','') === 'orders') setOtpTab('orders');
+  else setOtpTab('<%= OTP_INITIAL_TAB %>');
+});
+
+/* ----- Buy flow ----- */
+let chosen = { productId:null, countryId:null, name:'', price:0 };
+function openBuyModal(id, name, price){
+  chosen = { productId:id, countryId:null, name, price };
+  document.getElementById('selApp').textContent   = `รายการ : ${name}`;
+  document.getElementById('selPrice').textContent = `ราคา : ${price.toFixed(2)} บาท`;
+  document.querySelectorAll('#buyModal .flag').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btnConfirm').disabled = true;
+  document.getElementById('buyModal').showModal();
+}
+document.querySelectorAll('#buyModal .flag-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#buyModal .flag-btn').forEach(b=>b.classList.remove('active','selected'));
+    btn.classList.add('active','selected');       // ← ใช้คู่กับ CSS ด้านบน
+    chosen.countryId = Number(btn.dataset.ct);
+    document.getElementById('btnConfirm').disabled = false;
+  });
+});
+// สลับแท็บไป "ประวัติ"
+function goOrdersTab(){
+  setOtpTab('orders', { push:true });
+}
+
+function goOtpOrdersPage(url){
+  const target = url || '/otp24?tab=orders';
+  try { document.body.classList.add('otp24-navigating'); } catch(_) {}
+  // ไปหน้าเป้าหมายโดยตรง ไม่ reload หน้าปัจจุบันก่อน จึงไม่เกิดช่วง style แตก 1 วิ
+  window.location.replace(target);
+}
+
+// โพลลิ่งเช็คสถานะออเดอร์ทุก 1 วิ จนจบ
+const POLL_DONE = new Set(['success', 'refunded', 'timeout', 'failed', 'canceled']);
+const pollers = new Map();
+const OTP24_SINGLE_POLL_MS = 6000;
+const OTP24_LIST_POLL_MS = 15000;
+const OTP24_LIST_POLL_HIDDEN_MS = 60000;
+
+function startOrderPolling(orderId){
+  if (!orderId || pollers.has(orderId)) return;
+
+  // ป้องกันกระพริบ DOM เมื่อได้ OTP แล้ว
+  let lastOtp = null;
+  let lastStatus = null;
+
+  const updateOtpCell = (tr, patch) => {
+    const cell = tr.children[3];
+    const nowText = new Date().toISOString().replace('T',' ').slice(0,19);
+    const otpVal = normalizeOtp(patch.otp);
+
+    if (otpVal && otpVal !== lastOtp) {
+      lastOtp = otpVal;
+      cell.innerHTML = `
+        <div class="otp">OTP : <b>${otpVal}</b>
+          <button class="copy" data-copy="${otpVal}" aria-label="คัดลอก OTP">
+            <img src="/static/assets/otp24/copy.png" alt="" />
+          </button>
+        </div>
+        <div class="ts">${nowText}</div>`;
+      cell.classList.remove('flash'); void cell.offsetWidth; cell.classList.add('flash');
+    } else if (!otpVal && lastOtp == null) {
+      cell.innerHTML = `
+        <div class="otp none">OTP : <span class="muted">ไม่พบข้อความ</span></div>
+        <div class="ts">${nowText}</div>`;
+    }
+  };
+
+  const updateStatusPill = (tr, patch) => {
+    const pill = tr.querySelector('.pill');
+    if (!pill) return;
+    const st = String(patch.status || '').toLowerCase();
+    if (st === lastStatus) return;
+    lastStatus = st;
+
+    pill.className = `pill ${st}`;
+    pill.textContent =
+      st==='success'    ? 'สำเร็จ' :
+      st==='processing' ? 'กำลังรอ OTP' :
+      st==='timeout'    ? 'คืนเครดิต' :
+      st==='failed'     ? 'คืนเครดิต' :
+      st==='refunded'   ? 'คืนเครดิต' : 'คืนเครดิต';
+  };
+
+  const updatePhoneCells = (tr, patch) => {
+    if (!patch.phone) return;
+
+    const ct = Number(tr.dataset.ct || 0);
+    const formatted = patch.displayPhone || displayPhoneByCountry(patch.phone, ct);
+
+    // desktop cell
+    const cell = tr.children[2];
+    const mono = cell.querySelector('.mono .v') || cell.querySelector('.mono');
+    if (mono) mono.textContent = formatted;
+
+    let btn = cell.querySelector('.copy');
+    if (!btn){
+      btn = document.createElement('button');
+      btn.className = 'copy';
+      btn.setAttribute('aria-label','คัดลอกเบอร์');
+      btn.innerHTML = `<img src="/static/assets/otp24/copy.png" alt="">`;
+      (cell.querySelector('.mono') || cell).appendChild(btn);
+    }
+    btn.dataset.copy = formatted;
+
+    // mobile card
+    const mCard = document.querySelector(`.m-orders .m-item[data-orderid="${orderId}"]`);
+    if (mCard){
+      const el = mCard.querySelector('.row2 .phone .v');
+      if (el) el.textContent = formatted;
+      let mBtn = mCard.querySelector('.row2 .phone .copy');
+      if (!mBtn){
+        mBtn = document.createElement('button');
+        mBtn.className = 'copy';
+        mBtn.setAttribute('aria-label','คัดลอกเบอร์');
+        mBtn.innerHTML = `<img src="/static/assets/otp24/copy.png" alt="">`;
+        el?.after(mBtn);
+      }
+      mBtn.dataset.copy = formatted;
+    }
+  };
+
+  const stopThisPolling = () => {
+    clearInterval(pollers.get(orderId));
+    pollers.delete(orderId);
+    const tr = document.querySelector(`tr[data-orderid="${CSS.escape(orderId)}"]`);
+    tr?.querySelector('.countdown')?.remove();
+    const mCard = document.querySelector(`.m-orders .m-item[data-orderid="${orderId}"]`);
+    mCard?.querySelector('.countdown')?.remove();
+    if (!hasProcessingRows()) stopOrdersAutoRefresh();
+  };
+
+  const tick = async () => {
+    try{
+      if (document.hidden) return;
+      const r = await fetch(`/otp24/orders/${encodeURIComponent(orderId)}/refresh`, { method:'POST' });
+      const j = await r.json();
+      if (!j?.ok) return;
+
+      const { patch } = j;
+      const tr = document.querySelector(`tr[data-orderid="${CSS.escape(orderId)}"]`);
+      if (!tr || !patch) return;
+
+      // 1) อัปเดต OTP ทันทีที่มี
+      updateOtpCell(tr, patch);
+
+      // 2) อัปเดตสถานะ
+      updateStatusPill(tr, patch);
+
+      // 3) อัปเดตเบอร์ถ้ายังไม่เคยโชว์
+      updatePhoneCells(tr, patch);
+
+      // 4) หยุดเมื่อ success (ตามสเปคใหม่)
+      const st = String(patch.status||'').toLowerCase();
+      if (POLL_DONE.has(st)) stopThisPolling();
+
+    }catch{
+      // เงียบ ๆ ไป ไม่ให้ user สะดุด
+    }
+  };
+
+  // เริ่มยิงทันที แล้วค่อยทุก 1 วินาที
+  tick();
+  const id = setInterval(tick, OTP24_SINGLE_POLL_MS);
+  pollers.set(orderId, id);
+}
+
+document.getElementById('btnConfirm').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  if (!chosen.productId || !chosen.countryId) return;
+  try{
+    const res = await fetch('/otp24/buy', {
+      method:'POST',
+      headers:{ 'content-type':'application/json', 'accept':'application/json' },
+      body: JSON.stringify({ productId: chosen.productId, countryId: chosen.countryId })
+    });
+    const j = await res.json();
+    if (!res.ok || !j?.ok) throw new Error(j?.error || 'สั่งซื้อไม่สำเร็จ');
+
+    goOtpOrdersPage(j.redirect || '/otp24?tab=orders');
+  }catch(err){ alert(err.message || err); }
+});
+
+/* ----- Utilities ----- */
+function setCopyIcon(btn, success) {
+  const img = btn.querySelector('img');
+  if (!img) return;
+  img.src = success
+    ? '/static/assets/otp24/copy-success.png'
+    : '/static/assets/otp24/copy.png';
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy');
+  if (!btn) return;
+
+  navigator.clipboard.writeText(btn.dataset.copy || '').then(() => {
+    setCopyIcon(btn, true);
+    // กลับเป็นไอคอนปกติใน 900ms
+    setTimeout(() => setCopyIcon(btn, false), 900);
+  }).catch(() => {
+    // ถ้า copy ไม่ได้ อย่าค้างไอคอน success
+    setCopyIcon(btn, false);
+  });
+});
+
+(() => {
+  const u = new URL(location.href);
+  if (u.searchParams.get('tab') === 'orders' || location.hash.replace('#','') === 'orders'){
+    document.querySelector('.tab[data-target="orders"]')?.click();
+  }
+})();
+(() => {
+  const grid = document.getElementById('appsGrid');
+  if (!grid) return;
+
+  // คลิก = เปิด Terms ก่อน
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('section.card.app');
+    if (!card) return;
+
+    pendingApp = card.dataset.name;
+    pendingPrice = Number(card.dataset.price || 0);
+    pendingId = card.dataset.id;
+
+    termsAccept.checked = false;
+    termsConfirm.disabled = true;
+    termsModal.classList.remove("hidden");
+  });
+
+  // รองรับ Enter/Space
+  grid.addEventListener('keydown', (e) => {
+    if (!['Enter', ' '].includes(e.key)) return;
+    const card = e.target.closest('section.card.app');
+    if (!card) return;
+    e.preventDefault();
+
+    pendingApp = card.dataset.name;
+    pendingPrice = Number(card.dataset.price || 0);
+    pendingId = card.dataset.id;
+
+    termsAccept.checked = false;
+    termsConfirm.disabled = true;
+    termsModal.classList.remove("hidden");
+  });
+})();
+
+(() => {
+  // เคลียร์ flag เก่าจากเวอร์ชันก่อนหน้า เพื่อไม่ให้เกิด reload/redirect ซ้อน
+  if (sessionStorage.getItem('OTP24_AFTER_BUY')) sessionStorage.removeItem('OTP24_AFTER_BUY');
+})();
+
+function mmss(ms){
+  if (!Number.isFinite(ms) || ms < 0) ms = 0;
+  const s = Math.floor(ms/1000);
+  const m = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${m}:${ss}`;
+}
+function tickCountdowns(){
+  const now = Date.now();
+  const upd = (el) => {
+    const exp = Date.parse(el.dataset.expires || el.getAttribute('data-expires') || '');
+    if (!Number.isFinite(exp)) return;
+    const left = exp - now;
+    el.textContent = left>0 ? `เหลือเวลาอีก ${mmss(left)} นาที` : 'ระบบกำลังคืนเครดิต';
+    el.classList.toggle('warn', left>0 && left<=3*60*1000);
+    el.classList.toggle('danger', left>0 && left<=60*1000);
+  };
+  document.querySelectorAll('#ordersBody .countdown').forEach(upd);
+  document.querySelectorAll('#mOrders .countdown').forEach(upd);
+  // ปรับหมายเลขในตาราง Desktop ให้ถูกต้องตามประเทศ
+  document.querySelectorAll('#ordersBody tr').forEach(tr => {
+    const ct = Number(tr.dataset.ct || 0);
+    const box = tr.children?.[2];
+    const mono = box?.querySelector('.mono .v') || box?.querySelector('.mono');
+    if (mono){
+      const formatted = displayPhoneByCountry(mono.textContent.trim(), ct);
+      mono.textContent = formatted;
+      const btn = box.querySelector('.copy');
+      if (btn) btn.dataset.copy = formatted;
+    }
+  });
+
+  // ปรับหมายเลขในลิสต์มือถือให้ถูกต้องเหมือนกัน
+  document.querySelectorAll('#mOrders .m-item').forEach(card => {
+    const ct = Number(card.dataset.ct || 0);
+    const el = card.querySelector('.row2 .phone .v');
+    if (el){
+      const formatted = displayPhoneByCountry(el.textContent.trim(), ct);
+      el.textContent = formatted;
+      const btn = card.querySelector('.row2 .phone .copy');
+      if (btn) btn.dataset.copy = formatted;
+    }
+  });
+}
+
+// ผูกกับลูปรีเฟรชหลัก (ทุก 1 วิอยู่แล้ว)
+function startOrdersAutoRefresh(){
+  stopOrdersAutoRefresh();
+  ORD_AUTO_TIMER = setInterval(async () => {
+    if (document.hidden) { tickCountdowns(); return; }
+    await refreshProcessingOrdersOnce();
+    tickCountdowns();
+  }, OTP24_LIST_POLL_MS);
+}
+
+function displayPhoneByCountry(rawPhone, countryId){
+  if (!rawPhone) return '-';
+
+  // เก็บเฉพาะตัวเลขกับ "+" ไว้พอประมาณ (กันเคสมี space/dash)
+  let s = String(rawPhone).trim();
+
+  // ── ไทย: countryId = 52
+  if (Number(countryId) === 52) {
+    // รูปแบบ +66XXXXXXXX หรือ 66XXXXXXXX → แปลงเป็น 0XXXXXXXX
+    if (/^\+?66\d{8,9}$/.test(s)) return s.replace(/^\+?66/, '0');
+    // ถ้าเป็น 0XXXXXXXX อยู่แล้ว → ใช้เดิม
+    if (/^0\d{8,9}$/.test(s)) return s;
+    // รูปแบบอื่นของไทย ไม่รู้ชัดเจน → คืนค่าเดิม
+    return s;
+  }
+
+  // ── ประเทศอื่น: บังคับให้ขึ้นต้นด้วย "+"
+  // ถ้ามี "+" อยู่แล้ว → ใช้เดิม
+  if (s.startsWith('+')) return s;
+  // ถ้าเป็นรูปแบบ 00XXXXXXXX → แปลงเป็น +XXXXXXXX
+  if (s.startsWith('00')) return '+' + s.slice(2);
+  // ฟอลแบ็ก: ลบ non-digits แล้วเติม "+"
+  return '+' + s.replace(/[^\d]/g, '');
+}
+</script>
+
+<script>
+/* ===== Auto-refresh loop for orders ===== */
+let ORD_AUTO_TIMER = null;
+
+function hasProcessingRows(){
+  return !!document.querySelector('#ordersBody .pill.processing');
+}
+
+// ===============================
+// 🔔 REFUND NOTIFY (OTP24)
+// ===============================
+const OTP24_REFUND_NOTIFY_KEY = 'otp24_refund_notified_v1';
+const OTP24_REFUND_NOTIFY_MEMORY = new Set();
+
+function getRefundNotifyStore() {
+  try {
+    const raw = localStorage.getItem(OTP24_REFUND_NOTIFY_KEY);
+    const arr = JSON.parse(raw || '[]');
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveRefundNotifyStore(set) {
+  try {
+    // กันโตเกินไป เก็บล่าสุดประมาณ 300 ออเดอร์พอ
+    const arr = Array.from(set).slice(-300);
+    localStorage.setItem(OTP24_REFUND_NOTIFY_KEY, JSON.stringify(arr));
+  } catch {}
+}
+
+function fmtRefundBaht(v) {
+  const n = Number(v || 0);
+  return n.toLocaleString('th-TH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function notifyOtp24RefundOnce(p) {
+  if (!p) return;
+
+  const status = String(p.status || '').toLowerCase();
+  const isRefundedStatus = ['refunded', 'timeout', 'failed', 'cancelled', 'canceled'].includes(status);
+
+  // ต้องเป็นเคสคืนเงินจริงเท่านั้น
+  if (!isRefundedStatus) return;
+  if (p.refundApplied !== true && p.refundApplied !== 'true') return;
+
+  const orderId = String(p.orderId || p._id || '').trim();
+  if (!orderId) return;
+
+  const notifyId = `otp24:${orderId}`;
+
+  // กันยิงซ้ำใน memory
+  if (OTP24_REFUND_NOTIFY_MEMORY.has(notifyId)) return;
+
+  // กันยิงซ้ำหลัง refresh หน้า
+  const store = getRefundNotifyStore();
+  if (store.has(notifyId)) {
+    OTP24_REFUND_NOTIFY_MEMORY.add(notifyId);
+    return;
+  }
+
+  const amount = Number(p.refundAmount ?? p.salePrice ?? p.price ?? p.amount ?? 0);
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  const text = `ออเดอร์ ${orderId} ได้รับเครดิตคืนเป็นจำนวน ${fmtRefundBaht(amount)} บาท`;
+
+  if (typeof window.showMsg === 'function') {
+    window.showMsg({
+      variant: 'success',
+      title: 'คืนเครดิตสำเร็จ',
+      text,
+      timeout: 5000
+    });
+  } else if (window.notify?.success) {
+    window.notify.success('คืนเครดิตสำเร็จ', text);
+  } else {
+    console.log(text);
+  }
+
+  OTP24_REFUND_NOTIFY_MEMORY.add(notifyId);
+  store.add(notifyId);
+  saveRefundNotifyStore(store);
+}
+
+function applyOrderPatch(p){
+  // p: { orderId, status, otp, phone, message }
+  if (p && String(p.status || '').toLowerCase() === 'success' && !normalizeOtp(p.otp)) {
+    p = { ...p, status: 'processing', message: p.message || 'ระบบกำลังรอ OTP…' };
+  }
+
+  const tr = document.querySelector(`tr[data-orderid="${p.orderId}"]`);
+  if (!tr) return;
+
+  if (p.expiresAt){
+    tr.dataset.expires = p.expiresAt;
+    const cd = tr.querySelector('.countdown');
+    if (cd) cd.dataset.expires = p.expiresAt;
+  }
+
+  // อัปเดตเบอร์ (ถ้ามี)
+  if (Object.prototype.hasOwnProperty.call(p,'phone')) {
+    const cell = tr.children[2];
+    const ct = Number(tr.dataset.ct || 0);
+    const formatted = displayPhoneByCountry(p.phone || '-', ct);
+
+    // desktop
+    const mono = cell.querySelector('.mono .v') || cell.querySelector('.mono');
+    if (mono) mono.textContent = formatted;
+    let btn = cell.querySelector('.copy');
+    if (!btn && p.phone){
+      btn = document.createElement('button');
+      btn.className = 'copy';
+      btn.setAttribute('aria-label','คัดลอกเบอร์');
+      btn.innerHTML = `<img src="/static/assets/otp24/copy.png" alt="">`;
+      (cell.querySelector('.mono') || cell).appendChild(btn);
+    }
+    if (btn) btn.dataset.copy = formatted;
+
+    // mobile
+    const m = document.querySelector(`.m-orders .m-item[data-orderid="${p.orderId}"]`);
+    if (m){
+      const v = m.querySelector('.row2 .phone .v');
+      if (v) v.textContent = formatted;
+      let mBtn = m.querySelector('.row2 .phone .copy');
+      if (!mBtn && p.phone){
+        mBtn = document.createElement('button');
+        mBtn.className = 'copy';
+        mBtn.setAttribute('aria-label','คัดลอกเบอร์');
+        mBtn.innerHTML = `<img src="/static/assets/otp24/copy.png" alt="">`;
+        v?.after(mBtn);
+      }
+      if (mBtn) mBtn.dataset.copy = formatted;
+    }
+  }
+
+  // อัปเดต OTP block
+  const cell = tr.children[3];
+  const otpVal = normalizeOtp(p.otp);
+  let otpDiv = cell.querySelector('.otp');
+  if (!otpDiv){
+    otpDiv = document.createElement('div');
+    otpDiv.className = 'otp';
+    cell.prepend(otpDiv);
+  }
+  if (otpVal){
+    otpDiv.classList.remove('none');
+    otpDiv.innerHTML = `OTP : <b>${otpVal}</b>
+      <button class="copy" data-copy="${otpVal}" aria-label="คัดลอก OTP">
+        <img src="/static/assets/otp24/copy.png" alt="">
+      </button>`;
+  } else {
+    otpDiv.classList.add('none');
+    otpDiv.innerHTML = `OTP : <span class="muted">ไม่พบข้อความ</span>`;
+  }
+
+  // อัปเดต Pill สถานะ + ข้อความ
+  const mCardForPatch = document.querySelector(`.m-orders .m-item[data-orderid="${p.orderId}"]`);
+  if (p.status){
+    const status = String(p.status).toLowerCase();
+    const label =
+      status==='success'   ? 'สำเร็จ' :
+      status==='refunded'  ? 'คืนเครดิต' :
+      status==='timeout'   ? 'คืนเครดิต' :
+      status==='failed'    ? 'คืนเครดิต' :
+      status==='canceled'  ? 'ยกเลิก' :
+                            'กำลังรอ OTP';
+
+    const pill = tr.querySelector('.pill');
+    if (pill) {
+      pill.className = `pill ${status}`;
+      pill.textContent = label;
+    }
+
+    const mPill = mCardForPatch?.querySelector('.pill');
+    if (mPill) {
+      mPill.className = `pill ${status}`;
+      mPill.textContent = label;
+    }
+
+    // 🔔 แจ้งเตือนคืนเครดิต 1 ครั้งต่อออเดอร์
+    notifyOtp24RefundOnce(p);
+  }
+
+  // อัปเดต OTP block ฝั่งมือถือด้วย
+  if (mCardForPatch) {
+    let mOtp = mCardForPatch.querySelector('.otp');
+    if (mOtp) {
+      if (otpVal) {
+        mOtp.classList.remove('none');
+        mOtp.innerHTML = `OTP : <b>${otpVal}</b>
+          <button class="copy" data-copy="${otpVal}" aria-label="คัดลอก OTP">
+            <img src="/static/assets/otp24/copy.png" alt="">
+          </button>`;
+      } else {
+        mOtp.classList.add('none');
+        mOtp.innerHTML = `OTP : <span class="muted">ไม่พบข้อความ</span>`;
+      }
+    }
+
+    if (p.expiresAt) {
+      mCardForPatch.dataset.expires = p.expiresAt;
+      const mCd = mCardForPatch.querySelector('.countdown');
+      if (mCd) mCd.dataset.expires = p.expiresAt;
+    }
+  }
+
+  // จัดการ countdown ใต้ pill
+  const status = String(p.status||'').toLowerCase();
+  let cd = tr.querySelector('.countdown');
+
+  if (status === 'processing') {
+    if (!cd) {
+      cd = document.createElement('div');
+      cd.className = 'countdown';
+      // ถ้าเซิร์ฟเวอร์ส่ง expiresAt มาใน patch ก็ใส่ด้วย (ถ้ายังไม่มี ให้ใช้ data-expires เดิม)
+      // นี่คือ display only; ถ้าไม่มี ก็ไม่เป็นไร tick จะข้าม
+      cd.dataset.expires = tr.getAttribute('data-expires') || '';
+      tr.children[5].appendChild(cd); // คอลัมน์สถานะ
+    }
+  } else {
+    cd?.remove();
+  }
+
+  // ถ้าออเดอร์นี้ success → ตัด countdown ทิ้ง และถ้าไม่เหลือ processing เลย ให้หยุด auto-refresh ทันที
+  if (['success', 'refunded', 'timeout', 'failed', 'canceled'].includes(status)) {
+    // ตัด countdown ของแถวนี้ทิ้ง
+    tr.querySelector('.countdown')?.remove();
+    tr.removeAttribute('data-expires');
+
+    // มือถือด้วย
+    const mCard = document.querySelector(`.m-orders .m-item[data-orderid="${p.orderId}"]`);
+    mCard?.querySelector('.countdown')?.remove();
+    mCard?.removeAttribute('data-expires');
+
+    // ถ้าไม่เหลืองานสถานะ processing แล้ว → หยุดลูปทันที (ไม่ต้องรอรอบถัดไป)
+    if (!hasProcessingRows()) stopOrdersAutoRefresh();
+  }
+}
+
+// ดึง orderId ที่ยังอยู่สถานะ processing (รองรับทั้งจาก state และจาก DOM)
+function getProcessingOrderIds() {
+  const ids = new Set();
+
+  // Desktop table rows
+  document.querySelectorAll('#ordersBody tr[data-orderid]').forEach(tr => {
+    const pill = tr.querySelector('.pill');
+    const st = (pill?.className || '').toLowerCase();
+    if (st.includes('processing')) {
+      ids.add(tr.getAttribute('data-orderid'));
+    }
+  });
+
+  // Mobile cards
+  document.querySelectorAll('#mOrders .m-item[data-orderid]').forEach(card => {
+    const pill = card.querySelector('.pill');
+    const st = (pill?.className || '').toLowerCase();
+    if (st.includes('processing')) {
+      ids.add(card.getAttribute('data-orderid'));
+    }
+  });
+
+  return Array.from(ids).filter(Boolean);
+}
+
+// เรียกรีเฟรชเฉพาะรายการที่ยัง processing ทีละรอบ
+async function refreshProcessingOrdersOnce() {
+  try {
+    const ids = getProcessingOrderIds();
+    if (!ids.length) {
+      stopOrdersAutoRefresh?.();
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      ids.map(async (orderId) => {
+        const res = await fetch(`/otp24/orders/${encodeURIComponent(orderId)}/refresh`, { method: 'POST' });
+        const j = await res.json().catch(() => ({}));
+        if (res.ok && j?.ok && j?.patch) applyOrderPatch?.(j.patch);
+        return j;
+      })
+    );
+
+    // หลังอัปเดตทุกรายการแล้ว — ถ้าไม่เหลือ processing เลยให้หยุด
+    if (!hasProcessingRows?.()) stopOrdersAutoRefresh?.();
+  } catch {
+    // เงียบไว้ตามสไตล์เดิม
+  }
+}
+
+function startOrdersAutoRefresh(){
+  stopOrdersAutoRefresh();
+  ORD_AUTO_TIMER = setInterval(async () => {
+    if (document.hidden) { tickCountdowns(); return; }
+    await refreshProcessingOrdersOnce();
+    tickCountdowns();
+  }, OTP24_LIST_POLL_MS);
+}
+
+function stopOrdersAutoRefresh(){
+  if (ORD_AUTO_TIMER){ clearInterval(ORD_AUTO_TIMER); ORD_AUTO_TIMER = null; }
+}
+
+// ให้ tick ทำงานแม้ยังไม่เริ่มลูปรีเฟรช (เผื่อหน้าเปิดอยู่เฉยๆ)
+tickCountdowns();
+setInterval(tickCountdowns, 1000);
+
+/* เริ่มออโต้เมื่อเปิดแท็บ "ประวัติ" */
+document.querySelector('.tab[data-target="orders"]')
+  ?.addEventListener('click', () => {
+    startOrdersAutoRefresh();
+  });
+
+/* เริ่มออโต้ทันทีถ้าหน้าเปิดมามี processing อยู่แล้ว */
+if (hasProcessingRows()) startOrdersAutoRefresh();
+
+/* หยุด/เริ่มตาม visibility (ประหยัดโหลด) */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopOrdersAutoRefresh();
+  else if (document.querySelector('#section-orders').classList.contains('show')) {
+    startOrdersAutoRefresh();
+  }
+});
+
+// แตะตรงไหนก็พับ/กาง (ใช้ event delegation)
+document.getElementById('mOrders')?.addEventListener('click', (e) => {
+  const item = e.target.closest('.m-item');
+  if (!item) return;
+  // กันปุ่ม copy
+  if (e.target.closest('.copy')) return;
+  item.classList.toggle('collapsed');
+  const btn = item.querySelector('.toggle');
+  if (btn) btn.textContent = item.classList.contains('collapsed') ? '+' : '−';
+});
+
+// helper: เปลี่ยนภาพไอคอน copy
+function setCopyIcon(btn, success) {
+  const img = btn.querySelector('img');
+  if (!img) return;
+  img.src = success
+    ? '/static/assets/otp24/copy-success.png'
+    : '/static/assets/otp24/copy.png';
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy');
+  if (!btn) return;
+
+  navigator.clipboard.writeText(btn.dataset.copy || '').then(() => {
+    setCopyIcon(btn, true);
+    // กลับเป็นไอคอนปกติใน 900ms
+    setTimeout(() => setCopyIcon(btn, false), 900);
+  }).catch(() => {
+    // ถ้า copy ไม่ได้ อย่าค้างไอคอน success
+    setCopyIcon(btn, false);
+  });
+});
+</script>
+
+<script>
+/* ========= Pagination (Client-side) ========= */
+let ORDERS_PER_PAGE = Number(localStorage.getItem('OTP24_PER_PAGE')) || 20;
+let currentPage = 1;
+
+const $rows   = () => Array.from(document.querySelectorAll('#ordersBody tr'));
+const $cards  = () => Array.from(document.querySelectorAll('#mOrders .m-item'));
+const $info   = document.getElementById('pageInfo');
+const $infoM  = document.getElementById('pageInfoMobile');
+const $sel    = document.getElementById('perPageSelect');
+const $selM   = document.getElementById('perPageSelectMobile');
+const $ctrlD  = document.getElementById('ordersControlsDesktop');
+const $ctrlM  = document.getElementById('ordersControlsMobile');
+
+function totalItems(){ return (window.matchMedia('(max-width: 640px)').matches ? $cards().length : $rows().length); }
+function totalPages(){ return Math.max(1, Math.ceil(totalItems() / ORDERS_PER_PAGE)); }
+function clampPage(n){ return Math.min(Math.max(1, n), totalPages()); }
+
+function applyPagination(){
+  const isMobile = window.matchMedia('(max-width: 640px)').matches;
+  const items = isMobile ? $cards() : $rows();
+
+  const total = items.length;
+  const pages = totalPages();
+  currentPage = clampPage(currentPage);
+
+  const start = (currentPage-1) * ORDERS_PER_PAGE;
+  const end   = start + ORDERS_PER_PAGE;
+
+  items.forEach((el, i) => {
+    el.style.display = (i >= start && i < end) ? '' : 'none';
+  });
+
+  // อัปเดตตัวเลขหน้า
+  if (!isMobile && $info)  $info.textContent  = `หน้า ${currentPage}/${pages}`;
+  if (isMobile && $infoM)  $infoM.textContent = `หน้า ${currentPage}/${pages}`;
+
+  // ปุ่ม disabled
+  const setBtns = (root) => {
+    if (!root) return;
+    root.querySelector('[data-act="first"]')?.toggleAttribute('disabled', currentPage<=1);
+    root.querySelector('[data-act="prev"]') ?.toggleAttribute('disabled', currentPage<=1);
+    root.querySelector('[data-act="next"]') ?.toggleAttribute('disabled', currentPage>=pages);
+    root.querySelector('[data-act="last"]') ?.toggleAttribute('disabled', currentPage>=pages);
+  };
+  setBtns($ctrlD);
+  setBtns($ctrlM);
+}
+
+// เปลี่ยน per-page (เดสก์ท็อป & มือถือ)
+function bindPerPage(selectEl){
+  if (!selectEl) return;
+  // set ค่าเริ่มต้น
+  for (const opt of selectEl.options){
+    opt.selected = Number(opt.value) === ORDERS_PER_PAGE;
+  }
+  selectEl.addEventListener('change', () => {
+    ORDERS_PER_PAGE = Number(selectEl.value) || 20;
+    localStorage.setItem('OTP24_PER_PAGE', ORDERS_PER_PAGE);
+    currentPage = 1;
+    applyPagination();
+  });
+}
+bindPerPage($sel);
+bindPerPage($selM);
+
+// ปุ่มนำทาง (เดสก์ท็อป & มือถือ)
+function bindPager(ctrlRoot){
+  if (!ctrlRoot) return;
+  ctrlRoot.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pg-btn');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    if (act === 'first') currentPage = 1;
+    else if (act === 'prev') currentPage = clampPage(currentPage - 1);
+    else if (act === 'next') currentPage = clampPage(currentPage + 1);
+    else if (act === 'last') currentPage = totalPages();
+    applyPagination();
+  });
+}
+bindPager($ctrlD);
+bindPager($ctrlM);
+
+// เรียกครั้งแรกเมื่อโหลดหน้า
+applyPagination();
+
+// เมื่อรีเฟรชสถานะ/จำนวนรายการเปลี่ยน ให้คงหน้าปัจจุบันไว้ถ้าเป็นไปได้
+const _origRefreshAll = refreshProcessingOrdersOnce;
+refreshProcessingOrdersOnce = async function () {
+  const out = await _origRefreshAll(); // ดึงแพตช์สถานะจากเซิร์ฟเวอร์
+  applyPagination();                   // จัดหน้าใหม่ตามจำนวนรายการล่าสุด
+  tickCountdowns();                    // อัปเดตตัวเลขนับถอยหลังให้ตรง DOM ล่าสุด
+
+  // ถ้าไม่เหลือแถวสถานะ processing แล้ว ให้หยุดลูป auto-refresh ตอนนี้เลย
+  if (!hasProcessingRows()) stopOrdersAutoRefresh();
+
+  return out; // เผื่อที่อื่นยังใช้งานผลลัพธ์เดิม
+};
+
+
+
+/* ====== ซื้อเบอร์เดิม (buyotpagain) ====== */
+window.CT2CODE = window.CT2CODE || {
+  52:'th',187:'us',16:'gb',6:'id',10:'vn',5:'mm',1:'ua',19:'ng',62:'tr',3:'cn',4:'ph',24:'kh',25:'la',7:'my',21:'eg'
+};
+
+
+async function asJson(r){ const j = await r.json().catch(()=>({})); return { ok:r.ok, status:r.status, data:j }; }
+
+window.FLAGIMG_BY_ID = function(id){
+  const code = (window.CT2CODE || {})[Number(id)];
+  return code ? '/static/assets/otp24/' + code + '.png' : null;
+};
+
+let REUSE_CTX = {};
+
+// ─────────────────────────────────────────────
+// คลิกปุ่ม “ใช้เบอร์เดิม”
+// ─────────────────────────────────────────────
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-reuse');
+  if (!btn) return;
+
+  // ทำ ctx จาก data-* ของปุ่ม ไว้เป็น fallback
+  const ctx = {
+    orderId: btn.dataset.orderid,
+    app:     btn.dataset.app || '',
+    number:  btn.dataset.number || '',
+    price:   Number(btn.dataset.price || 0),
+    ct:      Number(btn.dataset.ct || 0),
+  };
+
+  // 1) ลองเรียก PREVIEW (GET)
+  let r = await fetch(`/otp24/buy-again/preview?orderId=${encodeURIComponent(ctx.orderId)}`, {
+    headers:{ accept:'application/json' }
+  }).catch(()=>null);
+  let res = r ? await asJson(r) : { ok:false, status:0, data:{} };
+
+  // 2) ถ้าไม่มี endpoint preview ให้ลอง POST preview:true
+  if (!res.ok && (res.status === 404 || res.status === 405)) {
+    r = await fetch('/otp24/buy-again', {
+      method:'POST',
+      headers:{ 'content-type':'application/json', accept:'application/json' },
+      body: JSON.stringify({ orderId: ctx.orderId, preview:true })
+    }).catch(()=>null);
+    res = r ? await asJson(r) : { ok:false, status:0, data:{} };
+  }
+
+  // 3) ตีความผลลัพธ์ผิดพลาด → แจ้งเหตุผลที่ถูกต้อง
+  if (!res.ok){
+    const code = res.data?.code || res.data?.reason;
+    if (res.status===409 || res.status===423 || code==='ACTIVE_ORDER' || code==='STILL_PROCESSING' || res.data?.active===true){
+      return (window.showMsg||alert)({ variant:'error', title:'สั่งซื้อไม่สำเร็จ', text:'เบอร์ของคุณยังอยู่ในสถานะกำลังทำงานอยู่' });
+    }
+    if (res.status===410 || code==='REMOVED' || code==='NOT_REUSABLE'){
+      return (window.showMsg||alert)({ variant:'error', title:'สั่งซื้อไม่สำเร็จ', text:'เบอร์นี้ถูกนำออกจากระบบไปแล้ว' });
+    }
+    return (window.showMsg||alert)({ variant:'error', title:'สั่งซื้อไม่สำเร็จ', text: res.data?.error || 'ระบบผู้ให้บริการขัดข้อง กรุณาลองใหม่' });
+  }
+
+  // 4) ผ่านเงื่อนไข → เปิดโมดัลยืนยัน
+  const info = res.data?.preview || res.data || {};
+  REUSE_CTX = {
+    orderId: ctx.orderId,
+    app:     info.appName   || ctx.app,
+    number:  info.phone     || ctx.number,
+    price:   Number(info.price ?? ctx.price),
+    ct:      Number(info.countryId ?? ctx.ct),
+  };
+
+  document.getElementById('reuseApp').textContent    = REUSE_CTX.app || '—';
+  document.getElementById('reuseNumber').textContent = displayPhoneByCountry(REUSE_CTX.number, REUSE_CTX.ct);
+
+  const flagEl = document.getElementById('reuseFlag');
+  const fcode  = (window.CT2CODE && window.CT2CODE[REUSE_CTX.ct]) || null;
+  if (fcode){ flagEl.src = `/static/assets/otp24/${fcode}.png`; flagEl.style.display='inline-block'; }
+  else { flagEl.removeAttribute('src'); flagEl.style.display='none'; }
+
+  document.getElementById('reusePrice').textContent = REUSE_CTX.price.toFixed(2);
+  document.getElementById('reuseModal').showModal();
+});
+
+// ─────────────────────────────────────────────
+// ปุ่มยืนยันซื้อซ้ำ
+// ─────────────────────────────────────────────
+document.getElementById('btnReuseConfirm')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (!REUSE_CTX?.orderId) return;
+
+  try{
+    const r = await fetch('/otp24/buy-again', {
+      method:'POST',
+      headers:{ 'content-type':'application/json', accept:'application/json' },
+      body: JSON.stringify({ orderId: REUSE_CTX.orderId })
+    });
+    const j = await r.json().catch(()=> ({}));
+    if (!r.ok || !j?.ok){
+      const code = j?.code || j?.reason || '';
+      (window.showMsg || alert)({
+        variant:'error',
+        title:'สั่งซื้อไม่สำเร็จ',
+        text: (code==='ACTIVE_ORDER' || code==='STILL_PROCESSING')
+              ? 'เบอร์ของคุณยังอยู่ในสถานะกำลังทำงานอยู่'
+              : (j?.error || 'เบอร์นี้ถูกนำออกจากระบบไปแล้ว')
+      });
+      return;
+    }
+    goOtpOrdersPage(j.redirect || '/otp24?tab=orders');
+  } catch {
+    (window.showMsg || alert)({ variant:'error', title:'สั่งซื้อไม่สำเร็จ', text:'เครือข่ายมีปัญหา' });
+  } finally {
+    document.getElementById('reuseModal')?.close();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.querySelector('#otpSearch');
+  const apps = document.querySelectorAll('#appsGrid .card.app');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+
+    apps.forEach(card => {
+      const name = (card.dataset.name || '').toLowerCase();
+      const show = name.includes(q);
+      card.style.display = show ? '' : 'none';
+    });
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const grid = document.getElementById("appsGrid");  // ใช้ event delegation
+  const termsModal = document.getElementById("termsModal");
+  const termsBackdrop = termsModal.querySelector(".bt-terms-backdrop");
+  const termsAccept = document.getElementById("termsAccept");
+  const termsConfirm = document.getElementById("termsConfirm");
+  const termsCancel = document.getElementById("termsCancel");
+
+  const buyModal = document.getElementById("buyModal");
+  const selApp = document.getElementById("selApp");
+  const selPrice = document.getElementById("selPrice");
+
+  let pendingId = null;
+  let pendingApp = null;
+  let pendingPrice = 0;
+
+  /* ============================================================
+     เมื่อคลิกที่การ์ดแอพ  (Event Delegation)
+     ============================================================ */
+  grid.addEventListener("click", (e) => {
+    const card = e.target.closest("section.card.app");
+    if (!card) return;
+
+    pendingId = card.dataset.id;
+    pendingApp = card.dataset.name;
+    pendingPrice = Number(card.dataset.price || 0);
+
+    // reset terms
+    termsAccept.checked = false;
+    termsConfirm.disabled = true;
+
+    // show Terms modal
+    termsModal.classList.remove("hidden");
+  });
+
+  /* ============================================================
+     Checkbox ✔ ยอมรับเงื่อนไข
+     ============================================================ */
+  termsAccept.addEventListener("change", () => {
+    termsConfirm.disabled = !termsAccept.checked;
+  });
+
+  /* ============================================================
+     ปุ่มยืนยันเงื่อนไข
+     ============================================================ */
+  termsConfirm.addEventListener("click", () => {
+    termsModal.classList.add("hidden");
+
+    // ตั้งค่า into chosen (ใช้โดยระบบสั่งซื้อเดิม)
+    chosen = {
+      productId: pendingId,
+      countryId: null,
+      name: pendingApp,
+      price: pendingPrice,
+    };
+
+    selApp.textContent = "รายการ : " + pendingApp;
+    selPrice.textContent = "ราคา : " + pendingPrice.toFixed(2) + " บาท";
+
+    buyModal.showModal();
+  });
+
+  /* ============================================================
+     ปิด Terms (ปุ่ม Cancel)
+     ============================================================ */
+  termsCancel.addEventListener("click", () => {
+    termsModal.classList.add("hidden");
+  });
+
+  /* ============================================================
+     คลิก Backdrop เพื่อปิด Terms
+     ============================================================ */
+  termsBackdrop.addEventListener("click", () => {
+    termsModal.classList.add("hidden");
+  });
+});
+
+// เมื่อสลับมือถือ/เดสก์ท็อป (resize) ให้ปรับหน้าให้เหมาะสม
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(applyPagination, 150);
+});
+</script>
+
+<style>
+.grid.cards{ display:grid; gap:18px; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); }
+.card.app{ position:relative; text-align:center; padding:14px; border-radius:16px; background:#17181b; border:1px solid #2b2d31; }
+.price-badge{ position:absolute; top:8px; right:8px; background:#63cff0; color:#fff; padding:4px 10px; border-radius:999px; font-weight:500; font-size:12px; }
+.app-icon{ display:grid; place-items:center; height:140px; border-radius:14px; background:rgba(255,255,255,.04); overflow:hidden; }
+.app-icon img{ width:96px; height:96px; border-radius: 23px; object-fit:contain; filter: drop-shadow(0 6px 10px rgba(0,0,0,.3)); }
+.placeholder{ font-size:56px; opacity:.7; }
+.app-name{ margin-top:10px; font-weight:300; letter-spacing:.5px; text-transform:uppercase; }
+
+.input{ padding:10px 12px; border-radius:12px; border:1px solid #2e2f35; flex:1; }
+.row{ display:flex; gap:12px; }
+.w-100{ width:100%; } .mt{ margin-top:12px; } .mt-sm{ margin-top:8px; } .mt-lg{ margin-top:20px; }
+.muted{ opacity:.8; }
+
+.flag.active{ outline:2px solid #63cff0; }
+.emoji{ font-size:24px; line-height:1; }
+
+/* Orders table like sample #3 */
+.orders-wrap{ margin-top:14px; }
+.tbl{ width:100%; border-collapse:separate; border-spacing:0; }
+.tbl th, .tbl td{ padding:12px 14px; border-bottom:1px solid #24262b; text-align:left; }
+.tbl th.right, .tbl td.right{ text-align:right; }
+.badge.app{ background:#f38200; color:#fff; padding:4px 10px; border-radius:999px; font-weight:400; margin-right:6px; }
+.flag{ display:inline-grid; place-items:center; width:28px; height:28px; border-radius:6px; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.otp b{ font-weight:500; color: #f7d438;}
+.appmobile{ color: #48f738d3; }
+.copy{ border:none; background:transparent; cursor:pointer; margin-left:6px; }
+.pill{ display:inline-block; padding:6px 12px; border-radius:999px; font-weight:400; }
+.pill.success{ background:#16a34a22; color:#34d399; }
+.pill.wait{ background:#f59e0b22; color:#fbbf24; }
+.pill.timeout{ background:#22c5f644; color:#67e8f9; }
+.pill.failed{ background:#22c5f644; color:#67e8f9; }
+
+dialog::backdrop{ background: rgba(0,0,0,.5); }
+.modal{ min-width:460px; padding:20px; border-radius:14px; border:1px solid #2e2f35; background:#17181b; }
+
+.grid.cards{ display:grid; gap:18px; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); }
+.card.app{ position:relative; text-align:center; padding:14px; border-radius:16px; background:var(--elevated-bg,#17181b); border:1px solid var(--elevated-border,#2b2d31); }
+.price-badge{ position:absolute; top:8px; right:8px; background:var(--accent,#63cff0); color:var(--accent-contrast,#fff); padding:4px 10px; border-radius:999px; font-weight:400; font-size:12px; }
+/* .app-icon{ display:grid; place-items:center; height:140px; border-radius:14px; background:color-mix(in oklab, var(--elevated-bg,#17181b), white 6%); overflow:hidden; } */
+.app-icon img{ width:96px; height:96px; object-fit:contain; filter: drop-shadow(0 6px 10px rgba(0,0,0,.3)); }
+.placeholder{ font-size:56px; opacity:.7; }
+.app-name{ margin-top:10px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; }
+.btn{ padding:10px 14px; border-radius:12px; border:0; background:var(--accent,#63cff0); color:var(--accent-contrast,#fff); cursor:pointer; }
+.btn.ghost{ background:transparent; border:1px solid var(--elevated-border,#444); color:var(--text-primary,#fff); }
+.btn.small{ padding:6px 10px; border-radius:10px; }
+
+.input{ padding:10px 12px; border-radius:12px; border:1px solid var(--elevated-border,#2e2f35); flex:1; }
+.row{ display:flex; gap:12px; }
+.w-100{ width:100%; } .mt{ margin-top:12px; } .mt-sm{ margin-top:8px; } .mt-lg{ margin-top:20px; }
+.muted{ color:var(--text-muted,#a7b0bb); }
+
+/* ── Flag grid (ในโมดัล) ───────────────────────────────── */
+.flag-grid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:20px; margin-top:10px; }
+.flag{
+  height:48px; border-radius:12px;
+  background: color-mix(in oklab, var(--elevated-bg,#17181b), white 4%);
+  border:1px solid var(--elevated-border,#2e2f35);
+  display:grid; place-items:center; cursor:pointer;
+  transition: transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+}
+.flag:hover{ transform: translateY(-1px); }
+.flag.selected, .flag.active{
+  border-color: var(--accent,#2a84ff);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent,#2a84ff), transparent 70%);
+}
+.flag img{ width:28px; height:28px; object-fit:cover; border-radius:6px; }
+
+/* ── Orders table (ของเดิมปรับใช้ตัวแปรธีม) ───────────── */
+.orders-wrap{ margin-top:14px; }
+.tbl{ width:100%; border-collapse:separate; border-spacing:0; }
+.tbl th, .tbl td{ padding:12px 14px; border-bottom:1px solid var(--elevated-border,#24262b); text-align:left; color:var(--text-primary,#f2f4f8); }
+.tbl th.right, .tbl td.right{ text-align:right; }
+.badge.app{  color:#fff; padding:4px 10px; border-radius:999px; font-weight:400; margin-right:6px; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.copy{ border:none; background:transparent; cursor:pointer; margin-left:6px; }
+.pill{ display:inline-block; padding:6px 12px; border-radius:999px; font-weight:400; }
+.pill.success{ background:#16a34a22; color:#34d399; }
+.pill.wait{ background:#f59e0b22; color:#fbbf24; }
+.pill.timeout,.pill.failed{ background:#22c5f644; color:#67e8f9; }
+
+/* ── Dialog reset: ไม่มีกรอบ/พื้นหลังขาว ─────────────── */
+dialog{ border:none; padding:0; background:transparent; }
+dialog::backdrop{ background: rgba(0,0,0,.55); backdrop-filter: blur(2px); }
+
+.modal{
+  min-width:460px; padding:20px; border-radius:16px;
+  border:1px solid var(--elevated-border,#2e2f35);
+  background: var(--elevated-bg,#17181b);
+  color: var(--text-primary,#fff);
+  box-shadow: var(--elevated-shadow, 0 12px 30px rgba(0,0,0,.4));
+}
+:root[data-theme="light"] .modal{
+  background: var(--elevated-bg,#fff);
+  color: var(--text-primary,#222);
+  border-color: var(--elevated-border,#e7e7ea);
+  box-shadow: 0 12px 26px rgba(0,0,0,.12);
+}
+/* ── Flag grid (เฉพาะในโมดัลซื้อ) ───────────────────── */
+:root{
+  /* ปรับขนาดธงได้ตรงนี้ */
+  --flag-w: 48px;
+  --flag-h: 38px; /* สัดส่วน 3:2 */
+  --flag-radius: 10px;
+}
+
+.flag-grid{
+  display:grid;
+  grid-template-columns: repeat(5, var(--flag-w));
+  gap:20px;
+  margin-top:10px;
+  justify-content: center; /* เรียงชิดซ้ายสวย ๆ */
+}
+
+/* ปุ่มธง = กรอบพอดีรูป, ไม่มี padding */
+#buyModal .flag{
+  width: var(--flag-w);
+  height: var(--flag-h);
+  padding: 0;
+  border-radius: var(--flag-radius);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--elevated-bg,#17181b), white 4%);
+  border: 1px solid var(--elevated-border,#2e2f35);
+  display: inline-block;
+  line-height: 0;               /* กันช่องว่าง inline */
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+}
+#buyModal .flag:hover{ transform: translateY(-1px); }
+#buyModal .flag.active{
+  border-color: var(--accent,#2a84ff);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent,#2a84ff), transparent 70%);
+}
+
+/* รูปธงเติมเต็มกรอบพอดี */
+#buyModal .flag img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* ครอบเต็ม ไม่เหลือขอบ */
+  display: block;       /* ตัดช่องว่าง inline */
+  border-radius: inherit;
+}
+/* ── ธงเล็กในตารางประวัติ (ตัวอย่างรูป #3) ─────────── */
+.orders-wrap .flag{
+  display:inline-grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:6px;
+  background: color-mix(in oklab, var(--elevated-bg,#17181b), white 4%);
+  border:1px solid var(--elevated-border,#2e2f35);
+  overflow:hidden;
+  line-height:0;
+}
+.orders-wrap .flag img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+/* ─────────────────────────────
+   Mobile tweaks (≤ 640px)
+   ───────────────────────────── */
+@media (max-width: 640px){
+
+  /* การ์ดสินค้า: แถวละ 3 */
+  .grid.cards{
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .card.app{
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .price-badge{
+    top: 6px; right: 6px;
+    font-size: 10px; padding: 2px 8px;
+  }
+  .app-icon{ height: 86px; border-radius: 12px; }
+  .app-icon img{ border-radius: 13px; width: 56px; height: 56px; }
+  .app-name{ margin-top: 8px; font-size: 12px; }
+
+  .btn{ padding: 10px 12px; font-size: 13px; }
+  .btn.small{ padding: 6px 10px; font-size: 12px; }
+  .row{ gap: 8px; }
+
+  /* โมดัลให้พอดีจอมือถือ */
+  dialog{ padding: 0; }
+  .modal{
+    min-width: unset;
+    width: 92vw;          /* กว้างพอดีจอ */
+    max-width: 92vw;
+    padding: 16px;
+    border-radius: 14px;
+  }
+  dialog::backdrop{
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(2px);
+  }
+
+  /* ธง: แถวละ 5 */
+  .flag-grid{
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+  .flag{
+    height: 40px;
+    border-radius: 10px;
+  }
+  .flag img{
+    width: 24px; height: 24px;
+    border-radius: 5px;
+  }
+}
+
+/* Desktop โมดัล: จำกัดความกว้างเล็กน้อย (ไม่กระทบมือถือ) */
+@media (min-width: 641px){
+  .modal{ max-width: 560px; }
+}
+
+/* จัดกริดให้อยู่กึ่งกลางเสมอ */
+.grid.cards{
+  justify-content: center;     /* จัดชุดคอลัมน์ให้อยู่กลางคอนเทนเนอร์ */
+  justify-items: stretch;      /* การ์ดกินพื้นที่คอลัมน์เต็ม */
+}
+
+/* ให้การ์ดขยายเต็มคอลัมน์ ไม่ล็อกความกว้างของตัวเอง */
+.card.app{ width: 100%; }
+
+/* มือถือ: ปรับคอลัมน์ + จัดกึ่งกลางให้ชัวร์ */
+@media (max-width: 640px){
+  .grid.cards{
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* ไม่มี min กวนใจ */
+    justify-content: center;
+    justify-items: stretch;
+    gap: 12px;
+  }
+  .card.app{ width: 100%; }
+}
+.card.app{
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.card.app:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.25);
+  border-color: color-mix(in oklab, var(--accent,#63cff0), transparent 60%);
+}
+.card.app:focus-within,
+.card.app:focus{
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent,#63cff0), transparent 70%);
+  border-color: var(--accent,#63cff0);
+}
+/* ─────────────────────────────
+   Modal: theme-aware + vivid buttons (light)
+   วางต่อท้ายไฟล์เดิม เพื่อให้ override
+   ───────────────────────────── */
+
+/* ครอบคลุมทั้ง :root และ html ที่ตั้ง data-theme */
+:root[data-theme="light"] .modal,
+html[data-theme="light"] .modal{
+  background: #fff;                     /* ขาวจริง ไม่อิงค่าดีฟอลต์มืด */
+  color: #1f2328;
+  border-color: #e7e7ea;
+  box-shadow: 0 16px 36px rgba(0,0,0,.12);
+}
+
+/* Backdrop โปร่งขึ้นนิดสำหรับธีมสว่าง */
+:root[data-theme="light"] dialog::backdrop,
+html[data-theme="light"] dialog::backdrop{
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+}
+
+/* ปรับกรอบ/พื้นของธงให้คมชัดในธีมสว่าง */
+:root[data-theme="light"] #buyModal .flag,
+html[data-theme="light"] #buyModal .flag{
+  background: #f7f8fa;
+  border-color: #e2e5ea;
+}
+:root[data-theme="light"] #buyModal .flag.active,
+html[data-theme="light"] #buyModal .flag.active{
+  border-color: #2a84ff;
+  box-shadow: 0 0 0 4px rgba(42,132,255,.18);
+}
+
+/* ปุ่มในโมดัล – ทำให้เด่น ไม่กลืนกับพื้นหลัง */
+.modal .btn{
+  border-radius: 12px;
+  font-weight: 400;
+  letter-spacing:.2px;
+}
+
+/* ปุ่มหลัก (ไม่ใช่ .ghost) ใช้กราเดียนท์ + เงานุ่ม */
+.modal .btn:not(.ghost){
+  background: linear-gradient(180deg, #2a84ff 0%, #1e6be0 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(42,132,255,.35);
+  border: 1px solid rgba(30,107,224,.2);
+}
+.modal .btn:not(.ghost):hover{
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+.modal .btn:not(.ghost):active{
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(42,132,255,.25);
+}
+
+/* ปุ่มรอง (.ghost) ให้มีขอบ+พื้นโปร่งสีอุ่นเล็กน้อย */
+.modal .btn.ghost{
+  background: rgba(27,31,36,.04);
+  color: #222;
+  border: 1px solid #dadde2;
+}
+:root[data-theme="dark"] .modal .btn.ghost,
+html[data-theme="dark"] .modal .btn.ghost{
+  background: rgba(255,255,255,.04);
+  color: #f2f4f8;
+  border-color: #3a3d45;
+}
+.modal .btn.ghost:hover{
+  background: rgba(27,31,36,.06);
+}
+
+/* ฟิลด์/การ์ดราคาในโมดัล (ถ้ามี) ให้คอนทราสต์ขึ้น */
+:root[data-theme="light"] .price-badge,
+html[data-theme="light"] .price-badge{
+  background: #2a84ff;
+  color:#fff;
+}
+
+/* กันกรณีบางเพจตั้ง data-theme ไว้บน body */
+body[data-theme="light"] .modal{ background:#fff; color:#1f2328; border-color:#e7e7ea; }
+body[data-theme="light"] dialog::backdrop{ background: rgba(0,0,0,.35); }
+body[data-theme="light"] #buyModal .flag{ background:#f7f8fa; border-color:#e2e5ea; }
+body[data-theme="light"] #buyModal .flag.active{ box-shadow:0 0 0 4px rgba(42,132,255,.18); border-color:#2a84ff; }
+.pill.success   { background:#16a34a22; color:#34d399; }
+.pill.processing{ background:#f59e0b22; color:#fbbf24; }
+.pill.failed,
+.pill.timeout   { background:#22c5f644; color:#67e8f9; }
+.pill.refunded  { background:#22c5f644; color:#67e8f9; }
+.countdown{ font-size:12px; opacity:.85; margin-top:4px; color:var(--text-muted,#a7b0bb); }
+.countdown.warn{ color:#fbbf24; }
+.countdown.danger{ color:#f87171; }
+
+/* Desktop = ใช้ตารางเดิม, ซ่อนลิสต์มือถือ */
+@media (min-width: 641px){
+  .m-orders{ display:none; }
+}
+
+/* Mobile = ซ่อนไว้ตาราง, ใช้ลิสต์มือถือแทน */
+@media (max-width: 640px){
+  .orders-wrap{ display:none; }  /* ซ่อน table */
+  .m-orders{ display:grid; gap:12px; margin-top:12px; }
+
+  .m-item{
+    background: var(--elevated-bg,#151518);
+    border: 1px solid var(--elevated-border,#2e2f35);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .m-head{
+    padding: 12px 14px;
+    position: relative;
+    cursor: pointer;
+  }
+  .m-head .row1{
+    display:flex; align-items:center; gap:10px;
+  }
+  .m-head .oid{ font-weight:400; }
+  .m-head .when{ margin-left:auto; opacity:.9; }
+  .m-head .toggle{
+    width:28px; height:28px; border-radius:8px;
+    border:1px solid var(--elevated-border,#2e2f35);
+    background: transparent; color: var(--text-primary,#fff);
+    margin-left:10px;
+  }
+  .m-head .row2{
+    display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;
+    font-size: 13px; color: var(--text-muted,#a7b0bb);
+  }
+  .m-head .row2 .otp b{ font-weight:500; color: var(--text-primary,#f7d438); }
+
+  .m-body{ padding: 12px 14px; border-top:1px dashed var(--elevated-border,#2e2f35); }
+  .m-item.collapsed .m-body{ display:none; }
+
+  .m-body .pair{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 8px 0; border-bottom:1px dashed var(--elevated-border,#2e2f35);
+  }
+  .m-body .pair:last-child{ border-bottom:0; }
+  .m-body .pair > span:first-child{ opacity:.9; }
+  .m-body .pair .flag{ width:28px; height:28px; border-radius:6px; overflow:hidden;
+    border:1px solid var(--elevated-border,#2e2f35); display:inline-grid; place-items:center; }
+  .m-body .pair .flag img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .pill{ padding:6px 12px; border-radius:999px; font-weight:400; }
+  .pill.success   { background:#16a34a22; color:#34d399; }
+  .pill.processing{ background:#f59e0b22; color:#fbbf24; }
+  .pill.failed,
+  .pill.timeout   { background:#22c5f644; color:#67e8f9; }
+  .pill.refunded  { background:#22c5f644; color:#67e8f9; }
+
+  .countdown{ font-size:12px; margin-top:6px; color: var(--text-muted,#a7b0bb); }
+  .countdown.warn{ color:#fbbf24; }
+  .countdown.danger{ color:#f87171; }
+}
+
+/* ==== Mobile: ขยายความกว้าง + บีบระยะให้พอดีจอ ==== */
+@media (max-width: 640px){
+
+  /* ให้ container กว้างเต็มจอมากขึ้น ลด padding ข้าง */
+  .page.container,
+  .otp24.container{
+    max-width: none;
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+
+  /* ลิสต์มือถือกินเต็มจอมากขึ้น */
+  .m-orders{
+    margin-left: -20px;   /* ดันออกนิดให้ดูเต็ม */
+    margin-right: -20px;
+  }
+
+  /* การ์ดให้กว้างขึ้นและกระชับขึ้น */
+  .m-item{
+    border-radius: 14px;
+  }
+  .m-head{ padding: 8px 54px; }
+  .m-body{ padding: 8px 54px; }
+
+  /* ===== หัวการ์ด: บังคับเวลาไม่ขึ้นบรรทัดใหม่ ===== */
+  .m-head .row1{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    min-width: 0;              /* ให้ flex ภายในคำนวณกว้างได้ */
+  }
+  .m-head .oid{
+    flex: 0 1 auto;            /* ยืดได้นิดหน่อยแต่ไม่กินจนล้น */
+    min-width: 0;
+  }
+  .m-head .when{
+    margin-left: auto;         /* ชิดขวา */
+    white-space: nowrap;       /* << คีย์: ไม่ตัดบรรทัด */
+    font-variant-numeric: tabular-nums;
+  }
+  .m-head .toggle{
+    margin-left: 8px;
+    flex: 0 0 auto;
+  }
+
+  /* ถ้ายังแคบจนขึ้นบรรทัด ให้ลดฟอนต์เวลาลงนิด */
+  .m-head .when{ font-size: 12.5px; }       /* ปรับได้ 12–13px ตามใจ */
+
+  /* แถวสรุปเบอร์/OTP ให้กระชับ */
+  .m-head .row2{
+    gap: 10px;
+    font-size: 12.5px;
+  }
+}
+
+.copy{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 4px;          /* เว้นนิดหน่อยให้คลิกง่าย */
+  line-height: 0;          /* ตัดช่องว่าง inline */
+  vertical-align: middle;  /* เรียงเสมอ baseline */
+}
+.copy img{
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+}
+
+/* ===== Flags: transparent background (override) ===== */
+
+/* ปุ่มธงในโมดัลซื้อ */
+#buyModal .flag{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* รูปธงในโมดัลให้เต็มกรอบเหมือนเดิม แต่กรอบโปร่งใส */
+#buyModal .flag img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--flag-radius, 10px);
+}
+
+/* ธงที่แสดงในตารางประวัติ */
+.orders-wrap .flag{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* รูปธงในตาราง */
+.orders-wrap .flag img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+
+/* ธงในลิสต์มือถือ */
+.m-orders .flag{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.m-orders .flag img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+
+/* สถานะ “เลือก” ให้เห็นชัดด้วยเส้นขอบบาง ๆ (ไม่ใส่พื้น) */
+#buyModal .flag.active,
+#buyModal .flag.selected{
+  border: 2px solid var(--accent, #2a84ff) !important;
+  box-shadow: none !important;
+}
+
+/* hover/active effect แบบไม่ใช้พื้นหลัง */
+#buyModal .flag:hover{ transform: translateY(-1px); }
+
+/* เฉพาะธงในตารางประวัติเท่านั้น */
+.orders-wrap td .badge.app{ vertical-align: middle; }
+
+.orders-wrap td .flag{
+  display: inline-block;
+  vertical-align: middle;   /* จับให้อยู่ระนาบเดียวกับป้ายแอพ */
+  margin-left: 8px;         /* ระยะห่างจากป้าย */
+  width: 24px;              /* ปรับได้ตามใจ */
+  height: 18px;
+  background: transparent !important;
+  border: none !important;
+  padding: 0;
+  line-height: 0;           /* กันเด้ง */
+  transform: translateY(1px); /* จูนตำแหน่งนิดหน่อย (0~2px) */
+}
+
+.orders-wrap td .flag img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.orders-controls{
+  margin-top: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-primary,#f2f4f8);
+}
+.orders-controls .left{ display:flex; align-items:center; gap:8px; }
+.orders-controls .pager{ display:flex; align-items:center; gap:6px; }
+.orders-controls select{
+  padding:6px 8px; border-radius:10px;
+  background: var(--elevated-bg,#151518);
+  color: var(--text-primary,#fff);
+  border: 1px solid var(--elevated-border,#2e2f35);
+}
+.pg-btn{
+  min-width: 34px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--elevated-border,#2e2f35);
+  background: transparent;
+  color: var(--text-primary,#fff);
+  cursor: pointer;
+}
+.pg-btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+/* ซ่อน/โชว์คอนโทรลตามอุปกรณ์ */
+.mobile-only{ display:none !important; }
+@media (max-width: 640px){
+  #ordersControlsDesktop{ display:none !important; }
+  .mobile-only{ display:flex !important; }
+}
+
+/* ===== OTP24 Modal (style แบบภาพตัวอย่าง) ===== */
+.modal-otp24{
+  min-width: 520px;
+  padding: 22px 22px 18px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--elevated-border,#2e2f35), white 6%);
+  background: color-mix(in oklab, var(--elevated-bg,#17181b), black 6%);
+  color: var(--text-primary,#fff);
+  box-shadow: 0 16px 36px rgba(0,0,0,.45);
+  text-align: center;
+}
+@media (max-width:640px){ .modal-otp24{ min-width:unset; width:92vw; } }
+
+.modal-otp24 .modal-title{
+  margin: 0 0 12px;
+  font-size: clamp(18px, 2.4vw, 22px);
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.modal-otp24 .modal-sub{
+  opacity: .9;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+.modal-otp24 .modal-label{
+  margin-top: 6px;
+  font-weight: 600;
+}
+.modal-otp24 .modal-divider{
+  height: 2px;
+  margin: 10px 0 14px;
+  background: linear-gradient(90deg, transparent 0, #ff9b50 18%, #ffa95f 50%, #ff9b50 82%, transparent 100%);
+  opacity: .9;
+  border-radius: 2px;
+}
+
+/* ธงโปร่งใส เรียงหลายคอลัมน์ */
+.modal-otp24 .flags-grid{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  justify-items: center;
+  margin-bottom: 18px;
+}
+@media (max-width:640px){
+  .modal-otp24 .flags-grid{ grid-template-columns: repeat(5, 1fr); gap: 10px; }
+}
+
+/* ปุ่มธง = ไม่มีพื้นหลัง, มีเฉพาะรูปธงโค้ง + เงานิดๆ */
+.modal-otp24 .flag-btn{
+  width: 52px; height: 36px;
+  padding: 0; border: 0;
+  background: transparent;
+  line-height: 0; cursor: pointer;
+  position: relative; border-radius: 9px;
+}
+.modal-otp24 .flag-btn img{
+  width: 100%; height: 100%;
+  display: block; object-fit: cover;
+  border-radius: inherit;
+  box-shadow: 0 1px 0 rgba(255,255,255,.15), 0 4px 10px rgba(0,0,0,.25);
+}
+
+/* hover / selected = ขอบส้มเรืองนุ่ม */
+.modal-otp24 .flag-btn:hover,
+.modal-otp24 .flag-btn.active,
+.modal-otp24 .flag-btn.selected{
+  outline: 2px solid #ff9242;
+  box-shadow: 0 0 0 3px rgba(255,146,66,.25);
+  border-radius: 11px;
+}
+
+/* ปุ่มกด */
+.modal-otp24 .actions{
+  display: flex; gap: 14px; justify-content: center;
+}
+.modal-otp24 .btn{
+  min-width: 120px; height: 40px;
+  border-radius: 12px; font-weight: 400; letter-spacing:.2px;
+}
+.modal-otp24 .modal-primary{
+  background: linear-gradient(180deg,#ff9a55 0%, #ff7f2f 100%);
+  color: #fff;
+  border: 1px solid rgba(255,132,58,.55);
+  box-shadow: 0 6px 18px rgba(255,132,58,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.modal-otp24 .modal-primary:disabled{
+  filter: grayscale(.35) brightness(.85);
+  opacity: .8; cursor: not-allowed;
+}
+.modal-otp24 .modal-primary:hover{ filter: brightness(1.04); transform: translateY(-1px); }
+.modal-otp24 .modal-primary:active{ transform: translateY(0); }
+
+.modal-otp24 .modal-secondary{
+  background: transparent;
+  color: var(--text-primary,#fff);
+  border: 1px solid rgba(255,132,58,.45);
+  box-shadow: 0 0 0 2px rgba(255,132,58,.15) inset;
+}
+.modal-otp24 .modal-secondary:hover{
+  background: rgba(255,132,58,.08);
+}
+
+/* กริดธง: คอลัมน์คงที่ + จัดทั้งบล็อกให้อยู่กลาง */
+.modal-otp24 .flags-grid{
+  display: grid;
+  grid-template-columns: repeat(5, 52px); /* 6 คอลัมน์ desktop */
+  gap: 12px;
+  justify-content: center; /* ทำให้แถวสุดท้ายกึ่งกลาง */
+  justify-items: center;   /* ตัวธงอยู่กลางแต่ละคอลัมน์ */
+  margin-bottom: 18px;
+}
+@media (max-width:640px){
+  .modal-otp24 .flags-grid{
+    grid-template-columns: repeat(5, 52px); /* มือถือ 5 คอลัมน์ */
+    gap: 10px;
+  }
+}
+
+/* ขนาดปุ่มธง */
+.modal-otp24 .flag-btn{
+  width: 52px; height: 36px;
+  padding: 0; border: 0;
+  background: transparent;
+  line-height: 0; cursor: pointer;
+  border-radius: 9px;
+}
+.modal-otp24 .flag-btn img{
+  width: 100%; height: 100%;
+  object-fit: cover; display: block; border-radius: inherit;
+  box-shadow: 0 1px 0 rgba(255,255,255,.15), 0 4px 10px rgba(0,0,0,.25);
+}
+.modal-otp24 .flag-btn:hover,
+.modal-otp24 .flag-btn.active,
+.modal-otp24 .flag-btn.selected{
+  outline: 2px solid #ff9242;
+  box-shadow: 0 0 0 3px rgba(255,146,66,.25);
+  border-radius: 11px;
+}
+
+/* โมดัลเลือกประเทศ */
+#buyModal .flag-grid{
+  display: grid;
+  grid-template-columns: repeat(5, 52px); /* desktop: 6 คอลัมน์ */
+  gap: 20px;
+
+  width: min-content;     /* << บีบให้เท่าคอนเทนต์จริง */
+  margin-inline: auto;    /* << จัดกลางทั้งบล็อก */
+  justify-items: center;  /* ธงอยู่กลางคอลัมน์ */
+}
+
+@media (max-width:640px){
+  #buyModal .flag-grid{
+    grid-template-columns: repeat(5, 52px); /* mobile: 5 คอลัมน์ */
+    gap: 10px;
+  }
+}
+
+#buyModal .flag{
+  width: 52px; height: 36px;
+  padding: 0; border: 0; line-height: 0;
+  background: transparent; border-radius: 9px;
+}
+#buyModal .flag img{
+  width: 100%; height: 100%;
+  object-fit: cover; display: block; border-radius: inherit;
+}
+
+#buyModal .flag-grid{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;   /* แต่ละบรรทัดกึ่งกลาง */
+}
+@media (max-width:640px){
+  #buyModal .flag-grid{ gap:10px; }
+}
+#buyModal .flag{ width:52px; height:36px; padding:0; border:0; background:transparent; line-height:0; border-radius:9px; }
+#buyModal .flag img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit; }
+
+.phone-cell .copy { margin-left: 6px; }
+.m-head .row2 .phone .copy { margin-left: 6px; }
+
+.status-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.status-stack .pill { display: inline-block; }
+.status-stack .reuse-btn { margin: 0; } /* กัน margin เริ่มต้นของปุ่มบางธีม */
+@media (max-width: 640px){
+  .status-stack { gap: 6px; }
+}
+
+/* ===== Reuse Modal (เหมือนภาพตัวอย่าง) ===== */
+.modal-reuse{
+  min-width: 520px;
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  /* border: 1px solid color-mix(in oklab, var(--elevated-border,#2e2f35), white 6%); */
+  background: var(--elevated-bg,#17181b);
+  color: var(--text-primary,#fff);
+  box-shadow: 0 16px 36px rgba(0,0,0,.45);
+  text-align: center;
+}
+@media (max-width:640px){ .modal-reuse{ min-width:unset; width:92vw; } }
+
+.modal-reuse .modal-title{
+  margin: 2px 0 10px;
+  font-size: clamp(20px, 2.6vw, 24px);
+  font-weight: 400;
+  letter-spacing:.2px;
+}
+
+.modal-reuse .modal-divider{
+  height: 1px;
+  background: color-mix(in oklab, var(--text-muted,#b6beca), transparent 40%);
+  margin: 8px 0 14px;
+}
+
+/* ตารางคีย์–ค่า 2 คอลัมน์ ตรงกลาง */
+.modal-reuse .kv{
+  display:grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px;
+  justify-items: center;
+  align-items: center;
+  margin: 4px auto 16px;
+  width: max(260px, 70%);
+}
+.modal-reuse .kv .k{
+  font-weight: 400;
+  opacity:.95;
+  text-align:center;
+}
+.modal-reuse .kv .v{ text-align:center; }
+.modal-reuse .kv .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace; }
+
+.modal-reuse .phone-line{
+  display:inline-flex; gap:8px; align-items:center;
+}
+.modal-reuse .flag-ic{
+  width: 28px; height: 20px;
+  border-radius: 4px; object-fit: cover;
+  display: inline-block;
+  transform: translateY(1px);
+}
+
+/* ปุ่มคู่ล่าง: ซ้าย = primary, ขวา = เส้นขอบอุ่น */
+.modal-reuse .actions{
+  display:flex; gap:16px; justify-content:center;
+}
+.modal-reuse .btn{
+  min-width:120px; height:42px;
+  border-radius:12px; font-weight:400; letter-spacing:.2px;
+}
+.modal-reuse .modal-primary{
+  background: linear-gradient(180deg, #ff9a55 0%, #ff7f2f 100%);
+  color:#fff;
+  border:1px solid rgba(255,132,58,.55);
+  box-shadow: 0 6px 18px rgba(255,132,58,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.modal-reuse .modal-primary:hover{ filter:brightness(1.04); transform:translateY(-1px); }
+.modal-reuse .modal-primary:active{ transform:translateY(0); }
+
+.modal-reuse .modal-secondary{
+  background: transparent;
+  color: var(--text-primary,#fff);
+  border: 1px solid rgba(255,132,58,.45);
+  box-shadow: 0 0 0 2px rgba(255,132,58,.15) inset;
+}
+.modal-reuse .modal-secondary:hover{ background: rgba(255,132,58,.08); }
+
+/* Theme: light mode */
+:root[data-theme="light"] .modal-reuse,
+html[data-theme="light"] .modal-reuse{
+  background:#1b1d22;           /* ใช้กล่องมืดเพื่อคอนทราสต์ตามภาพ */
+  color:#f5f7fb;
+  border-color:#2c2f37;
+}
+:root[data-theme="light"] dialog::backdrop,
+html[data-theme="light"] dialog::backdrop{
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+}
+
+.status-stack { display:flex; flex-direction:column; align-items:center; gap:8px; }
+@media (max-width:640px){ .status-stack{ gap:6px; } }
+
+/* ===== Reuse Modal – จัดวางกลางเป๊ะ ===== */
+.modal-reuse{
+  min-width: 520px;
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  /* border: 1px solid color-mix(in oklab, var(--elevated-border,#2e2f35), white 6%); */
+  background: var(--elevated-bg,#17181b);
+  color: var(--text-primary,#fff);
+  box-shadow: 0 16px 36px rgba(0,0,0,.45);
+  text-align: center;
+}
+@media (max-width:640px){ .modal-reuse{ min-width:unset; width:92vw; } }
+
+.modal-reuse .modal-title{
+  margin: 2px 0 10px;
+  font-size: clamp(20px, 2.6vw, 24px);
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.modal-reuse .modal-divider{
+  height: 1px;
+  background: color-mix(in oklab, var(--text-muted,#b6beca), transparent 40%);
+  margin: 8px 0 14px;
+}
+
+/* ตารางคีย์–ค่าอยู่กึ่งกลางจริง ทั้งบล็อกและข้อความ */
+.modal-reuse .kv{
+  display: grid;
+  grid-template-columns: auto auto;    /* 2 คอลัมน์กะทัดรัด */
+  gap: 10px 12px;
+  margin: 4px auto 16px;
+  width: fit-content;                   /* กว้างเท่าคอนเทนต์ */
+  justify-items: center;                /* จัดแต่ละช่องให้อยู่กลาง */
+  text-align: center;                   /* จัดข้อความให้อยู่กลาง */
+}
+.modal-reuse .kv .k{
+  font-weight: 800;
+  opacity: .95;
+  min-width: 78px;                      /* ความกว้าง label ใกล้เคียงภาพ */
+}
+.modal-reuse .kv .v{ white-space: nowrap; }
+
+.modal-reuse .phone-line{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;              /* เบอร์+ธงกึ่งกลางแนวนอน */
+  gap: 8px;
+}
+
+.flag-ic-wrap{ display: inline-flex; align-items: center; }
+.flag-ic{
+  width: 28px; height: 20px;
+  border-radius: 4px; object-fit: cover;
+  display: inline-block;
+  transform: translateY(1px);
+}
+.flag-emoji{ font-size: 18px; line-height: 1; transform: translateY(1px); }
+
+/* ปุ่มคู่ล่าง */
+.modal-reuse .actions{ display:flex; gap:16px; justify-content:center; }
+.modal-reuse .btn{
+  min-width:120px; height:42px;
+  border-radius:12px; font-weight:400; letter-spacing:.2px;
+}
+.modal-reuse .modal-primary{
+  background: linear-gradient(180deg, #ff9a55 0%, #ff7f2f 100%);
+  color:#fff; border:1px solid rgba(255,132,58,.55);
+  box-shadow: 0 6px 18px rgba(255,132,58,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.modal-reuse .modal-primary:hover{ filter:brightness(1.04); transform:translateY(-1px); }
+.modal-reuse .modal-secondary{
+  background: transparent;
+  color: var(--text-primary,#fff);
+  border: 1px solid rgba(255,132,58,.45);
+  box-shadow: 0 0 0 2px rgba(255,132,58,.15) inset;
+}
+.modal-reuse .modal-secondary:hover{ background: rgba(255,132,58,.08); }
+
+/* รองรับธีมสว่าง */
+:root[data-theme="light"] .modal-reuse,
+html[data-theme="light"] .modal-reuse{
+  background:#1b1d22;   /* คอนทราสต์แบบภาพตัวอย่าง */
+  color:#f5f7fb;
+  border-color:#2c2f37;
+}
+:root[data-theme="light"] dialog::backdrop,
+html[data-theme="light"] dialog::backdrop{
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+}
+#reuseFlag:not([src]){ display:none; }
+/* ===== Mobile: สถานะ + ใช้เบอร์เดิม อยู่บรรทัดเดียวกัน ===== */
+@media (max-width:640px){
+  /* เปลี่ยน status-stack จากคอลัมน์ → แถว */
+  .m-orders .status-stack{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;          /* ถ้าพื้นที่แคบ ให้ตกรางสวยๆ */
+  }
+
+  /* ปุ่มใช้เบอร์เดิมให้กะทัดรัดขึ้น */
+  .m-orders .status-stack .btn-reuse{
+    margin: 0;
+    padding: 6px 10px;
+    line-height: 1.1;
+  }
+
+  /* ตัวนับถอยหลังให้อยู่บรรทัดถัดไปใต้แถวเดียวกัน */
+  .m-orders .status-stack + .countdown{
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+
+/* เดสก์ท็อปยังคงเรียงเป็นคอลัมน์เหมือนเดิม */
+@media (min-width:641px){
+  .status-stack{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 8px;
+  }
+}
+
+.flash { animation: otpFlash 800ms ease-in-out 1; }
+@keyframes otpFlash {
+  0% { background: transparent; }
+  25% { background: rgba(16,185,129,.22); }
+  100% { background: transparent; }
+}
+
+/* =========================
+   THEME TOKENS (Light / Dark)
+   วางต่อท้ายไฟล์เดิม
+   ========================= */
+
+/* Dark (คงโทนเดิม แต่รวม token เพิ่มให้ครบ) */
+html[data-theme="dark"] {
+  --page-bg:          #0f1115;
+  --page-text:        #f2f4f8;
+
+  --elevated-bg:      #141518;
+  --elevated-bg-2:    #17181b;  /* การ์ด/กล่อง */
+  --elevated-border:  #24262b;
+  --elevated-shadow:  0 12px 30px rgba(0,0,0,.40);
+
+  --text-primary:     #f2f4f8;
+  --text-muted:       #a7b0bb;
+
+  --accent:           #2a84ff;
+  --accent-contrast:  #ffffff;
+
+  --brand-warm:       #00c3ff2a;
+  --brand-warm-ink:   #09f51d;
+
+  --success:          #10b981;
+  --warn:             #f59e0b;
+  --danger:           #ef4444;
+
+  --pill-success-bg:  color-mix(in oklab, #10b981 20%, transparent);
+  --pill-warn-bg:     color-mix(in oklab, #f59e0b 20%, transparent);
+  --pill-info-bg:     color-mix(in oklab, #22c5f6 26%, transparent);
+}
+
+/* Light — โทน “ไม่ขาวล้วน” นุ่มตา + คอนทราสต์ชัด */
+html[data-theme="light"] {
+  --page-bg:          #f6f8fc;   /* พื้นหลังทั้งหน้า */
+  --page-text:        #1f2328;
+
+  /* การ์ด/กล่อง: ขาวอมฟ้าเล็กน้อย + เงาบาง */
+  --elevated-bg:      #ffffff;
+  --elevated-bg-2:    color-mix(in oklab, #ffffff, #e9f0ff 7%);
+  --elevated-border:  #e3e8f3;
+  --elevated-shadow:  0 12px 26px rgba(15,32,75,.10);
+
+  --text-primary:     #1f2328;
+  --text-muted:       #687284;
+
+  /* น้ำเงินสด + ตัดกับพื้นอ่อน */
+  --accent:           #2a84ff;
+  --accent-contrast:  #ffffff;
+
+  /* วอร์มโทนสำหรับ badge/pill */
+  --brand-warm:       #00c3ff2a;
+  --brand-warm-ink:   #09f51d;
+
+  --success:          #12a86b;
+  --warn:             #b36500;
+  --danger:           #d92b2b;
+
+  /* พื้น pill แบบทินท์สี อ่านง่ายในพื้นสว่าง */
+  --pill-success-bg:  color-mix(in oklab, #12a86b 18%, #ffffff 88%);
+  --pill-warn-bg:     color-mix(in oklab, #ffb955 26%, #ffffff 84%);
+  --pill-info-bg:     color-mix(in oklab, #2a84ff 24%, #ffffff 84%);
+}
+
+/* พื้นหลัง/ตัวหนังสือรวมหน้า */
+body, .page, .otp24 {
+  background: var(--page-bg);
+  color: var(--text-primary);
+}
+
+/* การ์ด/กล่องหลัก */
+.card,
+.card2,
+.card.app,
+.m-item,
+.modal,
+.modal-otp24,
+.modal-reuse {
+  background: var(--elevated-bg-2);
+  border: 1px solid var(--elevated-border);
+  box-shadow: var(--elevated-shadow);
+  color: var(--text-primary);
+}
+
+/* หัวการ์ด/แถบหัวตาราง (ให้ดูไม่กลืนในธีมสว่าง) */
+.tbl thead th {
+  background: color-mix(in oklab, var(--elevated-bg), #e9f0ff 10%);
+  color: var(--text-primary);
+  border-bottom-color: var(--elevated-border);
+}
+
+/* ตาราง/คอนโทรลทั่วไป */
+.tbl th, .tbl td {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--elevated-border);
+}
+.orders-controls select,
+.pg-btn {
+  background: var(--elevated-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--elevated-border);
+}
+
+/* ป้ายราคา/แอป (badge อุ่น ๆ) */
+.price-badge,
+.badge.app {
+  background: var(--brand-warm);
+  color: var(--brand-warm-ink);
+  border: 1px solid color-mix(in oklab, var(--brand-warm), black 12%);
+}
+
+/* ปุ่มหลัก/รอง — เคารพธีมสว่าง/มืด */
+.btn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: 1px solid color-mix(in oklab, var(--accent), black 18%);
+}
+.btn:hover { filter: brightness(1.04); }
+.btn:active { filter: none; }
+
+.btn.ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--elevated-border);
+}
+html[data-theme="light"] .btn.ghost:hover {
+  background: color-mix(in oklab, var(--page-bg), black 4%);
+}
+
+/* ปุ่มใน .modal-otp24 / .modal-reuse — ใช้โทนอุ่น-น้ำเงินให้อ่านชัดใน Light */
+.modal-otp24 .modal-primary,
+.modal-reuse .modal-primary {
+  background: linear-gradient(180deg, #ff9a55 0%, #ff7f2f 100%);
+  color: #fff;
+  border: 1px solid rgba(255,132,58,.55);
+  box-shadow: 0 6px 18px rgba(255,132,58,.30);
+}
+.modal-otp24 .modal-secondary,
+.modal-reuse  .modal-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid color-mix(in oklab, var(--brand-warm), #ffffff 40%);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-warm), transparent 85%) inset;
+}
+
+/* Dialog / Backdrop */
+dialog { border: none; background: transparent; }
+dialog::backdrop {
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+}
+html[data-theme="light"] dialog::backdrop {
+  background: rgba(0,0,0,.35);
+}
+
+/* Pill สถานะ — ผูกกับตัวแปรให้ดูเด้งใน Light */
+.pill.success   { background: var(--pill-success-bg); color: var(--success); }
+.pill.processing{ background: var(--pill-warn-bg);    color: var(--warn); }
+.pill.failed,
+.pill.timeout,
+.pill.refunded  { background: var(--pill-info-bg);    color: #09daff; }
+
+/* Countdown สีเตือนใน Light ให้ชัดขึ้น */
+.countdown       { color: var(--text-muted); }
+.countdown.warn  { color: color-mix(in oklab, var(--warn), black 10%); }
+.countdown.danger{ color: color-mix(in oklab, var(--danger), black 5%); }
+
+/* ธง (table/mobile) โปร่งใส + คมใน Light */
+.orders-wrap .flag,
+.m-orders .flag {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.orders-wrap .flag img,
+.m-orders .flag img { border-radius: 6px; }
+
+/* โฟกัส/โฮเวอร์การ์ดแอปให้ชัดเจนใน Light */
+.card.app {
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.card.app:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(30,107,224,.18);
+  border-color: color-mix(in oklab, var(--accent), transparent 60%);
+}
+
+/* ตารางประวัติ: ชื่อ/ป้าย + ธง จูน baseline ให้เนียน */
+.orders-wrap td .badge.app { vertical-align: middle; }
+.orders-wrap td .flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  width: 24px; height: 18px;
+  line-height: 0;
+  transform: translateY(1px);
+}
+
+/* ===== Tabs: แบบเส้นใต้ยาวทั้งแถว ===== */
+.tabs{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:0;
+  margin:0 0 12px;
+  border-bottom:1px solid #2b2b2f;  /* เส้นเทาเข้มยาวทั้งแถว */
+  position:relative;
+}
+
+.tab{
+  flex:1 1 0;
+  background:transparent;
+  border:0;
+  border-radius:0;
+  padding:8px 0 10px;
+  text-align:center;
+  cursor:pointer;
+
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:.3px;
+  color:#e3b863;                 /* สีทองกลาง ๆ เหมือนเมนู */
+  position:relative;
+  transition:color .15s ease;
+}
+
+/* เส้นทองใต้แท็บที่ active */
+.tab::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-1px;
+  height:2px;
+  background:transparent;
+  transition:background-color .18s ease, transform .18s ease;
+  transform-origin:left;
+  transform:scaleX(0);
+}
+
+/* hover แค่เน้นตัวหนังสือ */
+.tab:hover{
+  color:#ffd47a;
+}
+
+/* แท็บที่เลือกอยู่ */
+.tab.active{
+  color:#ffd47a;
+}
+
+.tab.active::after{
+  background:#e3b863;
+  transform:scaleX(1);          /* เส้นทองเต็มความกว้าง */
+}
+
+/* ซ่อน/โชว์เนื้อหาแท็บ */
+.tabpane{ display:none; }
+.tabpane.show{ display:block; animation: tabFadeIn .22s ease; }
+@keyframes tabFadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+
+.otp24 .tabpane{
+  transform-origin: 50% 0;
+  will-change: opacity, transform, filter;
+}
+.otp24.tab-switching .tabpane.show{
+  animation: otp24SmoothIn .32s cubic-bezier(.2,.8,.2,1) both;
+}
+@media (prefers-reduced-motion: reduce){
+  .otp24.tab-switching .tabpane.show,
+  .tabpane.show{ animation:none !important; }
+  .otp24-route-loader__ring{ animation:none !important; }
+}
+
+/* ============================================
+   TERMS MODAL (Dark/Light Theme Aware)
+   ============================================ */
+.bt-terms-modal.hidden { display: none; }
+
+.bt-terms-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+/* Backdrop */
+.bt-terms-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(3px);
+}
+
+/* Dialog box */
+.bt-terms-dialog {
+  position: relative;
+  z-index: 2;
+  width: 92%;
+  max-width: 520px;
+
+  /* ใช้โทเคนธีมเดียวกับระบบ */
+  background: var(--elevated-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--elevated-border);
+  box-shadow: var(--elevated-shadow);
+
+  padding: 26px 28px 22px;
+  border-radius: 16px;
+
+  animation: fadeZoom .18s ease;
+}
+
+/* Light mode — ปรับให้ contrast ดีขึ้น */
+html[data-theme="light"] .bt-terms-dialog {
+  background: var(--elevated-bg-2);
+  border-color: var(--elevated-border);
+  box-shadow: 0 12px 26px rgba(15,32,75,.10);
+}
+
+/* Anim */
+@keyframes fadeZoom {
+  from { opacity:0; transform:scale(.92); }
+  to   { opacity:1; transform:scale(1); }
+}
+
+/* Title */
+.bt-terms-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+/* Scrollable text */
+.bt-terms-body {
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.bt-terms-body strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Checkbox row */
+.accept-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.accept-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* Buttons */
+.bt-terms-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Confirm */
+.bt-terms-actions .btn-primary {
+  flex: 1;
+  background: linear-gradient(180deg, #2a84ff 0%, #1e6be0 100%);
+  color: #fff;
+  border: 1px solid rgba(30,107,224,.3);
+  padding: 10px 0;
+  border-radius: 10px;
+  font-weight: 500;
+  box-shadow: 0 6px 16px rgba(42,132,255,.35);
+  cursor: pointer;
+  text-align: center;
+}
+
+.bt-terms-actions .btn-primary:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(.4);
+}
+
+/* Cancel */
+.bt-terms-actions .btn-secondary {
+  flex: 1;
+  background: #e11d48;
+  color: #fff;
+  padding: 10px 0;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.bt-terms-actions .btn-secondary:hover {
+  filter: brightness(1.06);
+}
+
+/* Mobile */
+@media (max-width: 640px){
+  .bt-terms-dialog {
+    max-width: 92vw;
+    padding: 20px 22px 18px;
+  }
+  .bt-terms-title { font-size: 18px; }
+  .bt-terms-body { max-height: 300px; }
+}
+
+
+/* =========================================================
+   OTP24 PRO SAAS UI OVERRIDE — production lightweight layer
+   ใช้ตัวแปรสีจาก layout.ejs / theme เดิม ไม่เพิ่มภาระ server
+   ========================================================= */
+:root{
+  --otp-accent: var(--accent, #f6c65b);
+  --otp-page: var(--page, #07090d);
+  --otp-card: color-mix(in srgb, var(--card, #12161d) 86%, transparent);
+  --otp-card2: color-mix(in srgb, var(--card, #161b23) 74%, var(--page, #07090d));
+  --otp-text: var(--text, #f7f8fb);
+  --otp-muted: var(--muted, #99a3b3);
+  --otp-border: color-mix(in srgb, var(--border, rgba(255,255,255,.12)) 75%, transparent);
+  --otp-border-strong: color-mix(in srgb, var(--otp-accent) 35%, var(--otp-border));
+  --otp-glow: color-mix(in srgb, var(--otp-accent) 28%, transparent);
+  --otp-blue: #2f9bff;
+  --otp-green: #00e676;
+  --otp-red: #ff4d61;
+  --otp-radius: 22px;
+}
+
+.page.otp24{
+  min-height: calc(100vh - 74px);
+  padding: clamp(12px, 1.6vw, 28px);
+  color: var(--otp-text);
+  background:
+    radial-gradient(900px 420px at 12% -10%, color-mix(in srgb, var(--otp-accent) 18%, transparent), transparent 62%),
+    radial-gradient(900px 420px at 92% 2%, rgba(47,155,255,.13), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--otp-page) 92%, #111827), var(--otp-page));
+  isolation: isolate;
+}
+.page.otp24::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .28;
+  z-index: -1;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--otp-border) 40%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--otp-border) 40%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 76%);
+}
+
+/* Header / top statement */
+.page.otp24 > .topbar,
+.page.otp24 > .hero,
+.otp24-hero{
+  border: 1px solid var(--otp-border);
+  border-radius: calc(var(--otp-radius) + 4px);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--otp-card) 96%, transparent), color-mix(in srgb, var(--otp-card2) 88%, transparent)),
+    radial-gradient(420px 180px at 18% 0%, var(--otp-glow), transparent 72%);
+  box-shadow: 0 24px 80px rgba(0,0,0,.28);
+  backdrop-filter: blur(14px);
+}
+
+.tabs{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+  padding: 8px;
+  margin: 0 0 14px;
+  border: 1px solid var(--otp-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--otp-card) 82%, transparent);
+  box-shadow: 0 14px 42px rgba(0,0,0,.22);
+  backdrop-filter: blur(18px);
+}
+.tab{
+  position: relative;
+  border: 0;
+  border-radius: 14px;
+  min-height: 48px;
+  cursor: pointer;
+  color: var(--otp-muted);
+  font-weight: 900;
+  letter-spacing: .02em;
+  background: transparent;
+  transition: transform .18s ease, color .18s ease, background .18s ease, box-shadow .18s ease;
+  overflow: hidden;
+}
+.tab::after{
+  content:"";
+  position:absolute;
+  inset:auto 12px 7px;
+  height:2px;
+  border-radius:999px;
+  background: linear-gradient(90deg, transparent, var(--otp-accent), transparent);
+  transform: scaleX(0);
+  transition: transform .22s ease;
+}
+.tab:hover{ transform: translateY(-1px); color: var(--otp-text); background: color-mix(in srgb, var(--otp-accent) 8%, transparent); }
+.tab.active{
+  color: color-mix(in srgb, var(--otp-accent) 88%, #fff);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--otp-accent) 16%, transparent), color-mix(in srgb, var(--otp-accent) 5%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--otp-accent) 34%, transparent), 0 12px 32px color-mix(in srgb, var(--otp-accent) 10%, transparent);
+}
+.tab.active::after{ transform: scaleX(1); }
+.tab:active{ transform: scale(.985); }
+
+.tabpane{
+  min-height: 62vh;
+}
+.tabpane.show,
+.tabpane.active{
+  /* display:block handled above; animation via tabFadeIn */
+}
+
+.input,
+input[type="search"],
+input[type="text"],
+select{
+  border: 1px solid var(--otp-border) !important;
+  border-radius: 16px !important;
+  color: var(--otp-text) !important;
+  background: color-mix(in srgb, var(--otp-card) 82%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 14px 42px rgba(0,0,0,.12);
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.input:focus,
+input[type="search"]:focus,
+input[type="text"]:focus,
+select:focus{
+  border-color: var(--otp-border-strong) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--otp-accent) 13%, transparent), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* Product grid */
+.grid,
+.cards,
+.app-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: clamp(12px, 1.35vw, 20px);
+  align-items: stretch;
+}
+.card,
+.app,
+.product-card{
+  position: relative;
+  border: 1px solid var(--otp-border) !important;
+  border-radius: var(--otp-radius) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--otp-card) 94%, transparent), color-mix(in srgb, var(--otp-card2) 90%, transparent)) !important;
+  box-shadow: 0 14px 44px rgba(0,0,0,.23);
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s ease, box-shadow .22s ease, background .22s ease;
+  animation: otpCardIn .32s ease both;
+}
+.card::before,
+.app::before,
+.product-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(240px 160px at 20% 0%, color-mix(in srgb, var(--otp-accent) 13%, transparent), transparent 70%);
+  opacity:0;
+  transition: opacity .22s ease;
+  pointer-events:none;
+}
+.card:hover,
+.app:hover,
+.product-card:hover{
+  transform: translateY(-5px) scale(1.012);
+  border-color: var(--otp-border-strong) !important;
+  box-shadow: 0 22px 64px rgba(0,0,0,.34), 0 0 0 1px color-mix(in srgb, var(--otp-accent) 12%, transparent);
+}
+.card:hover::before,
+.app:hover::before,
+.product-card:hover::before{ opacity:1; }
+.card:active,
+.app:active,
+.product-card:active{ transform: translateY(-1px) scale(.99); }
+
+.icon,
+.app-icon,
+.card img,
+.app img{
+  border-radius: 24px !important;
+  object-fit: contain;
+  background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 34px rgba(0,0,0,.24);
+}
+.app-name,
+.name{
+  font-weight: 450 !important;
+  text-transform: uppercase;
+  letter-spacing: .015em;
+  color: var(--otp-text) !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,.24);
+}
+.price-badge,
+.price{
+  border: 1px solid color-mix(in srgb, var(--otp-green) 36%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--otp-green) 22%, transparent), rgba(0,0,0,.12)) !important;
+  color: color-mix(in srgb, var(--otp-green) 86%, #fff) !important;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--otp-green) 12%, transparent);
+  font-weight: 450 !important;
+}
+.badge,
+.pill{
+  border-radius: 999px !important;
+  border: 1px solid var(--otp-border);
+  background: color-mix(in srgb, var(--otp-card) 72%, transparent);
+  color: var(--otp-text);
+}
+
+/* History controls / table */
+.orders-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 10px 0 12px;
+  border: 1px solid var(--otp-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--otp-card) 74%, transparent);
+  backdrop-filter: blur(14px);
+}
+.orders-wrap{
+  border: 1px solid var(--otp-border);
+  border-radius: 24px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--otp-card) 76%, transparent);
+  box-shadow: 0 18px 58px rgba(0,0,0,.25);
+}
+.tbl{
+  width:100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+.tbl thead th{
+  position: sticky;
+  top: 0px;
+  z-index: 5;
+  padding: 16px 14px !important;
+  color: color-mix(in srgb, var(--otp-text) 92%, var(--otp-accent));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--otp-card2) 96%, #000), color-mix(in srgb, var(--otp-card) 84%, #000)) !important;
+  border-bottom: 1px solid var(--otp-border) !important;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.tbl tbody tr{
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.tbl tbody tr:hover{
+  background: color-mix(in srgb, var(--otp-accent) 7%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--otp-accent);
+}
+.tbl td{
+  padding: 16px 14px !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--otp-border) 72%, transparent) !important;
+  vertical-align: middle !important;
+}
+.phone-cell,
+.phone-line{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+}
+.copy,
+.btn,
+.pg-btn,
+.reuse-btn,
+.btn-reuse,
+.modal-primary,
+.modal-secondary,
+.modal-reuse{
+  border: 1px solid var(--otp-border) !important;
+  border-radius: 999px !important;
+  cursor:pointer;
+  color: var(--otp-text) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--otp-card2) 92%, transparent), color-mix(in srgb, var(--otp-card) 78%, transparent)) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.16);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, filter .16s ease;
+}
+.copy:hover,
+.btn:hover,
+.pg-btn:hover,
+.reuse-btn:hover,
+.btn-reuse:hover,
+.modal-primary:hover,
+.modal-secondary:hover,
+.modal-reuse:hover{
+  transform: translateY(-2px);
+  border-color: var(--otp-border-strong) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.24), 0 0 0 4px color-mix(in srgb, var(--otp-accent) 8%, transparent);
+}
+.copy:active,
+.btn:active,
+.pg-btn:active,
+.reuse-btn:active,
+.btn-reuse:active,
+.modal-primary:active,
+.modal-secondary:active,
+.modal-reuse:active{ transform: translateY(0) scale(.98); }
+.modal-primary,
+.btn-primary{
+  background: linear-gradient(135deg, var(--otp-accent), color-mix(in srgb, var(--otp-accent) 72%, #ff7a1a)) !important;
+  color: #111 !important;
+  border-color: color-mix(in srgb, var(--otp-accent) 70%, #fff) !important;
+  font-weight: 950 !important;
+}
+
+.status-stack{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+.status.processing,
+.status.wait{ color: #ffd05a; background: rgba(255, 190, 60, .10); border-color: rgba(255, 190, 60, .28) !important; }
+.status.success{ color: var(--otp-green); background: rgba(0,230,118,.10); border-color: rgba(0,230,118,.28) !important; }
+.status.refunded,.status.failed{ color: #7bd7ff; background: rgba(47,155,255,.12); border-color: rgba(47,155,255,.26) !important; }
+.countdown,.small,.muted{ color: var(--otp-muted) !important; }
+.otp{ color: color-mix(in srgb, var(--otp-accent) 88%, #fff); font-weight:950; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+/* Modal */
+.modal,
+.modal-otp24{
+  backdrop-filter: blur(12px);
+}
+.modal .box,
+.modal-card,
+.m-body,
+.modal-otp24 .box{
+  border: 1px solid var(--otp-border) !important;
+  border-radius: 28px !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--otp-card2) 96%, transparent), color-mix(in srgb, var(--otp-card) 92%, transparent)),
+    radial-gradient(420px 180px at 0% 0%, var(--otp-glow), transparent 72%) !important;
+  box-shadow: 0 28px 100px rgba(0,0,0,.42) !important;
+}
+.m-head,
+.modal-title{ border-color: var(--otp-border) !important; }
+.flag-grid,
+.flags-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px,1fr));
+  gap:10px;
+}
+.flag-btn{
+  border:1px solid var(--otp-border) !important;
+  border-radius:18px !important;
+  background: color-mix(in srgb, var(--otp-card) 80%, transparent) !important;
+  color:var(--otp-text) !important;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.flag-btn:hover,
+.flag-btn.selected{
+  transform: translateY(-2px);
+  border-color: var(--otp-border-strong) !important;
+  background: color-mix(in srgb, var(--otp-accent) 11%, var(--otp-card)) !important;
+}
+
+/* Skeleton/empty state polish */
+.placeholder,
+.empty{
+  border: 1px dashed var(--otp-border-strong);
+  border-radius: 24px;
+  padding: clamp(26px, 5vw, 56px);
+  text-align:center;
+  color: var(--otp-muted);
+  background: color-mix(in srgb, var(--otp-card) 62%, transparent);
+}
+
+@keyframes otpCardIn{
+  from{ opacity:0; transform: translateY(10px) scale(.985); }
+  to{ opacity:1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 780px){
+  .page.otp24{ padding: 10px; }
+  .tabs{ top: 0; border-radius: 14px; gap:6px; }
+  .tab{ min-height: 44px; font-size: 13px; }
+  .grid,.cards,.app-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .orders-wrap{ overflow-x: auto; border-radius: 18px; }
+  .tbl{ min-width: 860px; }
+  .tbl thead th{ top: 58px; }
+}
+
+</style>
+
+<style id="otp24-enterprise-theme-final">
+/* ==========================================================
+   OTP24 Enterprise High-end Theme — local only for this file
+   รองรับโหมดมืด/สว่างจาก layout.ejs ผ่าน --page/--card/--text/--muted/--border/--accent
+   ========================================================== */
+.otp24{
+  --otp-page: var(--page, #08090d);
+  --otp-card: var(--card, #17181f);
+  --otp-card-2: color-mix(in srgb, var(--otp-card) 88%, #ffffff 5%);
+  --otp-soft: color-mix(in srgb, var(--otp-card) 86%, transparent);
+  --otp-text: var(--text, #f8f4e9);
+  --otp-muted: var(--muted, #b8b1a2);
+  --otp-border: color-mix(in srgb, var(--border, #30313a) 82%, transparent);
+  --otp-border-strong: color-mix(in srgb, var(--accent, #e8bc53) 44%, var(--otp-border));
+  --otp-accent: var(--accent, #e8bc53);
+  --otp-accent-2: color-mix(in srgb, var(--otp-accent) 72%, #fff);
+  --otp-green: #22c55e;
+  --otp-red: #ef4444;
+  --otp-blue: #3b82f6;
+  --otp-shadow: rgba(0,0,0,.34);
+  --otp-radius-xl: 30px;
+  --otp-radius-lg: 22px;
+  color:var(--otp-text);
+  position:relative;
+  isolation:isolate;
+  padding-top:clamp(10px,1.6vw,22px);
+}
+:root[data-theme="light"] .otp24,
+html[data-theme="light"] .otp24,
+body[data-theme="light"] .otp24,
+body.light .otp24,
+body.theme-light .otp24{
+  --otp-page: var(--page, #f7f8fb);
+  --otp-card: var(--card, #ffffff);
+  --otp-card-2: #f4f6fb;
+  --otp-soft: rgba(255,255,255,.82);
+  --otp-text: var(--text, #101624);
+  --otp-muted: var(--muted, #647084);
+  --otp-border: color-mix(in srgb, var(--border, #d8dfec) 88%, transparent);
+  --otp-shadow: rgba(25,30,45,.11);
+}
+.otp24::before,
+.otp24::after{
+  content:"";position:absolute;z-index:-1;pointer-events:none;border-radius:999px;filter:blur(18px);opacity:.8;
+}
+.otp24::before{width:420px;height:220px;left:-120px;top:20px;background:radial-gradient(circle,color-mix(in srgb,var(--otp-accent) 26%,transparent),transparent 66%);}
+.otp24::after{width:380px;height:240px;right:-90px;top:120px;background:radial-gradient(circle,rgba(94,92,255,.16),transparent 68%);}
+
+/* Hero */
+.otp-enterprise-hero{
+  position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:center;
+  margin:0 0 18px;padding:clamp(22px,3.2vw,42px);border-radius:var(--otp-radius-xl);
+  border:1px solid var(--otp-border);
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--otp-accent) 13%,transparent),transparent 38%),
+    radial-gradient(600px 240px at 12% 0%,color-mix(in srgb,var(--otp-accent) 18%,transparent),transparent 68%),
+    linear-gradient(180deg,color-mix(in srgb,var(--otp-card) 94%,transparent),color-mix(in srgb,var(--otp-card-2) 88%,transparent));
+  box-shadow:0 24px 72px var(--otp-shadow),inset 0 1px 0 rgba(255,255,255,.07);
+  animation:otpHeroIn .48s cubic-bezier(.2,.8,.2,1) both;
+}
+.otp-hero-glow{position:absolute;border-radius:999px;pointer-events:none;filter:blur(20px);opacity:.55;animation:otpFloat 7s ease-in-out infinite alternate;}
+.otp-hero-glow-a{width:180px;height:180px;right:18%;top:-90px;background:color-mix(in srgb,var(--otp-accent) 36%,transparent);}
+.otp-hero-glow-b{width:130px;height:130px;right:-35px;bottom:-50px;background:rgba(99,102,241,.24);animation-delay:-1.5s;}
+.otp-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:999px;border:1px solid var(--otp-border-strong);background:color-mix(in srgb,var(--otp-accent) 12%,transparent);color:var(--otp-accent-2);font-weight:900;font-size:12px;letter-spacing:.12em;text-transform:uppercase;}
+.otp-kicker::before{content:"✦";}
+.otp-hero-content h1{margin:0;font-size:clamp(30px,4.2vw,58px);line-height:1.02;letter-spacing:-.04em;font-weight:950;color:var(--otp-text);text-wrap:balance;}
+.otp-hero-content p{margin:12px 0 0;max-width:780px;color:var(--otp-muted);font-size:clamp(14px,1.35vw,18px);line-height:1.75;font-weight:650;}
+.otp-hero-stats{display:grid;grid-template-columns:repeat(3,minmax(108px,1fr));gap:10px;min-width:min(520px,42vw);}
+.otp-hero-stats div{padding:16px 18px;border-radius:20px;border:1px solid var(--otp-border);background:rgba(255,255,255,.045);backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
+.otp-hero-stats b{display:block;font-size:clamp(18px,1.7vw,28px);line-height:1.05;color:var(--otp-accent-2);font-weight:950;}
+.otp-hero-stats span{display:block;margin-top:6px;color:var(--otp-muted);font-size:12px;font-weight:800;}
+
+/* Tabs */
+.otp24 > .tabs{
+  position:sticky;top:8px;z-index:50;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 18px!important;padding:7px!important;
+  border:1px solid var(--otp-border)!important;border-radius:24px!important;background:color-mix(in srgb,var(--otp-card) 78%,transparent)!important;
+  backdrop-filter:blur(18px);box-shadow:0 18px 42px var(--otp-shadow),inset 0 1px 0 rgba(255,255,255,.06)!important;
+}
+.otp24 > .tabs .tab{
+  min-height:54px!important;border:0!important;border-radius:18px!important;padding:10px 14px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;
+  color:var(--otp-muted)!important;background:transparent!important;font-size:14px!important;font-weight:900!important;letter-spacing:0!important;transition:transform .18s ease,color .18s ease,background .18s ease,box-shadow .18s ease!important;
+}
+.otp24 > .tabs .tab::after{display:none!important;content:none!important;}
+.otp24 > .tabs .tab:hover{transform:translateY(-1px);color:var(--otp-text)!important;background:color-mix(in srgb,var(--otp-accent) 8%,transparent)!important;}
+.otp24 > .tabs .tab.active{color:#17130a!important;background:linear-gradient(135deg,#ffe28a,var(--otp-accent) 58%,#bd8626)!important;box-shadow:0 14px 34px color-mix(in srgb,var(--otp-accent) 26%,transparent),inset 0 1px 0 rgba(255,255,255,.55)!important;}
+.otp24 .tab-ico{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:10px;background:rgba(255,255,255,.16);}
+
+/* Search */
+.otp24 .row.mt{margin:0 0 18px!important;}
+.otp24 #otpSearch{
+  min-height:54px;padding:0 18px 0 48px!important;border-radius:20px!important;background:
+    linear-gradient(180deg,color-mix(in srgb,var(--otp-card) 88%,transparent),color-mix(in srgb,var(--otp-card-2) 74%,transparent))!important;
+  border:1px solid var(--otp-border)!important;color:var(--otp-text)!important;box-shadow:0 16px 42px var(--otp-shadow),inset 0 1px 0 rgba(255,255,255,.05)!important;
+}
+.otp24 .row.mt{position:relative;}
+.otp24 .row.mt::before{content:"🔎";position:absolute;left:18px;top:50%;transform:translateY(-50%);z-index:1;opacity:.75;}
+
+/* App cards */
+.otp24 #appsGrid.grid.cards{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))!important;gap:clamp(12px,1.3vw,18px)!important;}
+.otp24 .card.app{
+  min-height:218px;padding:16px!important;border-radius:26px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  border:1px solid var(--otp-border)!important;background:
+    radial-gradient(260px 160px at 50% 0%,color-mix(in srgb,var(--otp-accent) 12%,transparent),transparent 70%),
+    linear-gradient(180deg,color-mix(in srgb,var(--otp-card) 95%,transparent),color-mix(in srgb,var(--otp-card-2) 86%,transparent))!important;
+  box-shadow:0 18px 52px var(--otp-shadow),inset 0 1px 0 rgba(255,255,255,.06)!important;cursor:pointer;animation:otpCardIn .36s cubic-bezier(.2,.8,.2,1) both;
+}
+.otp24 .card.app:hover{transform:translateY(-7px) scale(1.012)!important;border-color:var(--otp-border-strong)!important;box-shadow:0 28px 72px var(--otp-shadow),0 0 0 4px color-mix(in srgb,var(--otp-accent) 9%,transparent)!important;}
+/* Align popular sold badge and price badge on the same baseline */
+.otp24 .popular-badge,
+.otp24 .price-badge{
+  top:10px!important;
+  min-height:30px!important;
+  height:30px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0 11px!important;
+  border-radius:999px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+}
+.otp24 .popular-badge{
+  left:10px!important;
+}
+.otp24 .price-badge{
+  right:10px!important;
+  background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(34,197,94,.08))!important;
+  border:1px solid rgba(34,197,94,.28)!important;
+  color:#49e887!important;
+  box-shadow:none!important;
+}
+@media(max-width:760px){
+  .otp24 .popular-badge,
+  .otp24 .price-badge{
+    top:8px!important;
+    min-height:26px!important;
+    height:26px!important;
+    padding:0 9px!important;
+    font-size:10px!important;
+  }
+  .otp24 .popular-badge{left:8px!important;}
+  .otp24 .price-badge{right:8px!important;}
+}
+.otp24 .app-icon{width:92px!important;height:92px!important;border-radius:28px!important;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 18px 38px rgba(0,0,0,.24)!important;}
+.otp24 .app-icon img{width:70px!important;height:70px!important;border-radius:20px!important;box-shadow:none!important;background:transparent!important;}
+.otp24 .app-name{font-weight:950!important;color:var(--otp-text)!important;line-height:1.25;text-align:center;text-transform:none!important;letter-spacing:0!important;}
+
+/* Orders / history */
+.otp24 .orders-controls{border:1px solid var(--otp-border)!important;border-radius:22px!important;background:color-mix(in srgb,var(--otp-card) 78%,transparent)!important;box-shadow:0 18px 46px var(--otp-shadow)!important;}
+.otp24 .orders-controls select{min-width:96px;appearance:none;background:color-mix(in srgb,var(--otp-card-2) 84%,transparent)!important;border:1px solid var(--otp-border-strong)!important;border-radius:16px!important;padding:10px 34px 10px 14px!important;font-weight:950!important;}
+.otp24 .orders-wrap{border-radius:28px!important;border:1px solid var(--otp-border)!important;background:color-mix(in srgb,var(--otp-card) 84%,transparent)!important;box-shadow:0 24px 72px var(--otp-shadow)!important;overflow:auto!important;}
+.otp24 .tbl thead th{padding:17px 16px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--otp-card-2) 96%,transparent),color-mix(in srgb,var(--otp-card) 86%,transparent))!important;color:color-mix(in srgb,var(--otp-accent) 58%,var(--otp-text))!important;font-weight:950!important;}
+.otp24 .tbl tbody tr{transition:background .18s ease,box-shadow .18s ease,transform .18s ease;}
+.otp24 .tbl tbody tr:hover{background:color-mix(in srgb,var(--otp-accent) 7%,transparent)!important;box-shadow:inset 4px 0 0 var(--otp-accent);}
+.otp24 .tbl td{padding:16px!important;color:var(--otp-text)!important;border-color:color-mix(in srgb,var(--otp-border) 74%,transparent)!important;}
+.otp24 .pill{display:inline-flex!important;align-items:center;justify-content:center;min-height:34px;border-radius:999px!important;padding:7px 13px!important;font-weight:950!important;border:1px solid var(--otp-border)!important;}
+.otp24 .pill.success{color:#35e98a!important;background:linear-gradient(135deg,rgba(34,197,94,.20),rgba(34,197,94,.08))!important;border-color:rgba(34,197,94,.34)!important;}
+.otp24 .pill.wait,.otp24 .pill.processing{color:#ffd76e!important;background:rgba(245,158,11,.13)!important;border-color:rgba(245,158,11,.30)!important;}
+.otp24 .pill.timeout,.otp24 .pill.failed,.otp24 .pill.refunded{color:#7dd3fc!important;background:rgba(59,130,246,.13)!important;border-color:rgba(59,130,246,.30)!important;}
+.otp24 .copy{width:30px;height:30px;display:inline-grid;place-items:center;padding:0!important;border-radius:11px!important;background:color-mix(in srgb,var(--otp-card-2) 80%,transparent)!important;border:1px solid var(--otp-border)!important;}
+.otp24 .copy img{width:15px;height:15px;box-shadow:none!important;background:transparent!important;border-radius:0!important;}
+.otp24 .pg-btn{min-width:38px;height:38px;display:inline-grid;place-items:center;border-radius:14px!important;font-weight:950!important;}
+
+/* Dialogs / modals */
+.otp24 dialog::backdrop{background:rgba(0,0,0,.62)!important;backdrop-filter:blur(10px)!important;}
+.otp24 dialog .modal,
+.otp24 .modal,
+.otp24 .modal-otp24,
+.otp24 .modal-reuse{
+  border-radius:30px!important;border:1px solid var(--otp-border)!important;background:
+    radial-gradient(420px 220px at 20% 0%,color-mix(in srgb,var(--otp-accent) 13%,transparent),transparent 70%),
+    linear-gradient(180deg,color-mix(in srgb,var(--otp-card) 96%,transparent),color-mix(in srgb,var(--otp-card-2) 90%,transparent))!important;
+  color:var(--otp-text)!important;box-shadow:0 34px 110px rgba(0,0,0,.48)!important;
+}
+.otp24 .btn,.otp24 button:not(.tab):not(.copy){transition:transform .16s ease,filter .16s ease,box-shadow .16s ease!important;}
+.otp24 .btn:hover,.otp24 button:not(.tab):not(.copy):hover{transform:translateY(-1px);filter:saturate(1.05);}
+
+@keyframes otpHeroIn{from{opacity:0;transform:translateY(12px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes otpCardIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes otpFloat{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(18px,16px,0) scale(1.08)}}
+
+@media (max-width: 980px){
+  .otp-enterprise-hero{grid-template-columns:1fr;}
+  .otp-hero-stats{min-width:0;width:100%;grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media (max-width: 640px){
+  .otp24{padding-inline:0;}
+  .otp-enterprise-hero{padding:22px 18px;border-radius:24px;margin-bottom:12px;}
+  .otp-hero-content h1{font-size:34px;}
+  .otp-hero-stats{grid-template-columns:1fr;}
+  .otp24 > .tabs{top:4px;border-radius:18px!important;gap:6px!important;padding:6px!important;}
+  .otp24 > .tabs .tab{min-height:46px!important;font-size:12.5px!important;padding:8px!important;}
+  .otp24 #appsGrid.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
+  .otp24 .card.app{min-height:188px;border-radius:22px!important;padding:12px!important;}
+  .otp24 .app-icon{width:76px!important;height:76px!important;border-radius:22px!important;}
+  .otp24 .app-icon img{width:58px!important;height:58px!important;}
+  .otp24 .orders-wrap{border-radius:22px!important;}
+  .otp24 .tbl{min-width:860px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .otp24 *, .otp24 *::before, .otp24 *::after{animation:none!important;transition:none!important;}
+}
+</style>
+
+
+<style id="otp24-custom-dropdown-layer-fix">
+/* ==========================================================
+   OTP24 Custom Dropdown — fixed layer, local to this file
+   แทน native select หน้า pagination และลอยเหนือทุก card/table/modal
+   ========================================================== */
+.otp24 .otp24-native-select-hidden{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.otp24 .otp24-dd{
+  --dd-h:44px;
+  position:relative;
+  z-index:5;
+  min-width:104px;
+  height:var(--dd-h);
+  display:inline-flex;
+  align-items:center;
+}
+.otp24 .otp24-dd-btn{
+  width:100%;
+  height:var(--dd-h);
+  border:1px solid var(--otp-border-strong)!important;
+  border-radius:16px!important;
+  padding:0 40px 0 15px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  cursor:pointer!important;
+  user-select:none!important;
+  color:var(--otp-text)!important;
+  font-weight:950!important;
+  letter-spacing:.01em!important;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--otp-card-2) 92%,transparent),color-mix(in srgb,var(--otp-card) 84%,transparent))!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 10px 26px color-mix(in srgb,var(--otp-shadow) 58%,transparent)!important;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease!important;
+}
+.otp24 .otp24-dd-btn:hover,
+.otp24 .otp24-dd.is-open .otp24-dd-btn{
+  transform:translateY(-1px)!important;
+  border-color:color-mix(in srgb,var(--otp-accent) 74%,var(--otp-border))!important;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb,var(--otp-accent) 14%,transparent),
+    0 14px 34px color-mix(in srgb,var(--otp-shadow) 72%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+.otp24 .otp24-dd-btn:focus-visible{
+  outline:0!important;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb,var(--otp-accent) 24%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+.otp24 .otp24-dd-value{
+  display:block;
+  min-width:34px;
+  text-align:left;
+  line-height:1;
+}
+.otp24 .otp24-dd-arrow{
+  position:absolute;
+  right:14px;
+  top:50%;
+  width:18px;
+  height:18px;
+  transform:translateY(-50%);
+  display:grid;
+  place-items:center;
+  color:var(--otp-accent-2);
+  font-size:11px;
+  pointer-events:none;
+  transition:transform .18s ease;
+}
+.otp24 .otp24-dd.is-open .otp24-dd-arrow{
+  transform:translateY(-50%) rotate(180deg);
+}
+.otp24-dd-menu{
+  position:fixed;
+  z-index:2147483647;
+  min-width:104px;
+  max-height:min(280px, calc(100vh - 24px));
+  padding:7px;
+  border-radius:18px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  color:var(--otp-dd-text,#f8f4e9);
+  border:1px solid var(--otp-dd-border,rgba(232,188,83,.42));
+  background:
+    radial-gradient(220px 120px at 25% 0%,var(--otp-dd-glow,rgba(232,188,83,.16)),transparent 70%),
+    linear-gradient(180deg,var(--otp-dd-bg-a,#1d1e25),var(--otp-dd-bg-b,#111218));
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.46),
+    0 0 0 1px rgba(255,255,255,.035),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  animation:otp24DdIn .16s cubic-bezier(.2,.8,.2,1) both;
+}
+.otp24-dd-menu[data-theme="light"]{
+  --otp-dd-text:#101624;
+  --otp-dd-bg-a:#ffffff;
+  --otp-dd-bg-b:#f3f6fb;
+  --otp-dd-border:rgba(196,146,37,.38);
+  --otp-dd-glow:rgba(232,188,83,.20);
+  box-shadow:0 22px 54px rgba(25,30,45,.18),0 0 0 1px rgba(10,15,30,.045),inset 0 1px 0 rgba(255,255,255,.72);
+}
+.otp24-dd-option{
+  width:100%;
+  min-height:38px;
+  border:0;
+  border-radius:13px;
+  padding:8px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  cursor:pointer;
+  background:transparent;
+  color:inherit;
+  font-weight:900;
+  text-align:left;
+  transition:background .14s ease,color .14s ease,transform .14s ease;
+}
+.otp24-dd-option:hover,
+.otp24-dd-option.is-active{
+  color:#17130a;
+  background:linear-gradient(135deg,#ffe28a,var(--otp-accent,#e8bc53) 60%,#bd8626);
+  transform:translateX(1px);
+}
+.otp24-dd-option.is-active::after{
+  content:"✓";
+  font-weight:950;
+}
+.otp24-dd-menu::-webkit-scrollbar{width:8px;height:8px;}
+.otp24-dd-menu::-webkit-scrollbar-track{background:transparent;}
+.otp24-dd-menu::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--otp-accent,#e8bc53) 45%,transparent);border-radius:999px;}
+@keyframes otp24DdIn{
+  from{opacity:0;transform:translateY(-6px) scale(.98);filter:blur(3px);}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+}
+@media (max-width:640px){
+  .otp24 .otp24-dd{min-width:92px;--dd-h:40px;}
+  .otp24 .otp24-dd-btn{border-radius:14px!important;padding-left:13px!important;padding-right:36px!important;}
+}
+</style>
+
+<script id="otp24-custom-dropdown-layer-fix-script">
+(function(){
+  const SELECT_IDS = ['perPageSelect','perPageSelectMobile'];
+  let openMenu = null;
+  let openHost = null;
+
+  const isLightTheme = () => {
+    const html = document.documentElement;
+    const body = document.body;
+    const flags = [
+      html.getAttribute('data-theme'),
+      body?.getAttribute('data-theme'),
+      body?.className || ''
+    ].join(' ').toLowerCase();
+    return flags.includes('light') || flags.includes('theme-light');
+  };
+
+  function closeDropdown(){
+    if (openMenu) openMenu.remove();
+    if (openHost) openHost.classList.remove('is-open');
+    openMenu = null;
+    openHost = null;
+  }
+
+  function syncAllLabels(value){
+    SELECT_IDS.forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      if (value != null) sel.value = String(value);
+      const host = sel.__otp24DropdownHost;
+      const label = host?.querySelector('.otp24-dd-value');
+      if (label) label.textContent = sel.options[sel.selectedIndex]?.textContent?.trim() || sel.value || '-';
+    });
+  }
+
+  function positionMenu(host, menu){
+    const r = host.getBoundingClientRect();
+    const margin = 8;
+    const minW = Math.max(r.width, 104);
+    menu.style.minWidth = `${minW}px`;
+    menu.style.left = `${Math.min(Math.max(margin, r.left), window.innerWidth - minW - margin)}px`;
+
+    // ต้อง append ก่อนเพื่อวัดความสูงจริง
+    const mh = menu.offsetHeight || 220;
+    let top = r.bottom + 8;
+    if (top + mh + margin > window.innerHeight) {
+      top = Math.max(margin, r.top - mh - 8);
+    }
+    menu.style.top = `${top}px`;
+  }
+
+  function openDropdown(sel){
+    const host = sel.__otp24DropdownHost;
+    if (!host) return;
+
+    if (openHost === host) {
+      closeDropdown();
+      return;
+    }
+
+    closeDropdown();
+    host.classList.add('is-open');
+    openHost = host;
+
+    const menu = document.createElement('div');
+    menu.className = 'otp24-dd-menu';
+    menu.setAttribute('role','listbox');
+    menu.dataset.owner = sel.id;
+    if (isLightTheme()) menu.dataset.theme = 'light';
+
+    Array.from(sel.options).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'otp24-dd-option' + (opt.selected ? ' is-active' : '');
+      btn.setAttribute('role','option');
+      btn.setAttribute('aria-selected', opt.selected ? 'true' : 'false');
+      btn.dataset.value = opt.value;
+      btn.textContent = opt.textContent.trim();
+      btn.addEventListener('click', () => {
+        const value = btn.dataset.value;
+        sel.value = value;
+        syncAllLabels(value);
+        sel.dispatchEvent(new Event('change', { bubbles:true }));
+        closeDropdown();
+      });
+      menu.appendChild(btn);
+    });
+
+    document.body.appendChild(menu);
+    openMenu = menu;
+    positionMenu(host, menu);
+
+    const active = menu.querySelector('.is-active');
+    if (active) active.scrollIntoView({ block:'nearest' });
+  }
+
+  function enhanceSelect(sel){
+    if (!sel || sel.__otp24DropdownReady) return;
+    sel.__otp24DropdownReady = true;
+    sel.classList.add('otp24-native-select-hidden');
+    sel.tabIndex = -1;
+    sel.setAttribute('aria-hidden','true');
+
+    const host = document.createElement('span');
+    host.className = 'otp24-dd';
+    host.innerHTML = `
+      <button type="button" class="otp24-dd-btn" aria-haspopup="listbox" aria-expanded="false">
+        <span class="otp24-dd-value"></span>
+        <span class="otp24-dd-arrow" aria-hidden="true">▾</span>
+      </button>`;
+    sel.insertAdjacentElement('afterend', host);
+    sel.__otp24DropdownHost = host;
+
+    const btn = host.querySelector('.otp24-dd-btn');
+    const setExpanded = () => btn.setAttribute('aria-expanded', host.classList.contains('is-open') ? 'true' : 'false');
+
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      openDropdown(sel);
+      requestAnimationFrame(setExpanded);
+    });
+
+    btn.addEventListener('keydown', (ev) => {
+      if (['Enter',' ','ArrowDown','ArrowUp'].includes(ev.key)) {
+        ev.preventDefault();
+        openDropdown(sel);
+        requestAnimationFrame(setExpanded);
+      }
+      if (ev.key === 'Escape') closeDropdown();
+    });
+
+    sel.addEventListener('change', () => syncAllLabels(sel.value));
+    syncAllLabels(sel.value);
+  }
+
+  function initOtp24Dropdowns(){
+    SELECT_IDS.forEach(id => enhanceSelect(document.getElementById(id)));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOtp24Dropdowns);
+  } else {
+    initOtp24Dropdowns();
+  }
+
+  document.addEventListener('click', (ev) => {
+    if (ev.target.closest('.otp24-dd-menu') || ev.target.closest('.otp24-dd')) return;
+    closeDropdown();
+  }, true);
+  window.addEventListener('resize', closeDropdown, { passive:true });
+  window.addEventListener('scroll', closeDropdown, { passive:true, capture:true });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') closeDropdown();
+  });
+})();
+</script>
+
+
+<style id="otp24-enterprise-modal-polish">
+/* ============================================================
+   OTP24 Enterprise High-end Modal/Dialog Override
+   - Center on viewport
+   - Safe overlay for <dialog> + custom div modal
+   ============================================================ */
+:root{
+  --otp24-modal-bg: rgba(13,15,22,.94);
+  --otp24-modal-bg2: rgba(24,25,34,.96);
+  --otp24-modal-border: rgba(245,196,81,.24);
+  --otp24-modal-border-strong: rgba(245,196,81,.44);
+  --otp24-modal-gold: #f5c451;
+  --otp24-modal-gold2: #d59a26;
+  --otp24-modal-text: #fff6dd;
+  --otp24-modal-muted: rgba(255,246,221,.68);
+  --otp24-modal-danger: #ef4444;
+}
+
+/* Native dialog viewport centering */
+dialog#buyModal,
+dialog#reuseModal,
+dialog#otpNoticeModal{
+  position: fixed !important;
+  inset: 0 !important;
+  width: min(94vw, 680px) !important;
+  max-width: min(94vw, 680px) !important;
+  height: fit-content !important;
+  max-height: min(86vh, 780px) !important;
+  margin: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  color: var(--otp24-modal-text) !important;
+  background: transparent !important;
+  overflow: visible !important;
+  z-index: 2147482500 !important;
+}
+
+dialog#reuseModal{ width:min(94vw, 620px) !important; max-width:min(94vw, 620px) !important; }
+dialog#otpNoticeModal{ width:min(94vw, 560px) !important; max-width:min(94vw, 560px) !important; }
+
+dialog#buyModal::backdrop,
+dialog#reuseModal::backdrop,
+dialog#otpNoticeModal::backdrop{
+  background:
+    radial-gradient(circle at 22% 18%, rgba(245,196,81,.16), transparent 34%),
+    radial-gradient(circle at 82% 72%, rgba(65,105,225,.16), transparent 38%),
+    rgba(0,0,0,.72) !important;
+  backdrop-filter: blur(18px) saturate(132%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(132%) !important;
+}
+
+/* Shared premium shell */
+#buyModal .modal,
+#reuseModal .modal,
+#otpNoticeModal .toast-card{
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: min(82vh, 740px) !important;
+  overflow: auto !important;
+  border: 1px solid var(--otp24-modal-border) !important;
+  border-radius: 30px !important;
+  padding: clamp(22px, 3vw, 34px) !important;
+  color: var(--otp24-modal-text) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 42%, rgba(245,196,81,.055)),
+    radial-gradient(circle at 0% 0%, rgba(245,196,81,.15), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(56,139,255,.13), transparent 34%),
+    linear-gradient(180deg, var(--otp24-modal-bg2), var(--otp24-modal-bg)) !important;
+  box-shadow:
+    0 34px 120px rgba(0,0,0,.66),
+    0 0 0 1px rgba(255,255,255,.055) inset,
+    0 1px 0 rgba(255,255,255,.09) inset !important;
+  transform: translateZ(0) !important;
+}
+
+#buyModal .modal::before,
+#reuseModal .modal::before,
+#otpNoticeModal .toast-card::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  border-radius:inherit !important;
+  background:
+    linear-gradient(90deg, transparent, rgba(245,196,81,.46), transparent) top / 100% 1px no-repeat,
+    radial-gradient(circle at 18% 0%, rgba(245,196,81,.16), transparent 28%) !important;
+}
+
+#buyModal .modal-title,
+#reuseModal .modal-title,
+#otpNoticeModal .toast-title{
+  margin: 0 !important;
+  color: var(--otp24-modal-text) !important;
+  font-size: clamp(24px, 3.3vw, 34px) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.04em !important;
+  font-weight: 900 !important;
+}
+
+#buyModal .modal-sub,
+#reuseModal .kv,
+#otpNoticeModal .toast-body,
+.bt-terms-body{
+  color: var(--otp24-modal-muted) !important;
+}
+
+#buyModal .modal-label{
+  margin-top: 22px !important;
+  color: var(--otp24-modal-gold) !important;
+  font-weight: 900 !important;
+  letter-spacing: .02em !important;
+}
+
+#buyModal .modal-divider,
+#reuseModal .modal-divider{
+  height: 1px !important;
+  border: 0 !important;
+  margin: 18px 0 20px !important;
+  background: linear-gradient(90deg, transparent, rgba(245,196,81,.38), transparent) !important;
+}
+
+#buyModal .flags-grid{
+  display:grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)) !important;
+  gap: 12px !important;
+  max-height: min(38vh, 320px) !important;
+  overflow:auto !important;
+  padding: 10px 4px 8px !important;
+  scrollbar-width: thin !important;
+}
+
+#buyModal .flag-btn{
+  position:relative !important;
+  min-height: 54px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.025)) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:0 !important;
+  text-align:center !important;
+}
+
+#buyModal .flag-btn:hover{
+  transform: translateY(-2px) !important;
+  border-color: var(--otp24-modal-border-strong) !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,.34), 0 0 0 3px rgba(245,196,81,.08) !important;
+}
+
+#buyModal .flag-btn.active,
+#buyModal .flag-btn.selected{
+  border-color: rgba(245,196,81,.78) !important;
+  background: linear-gradient(135deg, rgba(245,196,81,.24), rgba(245,196,81,.08)) !important;
+  box-shadow: 0 20px 54px rgba(213,154,38,.18), 0 0 0 4px rgba(245,196,81,.12) !important;
+}
+
+#buyModal .flag-btn img{
+  width: 34px !important;
+  height: 24px !important;
+  object-fit: cover !important;
+  border-radius: 6px !important;
+  filter: saturate(1.08) contrast(1.04) !important;
+}
+
+#buyModal .actions,
+#reuseModal .actions,
+#otpNoticeModal .toast-actions,
+.bt-terms-actions{
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap: 12px !important;
+  margin-top: 24px !important;
+}
+
+#buyModal .btn,
+#reuseModal .btn,
+#otpNoticeModal .pill,
+.bt-terms-actions button{
+  min-height: 46px !important;
+  border-radius: 999px !important;
+  padding: 0 22px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em !important;
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease !important;
+}
+
+#buyModal .modal-primary,
+#reuseModal .modal-primary,
+#otpNoticeModal .pill.primary,
+.bt-terms-actions .btn-primary{
+  color: #161009 !important;
+  background: linear-gradient(135deg, #ffe58a, var(--otp24-modal-gold2)) !important;
+  box-shadow: 0 18px 42px rgba(213,154,38,.28), inset 0 1px 0 rgba(255,255,255,.42) !important;
+}
+
+#buyModal .modal-primary:disabled,
+#reuseModal .modal-primary:disabled,
+.bt-terms-actions .btn-primary:disabled{
+  opacity: .46 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(.3) !important;
+}
+
+#buyModal .modal-secondary,
+#reuseModal .modal-secondary,
+.bt-terms-actions .btn-secondary{
+  color: #fff !important;
+  background: linear-gradient(135deg, rgba(239,68,68,.92), rgba(127,29,29,.92)) !important;
+  box-shadow: 0 16px 34px rgba(239,68,68,.18) !important;
+}
+
+#buyModal .btn:not(:disabled):hover,
+#reuseModal .btn:not(:disabled):hover,
+#otpNoticeModal .pill:not(:disabled):hover,
+.bt-terms-actions button:not(:disabled):hover{
+  transform: translateY(-1px) !important;
+  filter: brightness(1.04) !important;
+}
+
+/* Reuse details */
+#reuseModal .kv{
+  display:grid !important;
+  grid-template-columns: 120px 1fr !important;
+  gap: 12px 16px !important;
+  margin-top: 18px !important;
+  padding: 18px !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 22px !important;
+  background: rgba(0,0,0,.18) !important;
+}
+
+#reuseModal .kv .k{
+  color: rgba(245,196,81,.88) !important;
+  font-weight: 900 !important;
+}
+
+#reuseModal .kv .v{
+  color: var(--otp24-modal-text) !important;
+  font-weight: 800 !important;
+}
+
+/* Custom terms modal */
+.bt-terms-modal{
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147482400 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px !important;
+}
+
+.bt-terms-modal.hidden{
+  display: none !important;
+}
+
+.bt-terms-backdrop{
+  position: absolute !important;
+  inset: 0 !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(245,196,81,.15), transparent 34%),
+    rgba(0,0,0,.72) !important;
+  backdrop-filter: blur(18px) saturate(132%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(132%) !important;
+}
+
+.bt-terms-dialog{
+  position: relative !important;
+  width: min(94vw, 720px) !important;
+  max-height: min(86vh, 760px) !important;
+  overflow:auto !important;
+  border: 1px solid var(--otp24-modal-border) !important;
+  border-radius: 30px !important;
+  padding: clamp(22px, 3vw, 34px) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 42%, rgba(245,196,81,.055)),
+    linear-gradient(180deg, var(--otp24-modal-bg2), var(--otp24-modal-bg)) !important;
+  color: var(--otp24-modal-text) !important;
+  box-shadow: 0 34px 120px rgba(0,0,0,.66), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.bt-terms-title{
+  margin:0 0 16px !important;
+  color: var(--otp24-modal-text) !important;
+  font-size: clamp(24px, 3.2vw, 34px) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.04em !important;
+  font-weight: 900 !important;
+}
+
+.bt-terms-body{
+  line-height: 1.72 !important;
+}
+
+.bt-terms-body strong{
+  color: var(--otp24-modal-gold) !important;
+}
+
+.accept-row{
+  display:flex !important;
+  align-items:center !important;
+  gap: 12px !important;
+  margin-top: 18px !important;
+  padding: 14px 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(245,196,81,.20) !important;
+  background: rgba(245,196,81,.065) !important;
+  color: var(--otp24-modal-text) !important;
+  font-weight: 800 !important;
+}
+
+.accept-row input,
+#otpNoticeDontShow{
+  accent-color: var(--otp24-modal-gold) !important;
+}
+
+/* Notice modal */
+#otpNoticeModal .toast-headbar{
+  display:flex !important;
+  align-items:center !important;
+  gap: 14px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+#otpNoticeModal .toast-badge{
+  width: 50px !important;
+  height: 50px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius: 18px !important;
+  background: linear-gradient(135deg, #ffe58a, var(--otp24-modal-gold2)) !important;
+  color: #171009 !important;
+  box-shadow: 0 14px 34px rgba(213,154,38,.28) !important;
+}
+
+#otpNoticeModal .toast-body{
+  margin-top: 18px !important;
+  padding: 18px !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 22px !important;
+  background: rgba(0,0,0,.18) !important;
+}
+
+
+/* ============================================================
+   OTP Notice Modal — Enterprise High-end Theme
+   แต่งเฉพาะ #otpNoticeModal ให้ฟีลเดียวกับ Modal เติมเงิน
+============================================================ */
+dialog#otpNoticeModal.otp-enterprise-notice{
+  width:min(94vw, 620px) !important;
+  max-width:min(94vw, 620px) !important;
+}
+
+#otpNoticeModal.otp-enterprise-notice::backdrop{
+  background:
+    radial-gradient(circle at 18% 12%, rgba(245,196,81,.22), transparent 32%),
+    radial-gradient(circle at 80% 78%, rgba(139,92,246,.22), transparent 38%),
+    linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.84)) !important;
+  backdrop-filter: blur(22px) saturate(138%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(138%) !important;
+}
+
+#otpNoticeModal.otp-enterprise-notice[open] .otp-notice-card{
+  animation: otpNoticeEnter .48s cubic-bezier(.2,.9,.2,1) both !important;
+}
+
+#otpNoticeModal.otp-enterprise-notice.is-closing .otp-notice-card{
+  animation: otpNoticeExit .22s ease both !important;
+}
+
+#otpNoticeModal .otp-notice-card{
+  isolation:isolate !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  border-radius:32px !important;
+  border:1px solid rgba(245,196,81,.34) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.018) 38%, rgba(245,196,81,.07)),
+    radial-gradient(520px 260px at 0% 0%, rgba(245,196,81,.22), transparent 66%),
+    radial-gradient(420px 240px at 100% 0%, rgba(139,92,246,.18), transparent 64%),
+    linear-gradient(180deg, rgba(25,26,34,.98), rgba(11,12,18,.98)) !important;
+  box-shadow:
+    0 42px 140px rgba(0,0,0,.72),
+    0 0 0 1px rgba(255,255,255,.07) inset,
+    0 1px 0 rgba(255,255,255,.14) inset !important;
+}
+
+#otpNoticeModal .otp-notice-card::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  border-radius:inherit !important;
+  background:
+    linear-gradient(90deg, transparent, rgba(255,226,138,.72), rgba(139,92,246,.46), transparent) top / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(255,255,255,.07), transparent 28%) !important;
+  z-index:1 !important;
+}
+
+#otpNoticeModal .otp-notice-orb{
+  position:absolute !important;
+  border-radius:999px !important;
+  filter:blur(18px) !important;
+  opacity:.58 !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  animation: otpNoticeFloat 5.8s ease-in-out infinite !important;
+}
+#otpNoticeModal .otp-notice-orb-a{width:150px;height:150px;left:-48px;top:-42px;background:rgba(245,196,81,.36);}
+#otpNoticeModal .otp-notice-orb-b{width:160px;height:160px;right:-54px;bottom:-56px;background:rgba(139,92,246,.30);animation-delay:-2.2s !important;}
+
+#otpNoticeModal .otp-notice-head{
+  position:relative !important;
+  z-index:2 !important;
+  padding:24px 24px 18px !important;
+  gap:16px !important;
+  background:transparent !important;
+  border-bottom:1px solid rgba(255,255,255,.075) !important;
+}
+
+#otpNoticeModal .otp-notice-badge{
+  position:relative !important;
+  flex:0 0 auto !important;
+  width:62px !important;
+  height:62px !important;
+  border-radius:22px !important;
+  background:
+    linear-gradient(135deg, #ffe99b, #f5c451 48%, #b7791f) !important;
+  color:#171009 !important;
+  box-shadow:
+    0 20px 48px rgba(213,154,38,.34),
+    inset 0 1px 0 rgba(255,255,255,.62) !important;
+  transform:translateZ(0) !important;
+}
+
+#otpNoticeModal .otp-notice-badge-glow{
+  position:absolute !important;
+  inset:-8px !important;
+  border-radius:inherit !important;
+  background:rgba(245,196,81,.24) !important;
+  filter:blur(12px) !important;
+  animation: otpNoticePulse 2.2s ease-in-out infinite !important;
+}
+
+#otpNoticeModal .otp-notice-badge-icon{
+  position:relative !important;
+  z-index:1 !important;
+  font-size:26px !important;
+  filter:drop-shadow(0 5px 10px rgba(0,0,0,.22)) !important;
+}
+
+#otpNoticeModal .otp-notice-kicker{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  margin-bottom:7px !important;
+  color:rgba(245,196,81,.88) !important;
+  font-size:12px !important;
+  font-weight:950 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+}
+
+#otpNoticeModal .otp-notice-title{
+  font-size:clamp(24px, 3.4vw, 36px) !important;
+  letter-spacing:-.045em !important;
+}
+
+#otpNoticeModal .otp-notice-sub{
+  margin:8px 0 0 !important;
+  color:rgba(255,246,221,.68) !important;
+  font-size:14px !important;
+  line-height:1.6 !important;
+  font-weight:650 !important;
+}
+
+#otpNoticeModal .otp-notice-body{
+  position:relative !important;
+  z-index:2 !important;
+  margin:0 !important;
+  padding:22px 24px 0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+
+#otpNoticeModal .otp-notice-list{
+  display:grid !important;
+  gap:12px !important;
+}
+
+#otpNoticeModal .otp-notice-item{
+  display:grid !important;
+  grid-template-columns:48px 1fr !important;
+  gap:14px !important;
+  align-items:start !important;
+  padding:14px !important;
+  border-radius:20px !important;
+  border:1px solid rgba(255,255,255,.085) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)),
+    rgba(0,0,0,.18) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+#otpNoticeModal .otp-notice-item.is-warning{
+  border-color:rgba(245,158,11,.28) !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(245,158,11,.14), transparent 66%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)),
+    rgba(0,0,0,.18) !important;
+}
+
+#otpNoticeModal .otp-notice-no{
+  width:42px !important;
+  height:42px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:15px !important;
+  color:#171009 !important;
+  background:linear-gradient(135deg, #ffe58a, #d59a26) !important;
+  font-size:13px !important;
+  font-weight:950 !important;
+  box-shadow:0 14px 28px rgba(213,154,38,.20) !important;
+}
+
+#otpNoticeModal .otp-notice-item b{
+  display:block !important;
+  color:#fff7df !important;
+  font-size:15px !important;
+  line-height:1.35 !important;
+  font-weight:950 !important;
+}
+
+#otpNoticeModal .otp-notice-item small{
+  display:block !important;
+  margin-top:5px !important;
+  color:rgba(255,246,221,.64) !important;
+  line-height:1.55 !important;
+  font-size:13px !important;
+  font-weight:650 !important;
+}
+
+#otpNoticeModal .otp-notice-toggle-row{
+  display:flex !important;
+  align-items:center !important;
+  gap:13px !important;
+  margin-top:16px !important;
+  padding:14px !important;
+  border-radius:20px !important;
+  border:1px solid rgba(245,196,81,.20) !important;
+  background:rgba(245,196,81,.055) !important;
+  color:#fff6dd !important;
+  cursor:pointer !important;
+  user-select:none !important;
+}
+
+#otpNoticeModal #otpNoticeDontShow{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+#otpNoticeModal .otp-notice-switch{
+  position:relative !important;
+  flex:0 0 auto !important;
+  width:48px !important;
+  height:28px !important;
+  border-radius:999px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06)), rgba(255,255,255,.16) !important;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.38), 0 10px 24px rgba(0,0,0,.20) !important;
+  transition:background .22s ease, box-shadow .22s ease !important;
+}
+
+#otpNoticeModal .otp-notice-switch::before{
+  content:"" !important;
+  position:absolute !important;
+  width:22px !important;
+  height:22px !important;
+  left:3px !important;
+  top:3px !important;
+  border-radius:999px !important;
+  background:linear-gradient(180deg, #fff, #e7e3d7) !important;
+  box-shadow:0 6px 14px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.82) !important;
+  transition:transform .24s cubic-bezier(.2,.9,.2,1) !important;
+}
+
+#otpNoticeModal #otpNoticeDontShow:checked + .otp-notice-switch{
+  background:linear-gradient(135deg, #58e86c, #27b53f) !important;
+  box-shadow:0 0 0 4px rgba(88,232,108,.10), 0 16px 32px rgba(39,181,63,.18), inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+
+#otpNoticeModal #otpNoticeDontShow:checked + .otp-notice-switch::before{
+  transform:translateX(20px) !important;
+}
+
+#otpNoticeModal .otp-notice-toggle-text b{
+  display:block !important;
+  color:#fff6dd !important;
+  font-size:14px !important;
+  font-weight:950 !important;
+}
+
+#otpNoticeModal .otp-notice-toggle-text small{
+  display:block !important;
+  margin-top:3px !important;
+  color:rgba(255,246,221,.56) !important;
+  font-size:12px !important;
+  line-height:1.4 !important;
+  font-weight:650 !important;
+}
+
+#otpNoticeModal .otp-notice-actions{
+  position:relative !important;
+  z-index:2 !important;
+  padding:18px 24px 24px !important;
+  margin:0 !important;
+}
+
+#otpNoticeModal .otp-notice-accept{
+  position:relative !important;
+  overflow:hidden !important;
+  min-width:168px !important;
+  min-height:48px !important;
+}
+
+#otpNoticeModal .otp-notice-accept .btn-shine{
+  position:absolute !important;
+  inset:-30% auto -30% -42% !important;
+  width:36% !important;
+  transform:skewX(-18deg) !important;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.58), transparent) !important;
+  animation: otpNoticeShine 2.6s ease-in-out infinite !important;
+}
+
+@keyframes otpNoticeEnter{
+  from{opacity:0;transform:translateY(18px) scale(.955);filter:blur(10px);}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+}
+@keyframes otpNoticeExit{
+  from{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+  to{opacity:0;transform:translateY(10px) scale(.97);filter:blur(6px);}
+}
+@keyframes otpNoticeFloat{
+  0%,100%{transform:translate3d(0,0,0) scale(1);}
+  50%{transform:translate3d(10px,-8px,0) scale(1.05);}
+}
+@keyframes otpNoticePulse{
+  0%,100%{opacity:.55;transform:scale(.96);}
+  50%{opacity:1;transform:scale(1.06);}
+}
+@keyframes otpNoticeShine{
+  0%,45%{left:-46%;}
+  72%,100%{left:120%;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  #otpNoticeModal.otp-enterprise-notice[open] .otp-notice-card,
+  #otpNoticeModal.otp-enterprise-notice.is-closing .otp-notice-card,
+  #otpNoticeModal .otp-notice-orb,
+  #otpNoticeModal .otp-notice-badge-glow,
+  #otpNoticeModal .otp-notice-accept .btn-shine{
+    animation:none !important;
+  }
+}
+
+@media (max-width: 640px){
+  dialog#buyModal,
+  dialog#reuseModal,
+  dialog#otpNoticeModal{
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+  #buyModal .modal,
+  #reuseModal .modal,
+  #otpNoticeModal .toast-card,
+  .bt-terms-dialog{
+    border-radius: 24px !important;
+    padding: 20px !important;
+  }
+  #reuseModal .kv{
+    grid-template-columns: 1fr !important;
+  }
+  #buyModal .actions,
+  #reuseModal .actions,
+  #otpNoticeModal .toast-actions,
+  .bt-terms-actions{
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  #buyModal .btn,
+  #reuseModal .btn,
+  #otpNoticeModal .pill,
+  .bt-terms-actions button{
+    width: 100% !important;
+  }
+}
+
+/* ======================================================
+   OTP24 Mobile History Overflow Fix
+   Fix history cards overflowing viewport/container
+====================================================== */
+
+@media (max-width: 768px) {
+  .otp24-page,
+  .otp24-shell,
+  .otp24-container,
+  .otp24-history,
+  .otp24-history-wrap,
+  .otp24-history-list {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .otp24-history-card,
+  .otp24-order-card,
+  .history-card,
+  .order-history-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+    overflow: hidden;
+  }
+
+  .otp24-history-card *,
+  .otp24-order-card *,
+  .history-card *,
+  .order-history-card * {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .otp24-history-card .row,
+  .otp24-order-card .row,
+  .history-card .row,
+  .order-history-card .row {
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .otp24-history-card .id,
+  .otp24-order-card .id,
+  .history-card .id,
+  .order-history-card .id,
+  .otp24-history-card .phone,
+  .otp24-order-card .phone,
+  .history-card .phone,
+  .order-history-card .phone,
+  .otp24-history-card .otp,
+  .otp24-order-card .otp,
+  .history-card .otp,
+  .order-history-card .otp {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .otp24-history-card button,
+  .otp24-order-card button,
+  .history-card button,
+  .order-history-card button {
+    flex: 0 0 auto;
+  }
+}
+
+
+/* ======================================================
+   OTP24 Mobile Orders — Final real selector fix
+   แก้การ์ดประวัติ OTP มือถือล้นกรอบจาก .m-orders margin ติดลบ
+   และ padding ซ้าย/ขวา 54px ที่บีบ row1 จนเลขออเดอร์ชนกับเวลา
+====================================================== */
+@media (max-width: 640px){
+  .otp24 #section-orders,
+  .otp24 #mOrders,
+  .otp24 .m-orders{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    overflow-x:hidden !important;
+  }
+
+  .otp24 .m-orders{
+    display:grid !important;
+    gap:12px !important;
+    margin:12px 0 0 !important;      /* ยกเลิก margin-left/right:-20px */
+    padding:0 !important;
+  }
+
+  .otp24 .m-item{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    border-radius:18px !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+  }
+
+  .otp24 .m-head,
+  .otp24 .m-body{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    padding:14px !important;          /* เดิม 8px 54px ทำให้จอเล็กเนื้อหาชนกัน */
+  }
+
+  .otp24 .m-head .row1{
+    display:grid !important;
+    grid-template-columns:minmax(78px,.82fr) minmax(118px,1.18fr) 32px !important;
+    align-items:center !important;
+    gap:6px !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+
+  .otp24 .m-head .oid,
+  .otp24 .m-head .when{
+    display:block !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    line-height:1.25 !important;
+    letter-spacing:-.02em !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .otp24 .m-head .oid{
+    font-size:clamp(12px,3.35vw,14px) !important;
+    text-align:left !important;
+  }
+
+  .otp24 .m-head .when{
+    margin-left:0 !important;
+    font-size:clamp(10.5px,2.95vw,12.5px) !important;
+    text-align:right !important;
+    font-variant-numeric:tabular-nums !important;
+  }
+
+  .otp24 .m-head .toggle{
+    width:32px !important;
+    height:32px !important;
+    min-width:32px !important;
+    margin-left:0 !important;
+    justify-self:end !important;
+    flex:0 0 32px !important;
+  }
+
+  .otp24 .m-head .row2{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    margin-top:12px !important;
+    font-size:13px !important;
+  }
+
+  .otp24 .m-head .row2 > *,
+  .otp24 .m-body .pair,
+  .otp24 .status-stack,
+  .otp24 .countdown{
+    max-width:100% !important;
+    min-width:0 !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+    box-sizing:border-box !important;
+  }
+
+  .otp24 .m-head .row2 .phone,
+  .otp24 .m-head .row2 .otp,
+  .otp24 .m-head .row2 .appmobile{
+    display:flex !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:6px !important;
+  }
+
+  .otp24 .m-head .row2 .phone .copy,
+  .otp24 .m-head .row2 .otp .copy{
+    flex:0 0 auto !important;
+    margin-left:2px !important;
+  }
+}
+
+@media (max-width: 360px){
+  .otp24 .m-head,
+  .otp24 .m-body{ padding:12px !important; }
+  .otp24 .m-head .row1{
+    grid-template-columns:minmax(70px,.74fr) minmax(108px,1.26fr) 30px !important;
+    gap:5px !important;
+  }
+  .otp24 .m-head .toggle{
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+  }
+}
+
+</style>
+
+
+
+<style id="otp24-mobile-collapsed-clean-v2">
+/* ======================================================
+   OTP24 Mobile History — Collapsed clean state
+   ตอนหุบ: แสดงเฉพาะเลขออเดอร์ / เวลา / แอป
+   ตอนขยาย: ค่อยแสดงเบอร์, OTP, สถานะ
+====================================================== */
+@media (max-width: 640px){
+  .otp24 #mOrders .m-item.collapsed .m-head .row2{
+    gap:4px !important;
+    margin-top:8px !important;
+  }
+
+  .otp24 #mOrders .m-item.collapsed .m-head .row2 .phone,
+  .otp24 #mOrders .m-item.collapsed .m-head .row2 .otp{
+    display:none !important;
+  }
+
+  .otp24 #mOrders .m-item.collapsed .m-head .row2 .appmobile{
+    display:flex !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    align-items:center !important;
+    gap:6px !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .otp24 #mOrders .m-item.collapsed .m-head .row2 .appmobile .v{
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .otp24 #mOrders .m-item:not(.collapsed) .m-head .row2 .phone,
+  .otp24 #mOrders .m-item:not(.collapsed) .m-head .row2 .otp{
+    display:flex !important;
+  }
+
+  .otp24 #mOrders .m-item:not(.collapsed) .m-body{
+    display:block !important;
+  }
+}
+</style>
+
+<script id="otp24-enterprise-modal-portal">
+(function(){
+  function portalToBody(id){
+    var el = document.getElementById(id);
+    if (!el || el.parentNode === document.body) return;
+    document.body.appendChild(el);
+  }
+
+  function enhanceDialogBackdropClose(id){
+    var dlg = document.getElementById(id);
+    if (!dlg || dlg.__otp24Enhanced) return;
+    dlg.__otp24Enhanced = true;
+    dlg.addEventListener('click', function(e){
+      if (e.target === dlg) {
+        try { dlg.close(); } catch(_) {}
+      }
+    });
+  }
+
+  function boot(){
+    ['buyModal','reuseModal','otpNoticeModal','termsModal'].forEach(portalToBody);
+    ['buyModal','reuseModal','otpNoticeModal'].forEach(enhanceDialogBackdropClose);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  // กันบาง script เปิด modal ก่อน DOMContentLoaded
+  setTimeout(boot, 0);
+  setTimeout(boot, 250);
+})();
+</script>
+

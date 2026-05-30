@@ -1,0 +1,580 @@
+<%
+  const pageTitle = `${article.title} | เทคนิคเพิ่มวิว TikTok ติด FYP 2026 | RTSMM-TH`;
+  const pageDesc  = article.excerpt
+    || 'สรุปเทคนิคเพิ่มวิว TikTok ให้ติด FYP ในปี 2026 ทั้งเรื่องคอนเทนต์ แฮชแท็ก จังหวะโพสต์ และการสร้างตัวตนระยะยาวบน TikTok แบบเข้าใจอัลกอริทึมจริง ๆ';
+  const canonicalPath = `/blog/${article.slug || article._id || ''}`;
+
+  // ส่งค่าให้ layout.ejs ใช้ใน <head>
+  title       = pageTitle;
+  description = pageDesc;
+  ogTitle     = pageTitle;
+  ogDesc      = pageDesc;
+  ogImage     = article.image;
+%>
+
+<script type="application/ld+json">
+<%- safeJson({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": article.title,
+  "description": pageDesc,
+  "image": article.image,
+  "author": {
+    "@type": "Person",
+    "name": article.author
+  },
+  "datePublished": article.dateISO || article.date,
+  "dateModified": article.updatedAt || article.dateISO || article.date,
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rtsmm-th.com" + canonicalPath
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RTSSM-TH.COM",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rtsmm-th.com/static/logo/icon-logo.png"
+    }
+  }
+}, null, 2) %>
+</script>
+
+<style>
+  .tdx-page{
+    --tdx-page: var(--page, #08090d);
+    --tdx-card: color-mix(in srgb, var(--card, #17171d) 94%, transparent);
+    --tdx-card-2: color-mix(in srgb, var(--card, #191a20) 82%, var(--page, #08090d));
+    --tdx-text: var(--text, #fff7e8);
+    --tdx-muted: var(--muted, #c9b98d);
+    --tdx-border: color-mix(in srgb, var(--border, rgba(255,255,255,.14)) 78%, transparent);
+    --tdx-accent: var(--accent, #f6c84f);
+    --tdx-gold: #f7d978;
+    --tdx-orange: #d69a22;
+    --tdx-blue: #39bdf8;
+    --tdx-pink: #ff477e;
+    --tdx-green: #33dc78;
+    color: var(--tdx-text);
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: clamp(18px, 3vw, 36px) 16px 28px;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .tdx-page::before,
+  .tdx-page::after{
+    content:"";
+    position: fixed;
+    z-index: -1;
+    pointer-events:none;
+    filter: blur(48px);
+    opacity:.42;
+    transform: translateZ(0);
+  }
+  .tdx-page::before{
+    width: 440px; height: 440px;
+    left: min(4vw, 48px); top: 92px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--tdx-accent) 55%, transparent), transparent 64%);
+  }
+  .tdx-page::after{
+    width: 460px; height: 460px;
+    right: 2vw; bottom: 10vh;
+    background: radial-gradient(circle, rgba(255,71,126,.24), transparent 66%);
+  }
+
+  .tdx-hero{
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--tdx-border);
+    border-radius: 34px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--tdx-card) 88%, transparent), color-mix(in srgb, var(--tdx-page) 86%, transparent)),
+      radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--tdx-accent) 18%, transparent), transparent 34%),
+      radial-gradient(circle at 78% 24%, rgba(57,189,248,.15), transparent 32%);
+    box-shadow: 0 28px 80px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+    padding: clamp(22px, 4vw, 48px);
+    animation: tdxRise .62s ease both;
+  }
+  .tdx-hero::before{
+    content:"";
+    position:absolute; inset:-45% auto auto 55%;
+    width: 260px; height: 820px;
+    background: linear-gradient(180deg, rgba(255,255,255,.11), transparent);
+    transform: rotate(18deg);
+    opacity:.62;
+  }
+  .tdx-hero-grid{
+    position: relative;
+    z-index: 1;
+    display:grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+    gap: clamp(22px, 4vw, 46px);
+    align-items: center;
+  }
+  .tdx-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    width:max-content;
+    max-width:100%;
+    padding:9px 14px;
+    border-radius:999px;
+    border:1px solid color-mix(in srgb, var(--tdx-accent) 48%, transparent);
+    background: color-mix(in srgb, var(--tdx-accent) 12%, transparent);
+    color: color-mix(in srgb, var(--tdx-gold) 88%, var(--tdx-text));
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    box-shadow: 0 10px 28px rgba(214,154,34,.14);
+  }
+  .tdx-title{
+    margin: 18px 0 14px;
+    max-width: 760px;
+    font-size: clamp(36px, 6vw, 74px);
+    line-height: .94;
+    letter-spacing:-.06em;
+    color: var(--tdx-text);
+    text-wrap: balance;
+  }
+  .tdx-desc{
+    max-width: 660px;
+    margin:0;
+    color: color-mix(in srgb, var(--tdx-muted) 86%, var(--tdx-text));
+    font-size: clamp(15px, 1.35vw, 19px);
+    line-height:1.85;
+    font-weight:700;
+  }
+  .tdx-meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:24px;
+  }
+  .tdx-meta-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 14px;
+    border-radius: 18px;
+    border:1px solid var(--tdx-border);
+    background: color-mix(in srgb, var(--tdx-card-2) 74%, transparent);
+    color: color-mix(in srgb, var(--tdx-text) 90%, var(--tdx-muted));
+    font-weight:800;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .tdx-cover-card{
+    position:relative;
+    border-radius: 30px;
+    padding: 10px;
+    border:1px solid color-mix(in srgb, var(--tdx-accent) 30%, var(--tdx-border));
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--tdx-accent) 22%, transparent), rgba(255,255,255,.02)),
+      color-mix(in srgb, var(--tdx-card) 88%, transparent);
+    box-shadow: 0 22px 54px rgba(0,0,0,.35), 0 0 0 8px rgba(255,255,255,.015);
+    transform: perspective(900px) rotateY(-2deg) rotateX(1deg);
+    animation: tdxFloat 7s ease-in-out infinite;
+  }
+  .tdx-cover-card img{
+    display:block;
+    width:100%;
+    aspect-ratio: 16/10;
+    object-fit:cover;
+    border-radius: 22px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .tdx-cover-badge{
+    position:absolute;
+    left: 22px; bottom: 22px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 13px;
+    border-radius: 16px;
+    background: rgba(0,0,0,.58);
+    border:1px solid rgba(255,255,255,.14);
+    color:#fff7e8;
+    font-weight:900;
+    backdrop-filter: blur(14px);
+  }
+
+  .tdx-layout{
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 22px;
+    margin-top: 22px;
+    align-items:start;
+  }
+  .tdx-article-wrap{
+    min-width:0;
+    border:1px solid var(--tdx-border);
+    border-radius: 34px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--tdx-card) 92%, transparent), color-mix(in srgb, var(--tdx-card-2) 88%, transparent));
+    box-shadow: 0 24px 70px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
+    overflow:hidden;
+    animation: tdxRise .72s ease .06s both;
+  }
+  .tdx-article{
+    padding: clamp(22px, 3.6vw, 50px);
+    font-size: 16px;
+    line-height: 1.9;
+    color: color-mix(in srgb, var(--tdx-text) 86%, var(--tdx-muted));
+  }
+  .tdx-article h2{
+    position:relative;
+    margin: 10px 0 16px;
+    color: var(--tdx-text);
+    font-size: clamp(24px, 3vw, 36px);
+    letter-spacing:-.035em;
+    line-height:1.12;
+  }
+  .tdx-article h2::before{
+    content:"";
+    display:block;
+    width:46px;
+    height:5px;
+    border-radius:99px;
+    margin-bottom:12px;
+    background: linear-gradient(90deg, var(--tdx-accent), var(--tdx-pink));
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--tdx-accent) 32%, transparent);
+  }
+  .tdx-article h3{
+    margin: 26px 0 8px;
+    color: color-mix(in srgb, var(--tdx-gold) 88%, var(--tdx-text));
+    font-size: clamp(18px, 2vw, 22px);
+    letter-spacing:-.02em;
+  }
+  .tdx-article p{ margin: 0 0 16px; }
+  .tdx-article strong{ color: var(--tdx-gold); font-weight:900; }
+  .tdx-article hr{
+    border:0;
+    height:1px;
+    margin: 34px 0;
+    background: linear-gradient(90deg, transparent, var(--tdx-border), transparent);
+  }
+  .tdx-article ul{
+    margin: 14px 0 20px;
+    padding:0;
+    display:grid;
+    gap:10px;
+  }
+  .tdx-article li{
+    list-style:none;
+    position:relative;
+    padding: 12px 14px 12px 44px;
+    border-radius: 18px;
+    border:1px solid var(--tdx-border);
+    background: color-mix(in srgb, var(--tdx-page) 36%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  }
+  .tdx-article li::before{
+    content:"✓";
+    position:absolute;
+    left:14px; top:12px;
+    width:22px; height:22px;
+    display:grid; place-items:center;
+    border-radius:50%;
+    background: linear-gradient(135deg, var(--tdx-accent), var(--tdx-orange));
+    color:#111;
+    font-size:12px;
+    font-weight:1000;
+  }
+
+  .tdx-sidebar{
+    position: sticky;
+    top: 92px;
+    display:grid;
+    gap:14px;
+    animation: tdxRise .72s ease .12s both;
+  }
+  .tdx-side-card{
+    border:1px solid var(--tdx-border);
+    border-radius: 26px;
+    padding:18px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--tdx-card) 92%, transparent), color-mix(in srgb, var(--tdx-page) 72%, transparent));
+    box-shadow: 0 18px 48px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .tdx-side-title{
+    margin:0 0 12px;
+    color: var(--tdx-text);
+    font-size:16px;
+    font-weight:1000;
+  }
+  .tdx-toc{
+    display:grid;
+    gap:8px;
+  }
+  .tdx-toc a{
+    text-decoration:none;
+    color: color-mix(in srgb, var(--tdx-muted) 82%, var(--tdx-text));
+    font-weight:800;
+    font-size:14px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid transparent;
+    transition: transform .18s ease, color .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .tdx-toc a:hover{
+    transform: translateX(3px);
+    color: var(--tdx-text);
+    border-color: color-mix(in srgb, var(--tdx-accent) 38%, transparent);
+    background: color-mix(in srgb, var(--tdx-accent) 10%, transparent);
+  }
+  .tdx-cta{
+    position:relative;
+    overflow:hidden;
+  }
+  .tdx-cta::before{
+    content:"";
+    position:absolute; inset:-60% -20% auto auto;
+    width:180px; height:180px;
+    border-radius:50%;
+    background: color-mix(in srgb, var(--tdx-accent) 28%, transparent);
+    filter: blur(32px);
+  }
+  .tdx-cta p{
+    position:relative;
+    margin:0 0 14px;
+    color: color-mix(in srgb, var(--tdx-muted) 88%, var(--tdx-text));
+    line-height:1.65;
+    font-weight:700;
+  }
+  .tdx-btn{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:48px;
+    padding: 12px 16px;
+    border-radius: 18px;
+    text-decoration:none;
+    color:#17120a;
+    font-weight:1000;
+    background: linear-gradient(135deg, #ffe38a, #d39a25);
+    box-shadow: 0 14px 34px rgba(211,154,37,.26);
+    transition: transform .18s ease, filter .18s ease;
+  }
+  .tdx-btn:hover{ transform: translateY(-2px); filter:saturate(1.06); }
+
+  .site-footer.tdx-footer{
+    margin-top:22px;
+    border:1px solid var(--tdx-border);
+    border-radius: 34px;
+    overflow:hidden;
+    background: color-mix(in srgb, var(--tdx-card) 90%, transparent);
+    box-shadow: 0 24px 70px rgba(0,0,0,.22);
+  }
+  .tdx-footer .site-footer__topline{
+    height: 4px;
+    background: linear-gradient(90deg, var(--tdx-accent), var(--tdx-pink), var(--tdx-blue));
+  }
+  .tdx-footer .site-footer__container{
+    display:grid;
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+    gap:20px;
+    padding: 28px;
+  }
+  .tdx-footer .brand-logo{ max-width:180px; object-fit:contain; }
+  .tdx-footer .brand-text,
+  .tdx-footer .footer-list a{
+    color: color-mix(in srgb, var(--tdx-muted) 84%, var(--tdx-text));
+  }
+  .tdx-footer .brand-text{ line-height:1.75; margin:12px 0 0; }
+  .tdx-footer .footer-title{ margin:0 0 12px; color:var(--tdx-text); font-size:15px; }
+  .tdx-footer .footer-list{ list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+  .tdx-footer .footer-list a{ text-decoration:none; font-weight:700; transition: color .18s ease; }
+  .tdx-footer .footer-list a:hover{ color: var(--tdx-accent); }
+
+  @keyframes tdxRise{
+    from{ opacity:0; transform: translateY(18px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @keyframes tdxFloat{
+    0%,100%{ transform: perspective(900px) rotateY(-2deg) rotateX(1deg) translateY(0); }
+    50%{ transform: perspective(900px) rotateY(1deg) rotateX(-1deg) translateY(-8px); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tdx-hero,.tdx-article-wrap,.tdx-sidebar{ animation:none; }
+    .tdx-cover-card{ animation:none; }
+    .tdx-btn,.tdx-toc a{ transition:none; }
+  }
+  @media (max-width: 980px){
+    .tdx-hero-grid,.tdx-layout{ grid-template-columns:1fr; }
+    .tdx-sidebar{ position:relative; top:auto; grid-template-columns: 1fr 1fr; }
+    .tdx-cover-card{ transform:none; }
+  }
+  @media (max-width: 720px){
+    .tdx-page{ padding: 14px 10px 22px; }
+    .tdx-hero,.tdx-article-wrap,.site-footer.tdx-footer{ border-radius: 26px; }
+    .tdx-sidebar{ grid-template-columns:1fr; }
+    .tdx-title{ font-size: clamp(34px, 13vw, 48px); }
+    .tdx-meta-pill{ width:100%; justify-content:center; }
+    .tdx-article{ padding: 22px 16px; }
+    .tdx-article li{ padding-right:12px; }
+    .tdx-footer .site-footer__container{ grid-template-columns:1fr; padding:22px 18px; text-align:center; }
+    .tdx-footer .brand-logo{ margin:0 auto; }
+  }
+</style>
+
+<section class="tdx-page blog-detail container">
+  <header class="tdx-hero">
+    <div class="tdx-hero-grid">
+      <div>
+        <div class="tdx-kicker">✦ TikTok Growth Playbook</div>
+        <h1 class="tdx-title"><%= article.title %></h1>
+        <p class="tdx-desc"><%= pageDesc %></p>
+        <div class="tdx-meta-row" aria-label="ข้อมูลบทความ">
+          <span class="tdx-meta-pill">🕒 <%= article.date %></span>
+          <span class="tdx-meta-pill">👤 <%= article.author %></span>
+          <span class="tdx-meta-pill">🚀 FYP Strategy 2026</span>
+        </div>
+      </div>
+
+      <figure class="tdx-cover-card">
+        <img
+          src="/static/assets/thumbnails/blog1.png"
+          alt="บทความเพิ่มวิว TikTok 2026: <%= article.title %>"
+          loading="lazy"
+        >
+        <figcaption class="tdx-cover-badge">TikTok • Views • FYP</figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <div class="tdx-layout">
+    <main class="tdx-article-wrap">
+      <article class="tdx-article">
+        <h2 id="why">ทำไมยอดวิว TikTok ถึงสำคัญ?</h2>
+        <p>
+          ยอดวิว TikTok เป็นตัวชี้วัดว่าเนื้อหาของคุณน่าสนใจหรือไม่ โดยอัลกอริทึมของ TikTok จะนำวิดีโอที่มี
+          Engagement สูง (ยอดวิว ยอดไลก์ คอมเมนต์ และแชร์) ไปแสดงในหน้า <strong>For You (FYP)</strong> เพื่อกระตุ้น
+          การเข้าถึงแบบธรรมชาติ ยิ่งคนเห็นเยอะ โอกาสเติบโตก็ยิ่งสูง
+        </p>
+
+        <hr>
+
+        <h2 id="tips">เทคนิคเพิ่มยอดวิว TikTok ที่ได้ผลจริง</h2>
+        <h3>1) สร้างคอนเทนต์ที่มีคุณค่าและน่าสนใจ</h3>
+        <p>บันเทิง/ให้ความรู้/เรื่องราวจริง — ถ้า “ใช่” คนจะหยุดดู แชร์ และติดตาม</p>
+
+        <h3>2) ใช้คีย์เวิร์ดและแฮชแท็กอย่างชาญฉลาด</h3>
+        <ul>
+          <li>#fyp</li>
+          <li>#tiktokthailand</li>
+          <li>#ไวรัล</li>
+          <li>#คอนเทนต์เด็ด</li>
+          <li>#เทคนิคเพิ่มวิว</li>
+          <li>#เทคนิคติด FYP</li>
+        </ul>
+        <p>ใส่คีย์เวิร์ดหลักในคำอธิบาย เช่น “วิธีเพิ่มวิว TikTok ง่ายๆ ไม่ใช้เงิน”</p>
+
+        <h3>3) จับจังหวะโพสต์ให้ถูกเวลา</h3>
+        <ul>
+          <li>11:00–13:00 (พักเที่ยง)</li>
+          <li>18:00–21:00 (เลิกงาน)</li>
+          <li>ศุกร์–อาทิตย์ มักยอดสูงขึ้น</li>
+        </ul>
+
+        <h3>4) ความยาววิดีโอต้องพอดี</h3>
+        <p>ช่วง 15–30 วินาทีช่วยเพิ่มอัตราดูจบ</p>
+
+        <h3>5) ดึงความสนใจใน 3 วินาทีแรก</h3>
+        <ul>
+          <li>เปิดด้วยคำถาม “รู้ไหมว่าทำแบบนี้แล้ววิวขึ้น?”</li>
+          <li>ใช้ซับไตเติลใหญ่</li>
+          <li>ใส่เสียง/เพลงที่กำลังเทรนด์</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="longterm">กลยุทธ์ระยะยาว: สร้างตัวตนบน TikTok</h2>
+        <ul>
+          <li>โพสต์สม่ำเสมอ 3–5 ครั้ง/สัปดาห์</li>
+          <li>ตอบคอมเมนต์ เพิ่ม Engagement</li>
+          <li>วิเคราะห์วิดีโอไวรัลด้วย TikTok Analytics แล้วทำซ้ำสิ่งที่เวิร์ก</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="avoid">ข้อควรหลีกเลี่ยง</h2>
+        <ul>
+          <li>อย่าใช้บอท/วิวคุณภาพต่ำ เสี่ยงโดนลด Reach หรือแบน</li>
+          <li>อย่าลอกคอนเทนต์แบบไร้ความคิดสร้างสรรค์</li>
+          <li>อย่าใช้เพลงลิขสิทธิ์ที่ไม่ได้รับอนุญาต</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="summary">สรุป</h2>
+        <p>
+          การเพิ่มยอดวิว TikTok ไม่ใช่เรื่องของดวง แต่คือการเข้าใจอัลกอริทึม รู้จักผู้ชม และลงมือทำอย่างมีคุณภาพ
+          ต่อเนื่อง โอกาสติด FYP และไวรัล…อยู่ไม่ไกล ✨
+        </p>
+      </article>
+    </main>
+
+    <aside class="tdx-sidebar" aria-label="แถบข้อมูลบทความ">
+      <section class="tdx-side-card">
+        <h3 class="tdx-side-title">สารบัญบทความ</h3>
+        <nav class="tdx-toc">
+          <a href="#why">ทำไมยอดวิวสำคัญ</a>
+          <a href="#tips">เทคนิคเพิ่มยอดวิว</a>
+          <a href="#longterm">กลยุทธ์ระยะยาว</a>
+          <a href="#avoid">ข้อควรหลีกเลี่ยง</a>
+          <a href="#summary">สรุป</a>
+        </nav>
+      </section>
+
+      <section class="tdx-side-card tdx-cta">
+        <h3 class="tdx-side-title">พร้อมเพิ่มยอด TikTok?</h3>
+        <p>เลือกบริการ TikTok ที่เหมาะกับเป้าหมาย เพิ่มการมองเห็น เร่ง Engagement และคุมงบได้ในหน้าเดียว</p>
+        <a class="tdx-btn" href="/order">เริ่มสั่งบริการ <span>→</span></a>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="site-footer tdx-footer">
+    <div class="site-footer__topline"></div>
+
+    <div class="site-footer__container">
+      <section class="footer-col footer-brand">
+        <img class="brand-logo" src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH" height="56">
+        <p class="brand-text">
+          RTSSM-TH.COM ผู้ให้บริการOTP24ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก
+        </p>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">ผลิตภัณฑ์</h6>
+        <ul class="footer-list">
+          <li><a href="/">หน้าแรก</a></li>
+          <li><a href="/services">บริการทั้งหมด</a></li>
+          <li><a href="/order">คำสั่งซื้อใหม่</a></li>
+        </ul>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">FAQ</h6>
+        <ul class="footer-list">
+          <li><a href="/faq">คำถามที่พบบ่อย</a></li>
+          <li><a href="/blog">บทความ</a></li>
+        </ul>
+      </section>
+
+      <section class="footer-col">
+        <h6 class="footer-title">เกี่ยวกับเรา</h6>
+        <ul class="footer-list">
+          <li><a href="mailto:rtssm.th@gmail.com">Email: rtssm.th@gmail.com</a></li>
+          <li><a href="https://line.me/R/ti/p/@507vkplq">Line: @rtssm-th</a></li>
+          <li><a href="https://line.me/R/ti/p/@507vkplq">แจ้งปัญหาคำสั่งซื้อ</a></li>
+          <li><a href="/page/terms-of-use">เงื่อนไขและข้อตกลง</a></li>
+        </ul>
+      </section>
+    </div>
+  </footer>
+</section>

@@ -1,0 +1,1735 @@
+<% const BANK_LABELS = {
+  bbl:'ธนาคารกรุงเทพ', kbank:'ธนาคารกสิกรไทย', ktb:'ธนาคารกรุงไทย',
+  bay:'ธนาคารกรุงศรีอยุธยา', scb:'ธนาคารไทยพาณิชย์', tmb:'ทหารไทยธนชาต (TTB)',
+  cimb:'ธนาคารซีไอเอ็มบีไทย', uob:'ธนาคารยูโอบี', gsb:'ธนาคารออมสิน',
+  baac:'ธ.เพื่อการเกษตรและสหกรณ์การเกษตร', kkb:'ธนาคารเกียรตินาคินภัทร',
+  lhfg:'ธนาคารแลนด์ แอนด์ เฮ้าส์', icbc:'ธนาคารไอซีบีซี (ไทย)', tisco:'ธนาคารทิสโก้',
+  tw:'TrueMoney Wallet', qr:'PromptPay QR'
+};
+const REPORT_MODE = (typeof reportMode !== 'undefined' && reportMode === 'year') ? 'year' : 'month';
+const IS_YEAR_MODE = REPORT_MODE === 'year';
+const SELECTED_YEAR = Number(typeof selectedYear !== 'undefined' ? selectedYear : new Date().getFullYear());
+const SELECTED_LABEL = typeof selectedLabel !== 'undefined' && selectedLabel ? selectedLabel : '';
+const YEARLY_ROWS = Array.isArray(typeof yearlyRows !== 'undefined' ? yearlyRows : null) ? yearlyRows : [];
+%>
+
+<div class="topup-report-page">
+<section class="page-head">
+  <div class="page-title">
+    <h1>ประวัติการเติมเงินทั้งหมด</h1>
+    <small class="muted">หลังบ้าน → รายการเติมเงินทั้งหมด</small>
+  </div>
+</section>
+
+<!-- สรุปยอดเติมเงินที่สำเร็จทั้งเว็บ -->
+<div class="grid cards">
+  <% if (typeof sumNoAdmin !== 'undefined' && sumNoAdmin > 0) { %>
+    <section class="card">
+      <div class="card-head row-head">
+        <h3>ยอดเติมรวมทั้งหมด (ไม่รวมแอดมิน)<%= SELECTED_LABEL ? ' • ' + SELECTED_LABEL : '' %></h3>
+        <div class="head-right">
+          <span class="metric-badge" style="color:#cc8110; padding:2px 18px;">
+            <%= (countNoAdmin || 0).toLocaleString() %> รายการ
+          </span>
+        </div>
+      </div>
+      <div class="big" style="color:#35cc10; padding:6px 2px;">
+        ฿<%= Number(sumNoAdmin || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) %>
+      </div>
+    </section>
+  <% } %>
+</div>
+
+<div class="grid cards">
+  <% if (Array.isArray(methodTotals) && methodTotals.length) { %>
+    <% methodTotals.forEach(m => { %>
+      <section class="card2">
+        <div class="card-head row-head">
+          <h3>ยอดเติมรวม <%= m.label %><%= SELECTED_LABEL ? ' • ' + SELECTED_LABEL : '' %></h3>
+          <div class="head-right">
+            <span class="metric-badge" style="color:#cc8110; padding:2px 18px;">
+              <%= (m.count || 0).toLocaleString() %> รายการ
+            </span>
+          </div>
+        </div>
+        <div class="big" style="color:#35cc10; padding:6px 2px;">
+          ฿<%= Number(m.sum || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) %>
+        </div>
+      </section>
+    <% }) %>
+  <% } %>
+</div>
+
+<!-- ✔️ Section เลือกเดือน/ปี -->
+<section class="period-control-card" aria-label="เลือกเดือนหรือปีรายงาน">
+  <div class="period-control-glow" aria-hidden="true"></div>
+  <div class="period-control-glow period-control-glow--right" aria-hidden="true"></div>
+
+  <div class="period-control-head">
+    <div class="period-title-wrap">
+      <span class="period-icon" aria-hidden="true">📅</span>
+      <div class="period-copy">
+        <span class="period-kicker">Report Period</span>
+        <h2>เลือกเดือน/ปี</h2>
+        <p>สลับมุมมองรายเดือนหรือรายปี แล้วเลือกช่วงเวลาที่ต้องการดูรายงานเติมเงิน</p>
+      </div>
+    </div>
+
+    <div class="period-current">
+      <span>กำลังดูข้อมูล</span>
+      <strong><%= SELECTED_LABEL || (IS_YEAR_MODE ? `ปี ${SELECTED_YEAR + 543}` : monthStr) %></strong>
+    </div>
+
+    <div class="report-mode-tabs" role="tablist" aria-label="เลือกมุมมองรายงาน">
+      <button class="btn ghost <%= !IS_YEAR_MODE ? 'active' : '' %>" id="btnModeMonth" type="button">รายเดือน</button>
+      <button class="btn ghost <%= IS_YEAR_MODE ? 'active' : '' %>" id="btnModeYear" type="button">รายปี</button>
+    </div>
+  </div>
+
+  <div class="period-control-body">
+    <div class="month-toolbar" role="group" aria-label="เลือกช่วงเวลา">
+      <button class="btn ghost" id="btnPrev" type="button" aria-label="ก่อนหน้า">◀︎</button>
+      <label class="month-ctrl">
+        <input id="monthInput" type="text" value="<%= IS_YEAR_MODE ? SELECTED_YEAR : monthStr %>" readonly aria-label="เลือกช่วงเวลา" />
+        <button class="icon-btn" id="btnOpenPicker" type="button" aria-label="เปิดตัวเลือกช่วงเวลา">📅</button>
+      </label>
+      <button class="btn ghost" id="btnNext" type="button" aria-label="ถัดไป">▶︎</button>
+      <button class="btn" id="btnThisMonth" type="button"><%= IS_YEAR_MODE ? 'ปีนี้' : 'เดือนนี้' %></button>
+    </div>
+  </div>
+</section>
+
+<!-- Popup: Month/Year Picker — แยกออกจาก period-control-card เหมือนหน้า reportsummary เพื่อไม่ให้โดน overflow/transform ของ section ตัด -->
+<div id="monthPicker" class="mp-popup" hidden aria-hidden="true">
+  <div class="mp-backdrop" data-close-month-picker="1"></div>
+  <div class="mp-card" role="dialog" aria-modal="true" aria-label="เลือกช่วงเวลา">
+    <div class="mp-head">
+      <button class="mp-nav" id="mpPrevYear" type="button" aria-label="ปีก่อนหน้า">‹</button>
+      <div class="mp-year" id="mpYear">2025</div>
+      <button class="mp-nav" id="mpNextYear" type="button" aria-label="ปีถัดไป">›</button>
+    </div>
+    <div class="mp-grid" id="mpGrid" role="grid" aria-label="รายชื่อเดือนหรือปี">
+      <!-- เติมด้วยสคริปต์ -->
+    </div>
+    <div class="mp-actions">
+      <button class="btn ghost" id="mpClear" type="button">ล้าง</button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="mpThisMonth" type="button"><%= IS_YEAR_MODE ? 'ปีนี้' : 'เดือนนี้' %></button>
+      <button class="btn primary" id="mpOK" type="button">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<%
+// monthStr รูปแบบ 'YYYY-MM'
+const [yy, mm] = (monthStr || '').split('-').map(Number);
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const headMonthLabel = IS_YEAR_MODE
+  ? `ปี ${SELECTED_YEAR + 543}`
+  : `${MONTHS_TH[(mm||1)-1]} ${yy + 543}`;
+%>
+
+<div class="history-wrapper card soft">
+  <div class="title flex-between" style="align-items:center; gap:10px;">
+    <h3 style="margin:0;"><%= IS_YEAR_MODE ? `สรุปเติมเงินรายเดือน ${headMonthLabel}` : 'ทุกรายการเติมเงิน' %></h3>
+    <% if (IS_YEAR_MODE) { %>
+      <span class="metric-badge">รวม <%= (countNoAdmin || 0).toLocaleString('th-TH') %> รายการสำเร็จ</span>
+    <% } %>
+  </div>
+
+  <% if (IS_YEAR_MODE) { %>
+    <% const hasYearRows = YEARLY_ROWS.some(r => Number(r.count || 0) > 0); %>
+    <% if (hasYearRows) { %>
+      <!-- ===== Yearly Desktop/Table view ===== -->
+      <div class="table-wrap desktop-only">
+        <table class="history-table yearly-table">
+          <thead>
+            <tr>
+              <th>เดือน</th>
+              <th style="text-align:center;">จำนวนรายการเติม</th>
+              <th style="text-align:right;">ยอดรวมไม่รวมแอดมิน</th>
+              <th style="text-align:left;">ยอดแยกตาม Method</th>
+              <th style="text-align:right;">ยอดรวม Completed</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% YEARLY_ROWS.forEach(row => { %>
+              <tr class="<%= Number(row.count || 0) <= 0 ? 'is-empty-month' : '' %>">
+                <td>
+                  <b class="month-name"><%= row.label %></b>
+                  <div class="muted"><%= row.month %></div>
+                </td>
+                <td style="text-align:center;">
+                  <span class="metric-badge"><%= Number(row.noAdminCount || 0).toLocaleString('th-TH') %> รายการ</span>
+                </td>
+                <td class="amount">฿<%= Number(row.noAdminSum || 0).toLocaleString(undefined,{ minimumFractionDigits: 2 }) %></td>
+                <td>
+                  <% if (Array.isArray(row.methods) && row.methods.length) { %>
+                    <div class="method-chip-list">
+                      <% row.methods.forEach(m => { %>
+                        <span class="method-chip">
+                          <b><%= m.label %></b>
+                          <em><%= Number(m.count || 0).toLocaleString('th-TH') %> รายการ</em>
+                          <strong>฿<%= Number(m.sum || 0).toLocaleString(undefined,{ minimumFractionDigits: 2 }) %></strong>
+                        </span>
+                      <% }) %>
+                    </div>
+                  <% } else { %>
+                    <span class="muted">ไม่มีรายการสำเร็จ</span>
+                  <% } %>
+                </td>
+                <td class="amount">฿<%= Number(row.sum || 0).toLocaleString(undefined,{ minimumFractionDigits: 2 }) %></td>
+                <td style="text-align:right;">
+                  <a class="btn small ghost" href="?month=<%= row.month %>&mode=month">ดูรายการ</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ===== Yearly Mobile/Card accordion ===== -->
+      <div class="mobile-only tx-accordion-list" style="margin-top:10px;">
+        <% YEARLY_ROWS.forEach(row => { %>
+          <div class="tx-accordion" data-open="0">
+            <button class="tx-accordion__head" type="button">
+              <div class="tx-accordion__title">
+                <span class="tx-id"><%= row.label %></span>
+              </div>
+              <div class="tx-accordion__meta">
+                <span class="tx-date"><%= Number(row.noAdminCount || 0).toLocaleString('th-TH') %> รายการ</span>
+                <span class="tx-toggle"></span>
+              </div>
+            </button>
+            <div class="tx-accordion__body">
+              <div class="tx-row">
+                <div class="tx-label">ยอดรวมไม่รวมแอดมิน</div>
+                <div class="tx-value"><b>฿<%= Number(row.noAdminSum || 0).toLocaleString(undefined,{minimumFractionDigits:2}) %></b></div>
+              </div>
+              <div class="tx-row">
+                <div class="tx-label">Completed ทั้งหมด</div>
+                <div class="tx-value"><b>฿<%= Number(row.sum || 0).toLocaleString(undefined,{minimumFractionDigits:2}) %></b></div>
+              </div>
+              <div class="tx-row">
+                <div class="tx-label">Method</div>
+                <div class="tx-value">
+                  <% if (Array.isArray(row.methods) && row.methods.length) { %>
+                    <div class="method-chip-list">
+                      <% row.methods.forEach(m => { %>
+                        <span class="method-chip">
+                          <b><%= m.label %></b>
+                          <em><%= Number(m.count || 0).toLocaleString('th-TH') %> รายการ</em>
+                          <strong>฿<%= Number(m.sum || 0).toLocaleString(undefined,{ minimumFractionDigits: 2 }) %></strong>
+                        </span>
+                      <% }) %>
+                    </div>
+                  <% } else { %>
+                    <span class="muted">ไม่มีรายการสำเร็จ</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="tx-actions">
+                <a class="btn small ghost" style="width:100%; text-align:center;" href="?month=<%= row.month %>&mode=month">ดูรายการเดือนนี้</a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="empty-history" role="status" aria-live="polite">
+        <img src="/static/assets/emoji/empty.png" alt="" aria-hidden="true">
+        <div class="empty-title">ปีนี้ยังไม่มีรายการเติมเงินสำเร็จ</div>
+        <div class="empty-sub">เลือกปีอื่น หรือกลับไปดูแบบรายเดือน</div>
+      </div>
+    <% } %>
+
+  <% } else if (transactions && transactions.length) { %>
+
+  <!-- ===== Desktop/Table view ===== -->
+  <div class="table-wrap desktop-only">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>วันที่ / เวลา</th>
+          <th>รหัสรายการ</th>
+          <th>ผู้ใช้</th>
+          <th style="text-align:left;">วิธีเติม</th>
+          <th>ข้อมูลผู้โอน</th>
+          <th style="text-align:right;">จำนวนเงิน</th>
+          <th style="text-align:center;">สถานะ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% transactions.forEach(tx => {
+             const method = (tx.method||'').toLowerCase();
+             const statusLabel =
+                (tx.status === "completed" || tx.status === "completed") ? "สำเร็จ" :
+                (tx.status === "pending" || tx.status === "pending") ? "รอดำเนินการ" :
+                (tx.status === "reject" || tx.status === "rejected") ? "ถูกปฏิเสธ" :
+                tx.status === "failed"    ? "ล้มเหลว" : "ยกเลิก";
+        %>
+        <tr>
+          <td class="muted">
+            <%= new Date(tx.createdAt).toLocaleString('th-TH', {
+              timeZone: 'Asia/Bangkok', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'
+            }) %>
+          </td>
+          <td title="<%= tx.transactionId || '' %>"><%= tx.transactionId || '—' %></td>
+          <td>
+            <div class="user-cell">
+                <img
+                class="avatar-sm"
+                src="<%= (tx.userId?.avatarUrl || '/static/assets/img/user-blue.png') %>?v=<%= tx.userId?.avatarVer || 0 %>"
+                alt="<%= tx.userId?.username || tx.username || 'user' %>" width="28" height="28" loading="lazy"/>
+                <div class="user-meta">
+                    <b class="user-name"><%= (tx.userId?.username || tx.username || '-') %></b>
+                    <% if (tx.userId?.email) { %>
+                    <span class="user-email muted"><%= tx.userId.email %></span>
+                    <% } %>
+                </div>
+            </div>
+          </td>
+          <td>
+            <% const m = (tx.method || '').toLowerCase(); %>
+            <%=
+              (m === 'tw' || m === 'truewallet') ? 'True Wallet' :
+              (m === 'kbank') ? 'กสิกรไทย' :
+              (m === 'scb') ? 'ไทยพานิชย์' :
+              (m === 'qr') ? 'PromptPay QR' :
+              (m === 'admin') ? 'Admin' :
+              (m === 'manual') ? 'เติมมือ' :
+              (m || '—')
+            %>
+          </td>
+          <td>
+            <% if (method === 'truewallet' || method === 'tw') { %>
+              <img src="/static/assets/payment/tw.webp" class="bank-logo" />
+              <b>TrueWallet</b>
+              <div class="muted">เบอร์ผู้โอน: <%= tx.senderNumber || '-' %></div>
+            <% } else { %>
+              <img src="/static/assets/payment/mobilebanking.png" class="bank-logo" />
+              <b><%= BANK_LABELS[tx.senderBank] || 'ไม่ระบุธนาคาร' %></b>
+              <div class="muted">เลขท้ายบัญชีผู้โอน: <%= tx.senderLast6 || '-' %></div>
+            <% } %>
+          </td>
+          <td class="amount">฿<%= Number(tx.amount).toLocaleString(undefined,{ minimumFractionDigits: 2 }) %></td>
+          <td class="status <%= (tx.status||'').toLowerCase() %>"><%= statusLabel %></td>
+          <td>
+            <% if ((tx.status||'') === 'pending') { %>
+            <button class="btn small success"
+              onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\' ) %>')">
+              เติมให้ผู้ใช้
+            </button>
+            <button class="btn small danger" onclick="rejectTx('<%= (tx._id || tx.transactionId) %>')">
+              ปฏิเสธ
+            </button>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== Mobile/Card accordion ===== -->
+  <div class="mobile-only tx-accordion-list" style="margin-top:10px;">
+    <% transactions.forEach(tx => {
+         const method = (tx.method||'').toLowerCase();
+         const statusLabel =
+           (tx.status === "completed" || tx.status === "completed") ? "สำเร็จ" :
+           (tx.status === "pending" || tx.status === "pending") ? "รอดำเนินการ" :
+           (tx.status === "reject" || tx.status === "rejected") ? "ถูกปฏิเสธ" :
+           tx.status === "failed"    ? "ล้มเหลว" : "ยกเลิก";
+    %>
+    <div class="tx-accordion" data-open="0">
+      <button class="tx-accordion__head" type="button">
+        <div class="tx-accordion__title">
+          <span class="tx-id" title="<%= tx.transactionId || '' %>"><%= tx.transactionId || '—' %></span>
+        </div>
+        <div class="tx-accordion__meta">
+          <span class="tx-date">
+            <%= new Date(tx.createdAt).toLocaleString('th-TH', {
+              timeZone: 'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit',
+              hour:'2-digit', minute:'2-digit', second:'2-digit'
+            }) %>
+          </span>
+          <span class="tx-toggle"></span>
+        </div>
+      </button>
+      <div class="tx-accordion__body">
+        <div class="tx-row">
+            <div class="tx-label">ผู้ใช้</div>
+            <div class="tx-value">
+                <div class="user-cell">
+                <img
+                    class="avatar-sm"
+                    src="<%= (tx.userId?.avatarUrl || '/static/assets/img/user-blue.png') %>?v=<%= tx.userId?.avatarVer || 0 %>"
+                    alt="<%= tx.userId?.username || tx.username || 'user' %>" width="28" height="28" loading="lazy"/>
+                    <div class="user-meta">
+                        <b class="user-name"><%= (tx.userId?.username || tx.username || '-') %></b>
+                        <% if (tx.userId?.email) { %>
+                        <span class="user-email muted"><%= tx.userId.email %></span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tx-row">
+          <div class="tx-label">ผู้โอน</div>
+          <div class="tx-value">
+            <% if (method === 'truewallet' || method === 'tw') { %>
+              <img src="/static/assets/payment/tw.webp" class="bank-logo" alt="">
+              <b>TrueWallet</b><br>
+              <span class="muted">เบอร์ผู้โอน: <%= tx.senderNumber || '-' %></span>
+            <% } else { %>
+              <img src="/static/assets/payment/mobilebanking.png" class="bank-logo" alt="">
+              <b><%= BANK_LABELS[tx.senderBank] || 'ไม่ระบุธนาคาร' %></b><br>
+              <span class="muted">เลขท้ายบัญชีผู้โอน: <%= tx.senderLast6 || '-' %></span>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="tx-row">
+          <div class="tx-label">วิธีเติม</div>
+          <div class="tx-value">
+            <% const m = (tx.method || '').toLowerCase(); %>
+            <%=
+              (m === 'tw' || m === 'truewallet') ? 'True Wallet' :
+              (m === 'kbank') ? 'กสิกรไทย' :
+              (m === 'scb') ? 'ไทยพานิชย์' :
+              (m === 'qr') ? 'PromptPay QR' :
+              (m === 'admin') ? 'Admin' :
+              (m === 'manual') ? 'เติมมือ' :
+              (m || '—')
+            %>
+          </div>
+        </div>
+
+        <div class="tx-row">
+          <div class="tx-label">จำนวนเงิน</div>
+          <div class="tx-value"><b>฿<%= Number(tx.amount).toLocaleString(undefined,{minimumFractionDigits:2}) %></b></div>
+        </div>
+
+        <div class="tx-row">
+          <div class="tx-label">สถานะ</div>
+          <div class="tx-value">
+            <span class="pill pill--<%= (tx.status||'').toLowerCase() %>"><%= statusLabel %></span>
+          </div>
+        </div>
+
+        <div class="tx-actions">
+          <% if ((tx.status||'') === 'pending') { %>
+          <button class="btn small success" style="width: 100%;"
+            onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\') %>')">
+            เติมให้ผู้ใช้
+          </button>
+          <button class="btn small danger" style="width: 100%; margin-top: 8px;"
+            onclick="rejectTx('<%= (tx._id || tx.transactionId) %>')">
+            ปฏิเสธ
+          </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+
+  <% } else { %>
+    <div class="empty-history" role="status" aria-live="polite">
+      <img src="/static/assets/emoji/empty.png" alt="" aria-hidden="true">
+      <div class="empty-title">ยังไม่มีรายการเติมเงิน</div>
+      <div class="empty-sub">เมื่อมีรายการ ระบบจะแสดงที่นี่โดยอัตโนมัติ</div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Manual Topup Modal -->
+<div id="manualTopupModal" class="hidden modal">
+  <div class="overlay" data-close="1"></div>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <div class="hdr">
+      <div class="title" id="manualTitle">เติมเงินให้ผู้ใช้</div>
+      <button class="icon close" id="manualTopupClose" aria-label="ปิด">×</button>
+    </div>
+    <hr class="sep" />
+    <div class="body">
+      <form id="manualTopupForm" onsubmit="return submitManualTopup(event)">
+        <label>
+          ชื่อผู้ใช้ (Username)
+          <input type="text" id="manualUsername" list="userList" autocomplete="off" required
+                 placeholder="พิมพ์ค้นหา เช่น: ad" class="block input mt-sm"/>
+          <datalist id="userList"></datalist>
+        </label>
+
+        <label>
+          จำนวนเงิน
+          <input type="number" id="manualAmount" required class="block input mt-sm"/>
+        </label>
+
+        <div class="card soft mt">💡 ระบบจะเพิ่มยอดเงินเข้าบัญชีของผู้ใช้ทันที และบันทึกในระบบ</div>
+
+        <div class="footer d-flex justify-content-center mt">
+          <button class="block btn primary" type="submit">ยืนยันเติมเงิน</button>
+        </div>
+      </form>
+      <div id="manualTopupStatus" class="mt"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* =========================================================
+   Topup Report — Enterprise High-end (local scoped)
+   รองรับธีมจาก layout.ejs ผ่าน CSS variables + fallback
+   ========================================================= */
+.topup-report-page,
+body:has(.topup-report-page){
+  --tr-page: var(--page, var(--bg, #08090c));
+  --tr-card: var(--card, #17181d);
+  --tr-card-2: color-mix(in srgb, var(--tr-card) 82%, #ffffff 4%);
+  --tr-soft: color-mix(in srgb, var(--tr-card) 74%, #ffffff 5%);
+  --tr-text: var(--text, #fff7e8);
+  --tr-muted: var(--muted, #c7b890);
+  --tr-border: var(--border, rgba(255,255,255,.11));
+  --tr-accent: var(--accent, #f7cb3b);
+  --tr-accent-2: #ffe59a;
+  --tr-gold-1: #ffe48c;
+  --tr-gold-2: #d59b25;
+  --tr-green: #35df7b;
+  --tr-red: #ff5d63;
+  --tr-blue: #46a6ff;
+  --tr-shadow: rgba(0,0,0,.36);
+  color: var(--tr-text);
+}
+
+.topup-report-page{
+  position: relative;
+  isolation: isolate;
+  padding: clamp(14px,2vw,28px);
+  min-height: calc(100vh - 80px);
+}
+.topup-report-page::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    radial-gradient(900px 440px at 12% -10%, color-mix(in srgb,var(--tr-accent) 16%, transparent), transparent 62%),
+    radial-gradient(760px 420px at 92% 4%, rgba(96,120,255,.14), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb,var(--tr-page) 100%, #000 0%), color-mix(in srgb,var(--tr-page) 90%, #000 10%));
+}
+.topup-report-page *{ box-sizing:border-box; }
+.topup-report-page a{ color:inherit; }
+
+/* ===== Header ===== */
+.topup-report-page .page-head{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--tr-border);
+  border-radius:30px;
+  padding:clamp(24px,4vw,48px);
+  margin:0 0 24px;
+  background:
+    linear-gradient(118deg, rgba(255,255,255,.055), rgba(255,255,255,.018) 52%, rgba(91,108,255,.09)),
+    color-mix(in srgb,var(--tr-card) 90%, transparent);
+  box-shadow:0 26px 70px var(--tr-shadow), inset 0 1px 0 rgba(255,255,255,.07);
+  animation: trFadeUp .55s ease both;
+}
+.topup-report-page .page-head::after{
+  content:"";
+  position:absolute;
+  inset:-40% -12% auto auto;
+  width:34%;
+  height:180%;
+  transform:rotate(14deg);
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+  opacity:.7;
+  pointer-events:none;
+}
+.topup-report-page .page-title::before{
+  content:"✦ TOPUP REPORT";
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  margin-bottom:16px;
+  padding:7px 14px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--tr-accent) 56%, transparent);
+  color:var(--tr-accent-2);
+  background:color-mix(in srgb,var(--tr-accent) 11%, transparent);
+  font-size:12px;
+  font-weight:7000;
+  letter-spacing:.08em;
+}
+.topup-report-page .page-title h1{
+  margin:0;
+  font-size:clamp(34px,5vw,70px);
+  line-height:.98;
+  letter-spacing:-.05em;
+  color:var(--tr-text);
+  text-wrap:balance;
+}
+.topup-report-page .page-title .muted,
+.topup-report-page .page-title small{
+  display:block;
+  margin-top:16px;
+  color:var(--tr-muted);
+  font-size:clamp(14px,1.2vw,17px);
+  font-weight:600;
+}
+
+/* ===== Cards ===== */
+.topup-report-page .grid.cards{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:0 0 16px;
+}
+.topup-report-page .grid.cards:first-of-type{ grid-template-columns:1fr; }
+.topup-report-page .card,
+.topup-report-page .card2,
+.topup-report-page .history-wrapper,
+.topup-report-page .month-toolbar,
+.topup-report-page .mp-card,
+.topup-report-page .dialog{
+  border:1px solid var(--tr-border);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
+    color-mix(in srgb,var(--tr-card) 92%, transparent);
+  border-radius:26px;
+  box-shadow:0 20px 54px var(--tr-shadow), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.topup-report-page .card,
+.topup-report-page .card2{
+  position:relative;
+  overflow:hidden;
+  min-height:150px;
+  padding:24px;
+  animation: trFadeUp .55s ease both;
+}
+.topup-report-page .card::before,
+.topup-report-page .card2::before{
+  content:"";
+  position:absolute;
+  inset:auto -8% -48% 18%;
+  height:80px;
+  transform:rotate(-8deg);
+  background:linear-gradient(90deg, transparent, color-mix(in srgb,var(--tr-accent) 24%, transparent), transparent);
+  filter:blur(10px);
+  opacity:.75;
+}
+.topup-report-page .card-head.row-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 16px;
+}
+.topup-report-page .card-head h3{
+  margin:0;
+  color:var(--tr-muted);
+  font-size:14px;
+  font-weight:600;
+}
+.topup-report-page .metric-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  border-radius:999px;
+  border:1px solid var(--tr-border);
+  background:rgba(255,255,255,.035);
+  color:var(--tr-accent-2)!important;
+  font-weight:600;
+  white-space:nowrap;
+}
+.topup-report-page .big{
+  position:relative;
+  z-index:1;
+  color:var(--tr-green)!important;
+  font-size:clamp(34px,3.6vw,52px);
+  line-height:1;
+  font-weight:600;
+  letter-spacing:-.04em;
+  text-shadow:0 14px 34px color-mix(in srgb,var(--tr-green) 22%, transparent);
+}
+
+
+/* ===== Report mode tabs ===== */
+.topup-report-page .report-mode-tabs{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin:0 0 10px;
+}
+.topup-report-page .report-mode-tabs .btn.active{
+  color:#17130a;
+  background:linear-gradient(135deg,var(--tr-gold-1),var(--tr-gold-2));
+  box-shadow:0 14px 30px color-mix(in srgb,var(--tr-accent) 18%, transparent);
+}
+
+/* ===== Month toolbar ===== */
+.topup-report-page .month-toolbar{
+  position:relative;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  margin:16px 0 18px;
+  padding:12px;
+  border-radius:24px;
+}
+
+/* ===== Period Control Card — Enterprise High-end ===== */
+.topup-report-page .period-control-card{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  display:grid;
+  gap:18px;
+  margin:18px 0 20px;
+  padding:20px;
+  border:1px solid color-mix(in srgb,var(--tr-border) 88%, rgba(255,255,255,.06));
+  border-radius:30px;
+  background:
+    radial-gradient(760px 260px at 8% 0%, color-mix(in srgb,var(--tr-accent) 14%, transparent), transparent 62%),
+    radial-gradient(520px 240px at 94% 100%, rgba(84,116,255,.11), transparent 60%),
+    linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.018) 52%, rgba(0,0,0,.10)),
+    color-mix(in srgb,var(--tr-card) 94%, transparent);
+  box-shadow:0 24px 64px var(--tr-shadow), inset 0 1px 0 rgba(255,255,255,.07);
+  animation:trFadeUp .58s ease both;
+}
+.topup-report-page .period-control-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.045), transparent);
+  opacity:.28;
+  pointer-events:none;
+}
+.topup-report-page .period-control-glow{
+  position:absolute;
+  z-index:-1;
+  left:-100px;
+  top:-170px;
+  width:340px;
+  height:340px;
+  border-radius:999px;
+  background:radial-gradient(circle, color-mix(in srgb,var(--tr-accent) 22%, transparent), transparent 68%);
+  filter:blur(18px);
+  opacity:.82;
+  pointer-events:none;
+}
+.topup-report-page .period-control-glow--right{
+  left:auto;
+  right:-110px;
+  top:auto;
+  bottom:-190px;
+  background:radial-gradient(circle, rgba(96,120,255,.18), transparent 70%);
+}
+.topup-report-page .period-control-head{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) minmax(260px,.72fr) auto;
+  align-items:center;
+  gap:16px;
+}
+.topup-report-page .period-title-wrap{
+  display:flex;
+  align-items:flex-start;
+  gap:15px;
+  min-width:0;
+}
+.topup-report-page .period-icon{
+  flex:0 0 58px;
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  border-radius:19px;
+  border:1px solid color-mix(in srgb,var(--tr-accent) 30%, var(--tr-border));
+  background:linear-gradient(145deg, color-mix(in srgb,var(--tr-accent) 18%, transparent), rgba(255,255,255,.035));
+  box-shadow:0 18px 38px color-mix(in srgb,var(--tr-accent) 15%, transparent), inset 0 1px 0 rgba(255,255,255,.10);
+  font-size:24px;
+}
+.topup-report-page .period-copy{ min-width:0; }
+.topup-report-page .period-kicker{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  margin-bottom:8px;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--tr-accent) 34%, var(--tr-border));
+  background:color-mix(in srgb,var(--tr-accent) 10%, transparent);
+  color:var(--tr-accent-2);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.topup-report-page .period-copy h2{
+  margin:0;
+  color:var(--tr-text);
+  font-size:clamp(24px,2.35vw,38px);
+  line-height:1.05;
+  font-weight:1000;
+  letter-spacing:-.04em;
+}
+.topup-report-page .period-copy p{
+  margin:7px 0 0;
+  max-width:520px;
+  color:var(--tr-muted);
+  font-size:13.5px;
+  line-height:1.55;
+  font-weight:700;
+}
+.topup-report-page .period-current{
+  min-height:66px;
+  padding:12px 18px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--tr-border) 84%, rgba(255,255,255,.05));
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)), color-mix(in srgb,var(--tr-card) 82%, var(--tr-page));
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 14px 30px rgba(0,0,0,.16);
+}
+.topup-report-page .period-current span{
+  color:var(--tr-muted);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.topup-report-page .period-current strong{
+  margin-top:4px;
+  color:var(--tr-accent-2);
+  font-size:clamp(18px,1.8vw,26px);
+  font-weight:1000;
+  letter-spacing:-.025em;
+}
+.topup-report-page .period-control-card .report-mode-tabs{
+  margin:0;
+  justify-content:flex-end;
+  padding:6px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--tr-border) 84%, rgba(255,255,255,.05));
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)), color-mix(in srgb,var(--tr-page) 78%, var(--tr-card));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 16px 34px rgba(0,0,0,.15);
+}
+.topup-report-page .period-control-card .report-mode-tabs .btn{
+  min-width:96px;
+  min-height:46px;
+  border-radius:16px;
+  padding:0 18px;
+  font-weight:900;
+}
+.topup-report-page .period-control-card .report-mode-tabs .btn.active{
+  color:#17130a;
+  background:linear-gradient(135deg,var(--tr-gold-1),var(--tr-gold-2));
+  box-shadow:0 14px 28px color-mix(in srgb,var(--tr-accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.topup-report-page .period-control-body{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:center;
+  padding-top:2px;
+}
+.topup-report-page .period-control-card .month-toolbar{
+  margin:0;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)), color-mix(in srgb,var(--tr-page) 75%, var(--tr-card));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 16px 34px rgba(0,0,0,.18);
+}
+.topup-report-page .period-control-card .month-ctrl{
+  min-height:52px;
+  border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)), color-mix(in srgb,var(--tr-card) 82%, var(--tr-page));
+}
+.topup-report-page .period-control-card #monthInput{ width:160px; }
+
+.topup-report-page .btn,
+.topup-report-page button.btn,
+.topup-report-page .icon-btn{
+  border:1px solid var(--tr-border);
+  border-radius:16px;
+  min-height:44px;
+  padding:0 18px;
+  color:#17130a;
+  background:linear-gradient(135deg,var(--tr-gold-1),var(--tr-gold-2));
+  font-weight:600;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  box-shadow:0 14px 30px color-mix(in srgb,var(--tr-accent) 18%, transparent);
+}
+.topup-report-page .btn:hover,
+.topup-report-page .icon-btn:hover{ transform:translateY(-1px); filter:saturate(1.05); }
+.topup-report-page .btn.ghost,
+.topup-report-page button.btn.ghost{
+  color:var(--tr-text);
+  background:color-mix(in srgb,var(--tr-card) 88%, transparent);
+  box-shadow:none;
+}
+.topup-report-page .btn.small{ min-height:36px; padding:0 13px; border-radius:13px; font-size:12px; }
+.topup-report-page .btn.success{ background:linear-gradient(135deg,#49ec8d,#109653); color:#062214; border:0; }
+.topup-report-page .btn.danger{ background:linear-gradient(135deg,#ff7a7f,#b71f28); color:#fff; border:0; }
+.topup-report-page .month-ctrl{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:54px;
+  padding:7px;
+  border:1px solid color-mix(in srgb,var(--tr-accent) 42%, var(--tr-border));
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+}
+.topup-report-page #monthInput{
+  width:150px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--tr-text);
+  text-align:center;
+  font-weight:1000;
+  font-size:16px;
+}
+.topup-report-page .icon-btn{ width:42px; min-height:42px; padding:0; border-radius:14px; }
+
+/* ===== Month / Year picker — same top-layer style as reportsummary ===== */
+.topup-report-page .mp-popup[hidden]{display:none!important;}
+.topup-report-page .mp-popup{
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  display:block;
+  pointer-events:none;
+  background:transparent;
+}
+.topup-report-page .mp-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.18);
+  backdrop-filter:blur(2px);
+  opacity:0;
+  pointer-events:auto;
+}
+.topup-report-page .mp-card{
+  position:fixed;
+  left:var(--mp-left,50%);
+  top:var(--mp-top,50%);
+  width:min(342px,calc(100vw - 24px));
+  max-width:none;
+  border-radius:24px;
+  border:1px solid var(--tr-border);
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--tr-card) 96%,transparent),color-mix(in srgb,var(--tr-page) 30%,var(--tr-card)));
+  color:var(--tr-text);
+  box-shadow:0 30px 90px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.08);
+  padding:14px;
+  pointer-events:auto;
+  animation:trPicker .2s ease both;
+  overflow:hidden;
+  transform:none;
+  z-index:1;
+}
+.topup-report-page .mp-card::before{
+  content:"";
+  position:absolute;
+  inset:-60px -80px auto auto;
+  width:180px;
+  height:180px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--tr-accent) 22%,transparent);
+  filter:blur(20px);
+  pointer-events:none;
+}
+.topup-report-page .mp-head{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 2px 12px;
+  border-bottom:1px solid var(--tr-border);
+}
+.topup-report-page .mp-actions{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding-top:12px;
+  border-top:1px solid var(--tr-border);
+}
+.topup-report-page .mp-year{
+  flex:1;
+  text-align:center;
+  font-size:20px;
+  font-weight:950;
+  color:var(--tr-accent-2);
+  letter-spacing:-.02em;
+}
+.topup-report-page .mp-nav{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  border:1px solid var(--tr-border);
+  background:var(--tr-soft);
+  color:var(--tr-text);
+  cursor:pointer;
+  font-size:24px;
+  line-height:1;
+  transition:transform .18s ease, background .18s ease;
+}
+.topup-report-page .mp-nav:hover{
+  transform:translateY(-1px);
+  background:color-mix(in srgb,var(--tr-accent) 14%,transparent);
+}
+.topup-report-page .mp-grid{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  padding:14px 0;
+  margin:0;
+}
+.topup-report-page .mp-m,
+.topup-report-page .mp-grid button{
+  min-height:44px;
+  border:1px solid var(--tr-border);
+  background:color-mix(in srgb,var(--tr-page) 55%,transparent);
+  color:var(--tr-text);
+  border-radius:15px;
+  cursor:pointer;
+  font-weight:950;
+  transition:transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.topup-report-page .mp-m:hover,
+.topup-report-page .mp-grid button:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--tr-accent) 45%,var(--tr-border));
+  background:color-mix(in srgb,var(--tr-accent) 12%,transparent);
+}
+.topup-report-page .mp-m.active,
+.topup-report-page .mp-grid button.active{
+  color:#17130a;
+  background:linear-gradient(135deg,var(--tr-gold-1),var(--tr-gold-2));
+  border-color:transparent;
+  box-shadow:0 10px 22px color-mix(in srgb,var(--tr-accent) 25%,transparent);
+}
+.topup-report-page .mp-m.current:not(.active),
+.topup-report-page .mp-grid button.current:not(.active){
+  border-color:color-mix(in srgb,var(--tr-accent) 48%,var(--tr-border));
+  color:var(--tr-accent-2);
+}
+.topup-report-page .spacer{flex:1;}
+
+
+/* Picker must live outside the control card: keep it on top and never clipped by section overflow/animation */
+.topup-report-page > .mp-popup{
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  pointer-events:none;
+  background:transparent;
+}
+.topup-report-page > .mp-popup .mp-backdrop{ pointer-events:auto; }
+.topup-report-page > .mp-popup .mp-card{ pointer-events:auto; }
+
+/* ===== Table / History ===== */
+.topup-report-page .history-wrapper{
+  overflow:hidden;
+  padding:18px;
+  border-radius:28px;
+  animation: trFadeUp .62s ease both;
+}
+.topup-report-page .history-wrapper .title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:0 0 14px;
+}
+.topup-report-page .history-wrapper h3{ color:var(--tr-text); font-weight:1000; }
+.topup-report-page .table-wrap{
+  width:100%;
+  overflow-x:auto;
+  border:1px solid var(--tr-border);
+  border-radius:22px;
+  background:rgba(0,0,0,.12);
+}
+.topup-report-page .history-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:1120px;
+}
+.topup-report-page .history-table th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:16px 18px;
+  color:var(--tr-accent-2);
+  font-size:13px;
+  text-align:left;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.026));
+  border-bottom:1px solid var(--tr-border);
+  white-space:nowrap;
+}
+.topup-report-page .history-table td{
+  padding:16px 18px;
+  border-bottom:1px solid color-mix(in srgb,var(--tr-border) 70%, transparent);
+  vertical-align:middle;
+  color:var(--tr-text);
+}
+.topup-report-page .history-table tbody tr{
+  transition:background .18s ease, transform .18s ease;
+}
+.topup-report-page .history-table tbody tr:hover{
+  background:color-mix(in srgb,var(--tr-accent) 7%, transparent);
+}
+.topup-report-page .amount{ text-align:right; color:var(--tr-accent-2)!important; font-weight:1000; }
+.topup-report-page .status{ text-align:center; font-weight:1000; }
+.topup-report-page .status.completed,
+.topup-report-page .status.success{ color:var(--tr-green)!important; }
+.topup-report-page .status.pending{ color:var(--tr-accent-2)!important; }
+.topup-report-page .status.reject,
+.topup-report-page .status.rejected,
+.topup-report-page .status.failed,
+.topup-report-page .status.cancelled,
+.topup-report-page .status.canceled{ color:var(--tr-red)!important; }
+.topup-report-page .user-cell{ display:flex; align-items:center; gap:10px; min-width:180px; }
+.topup-report-page .avatar-sm,
+.topup-report-page .bank-logo{
+  width:34px; height:34px; border-radius:12px; object-fit:cover;
+  border:1px solid var(--tr-border); background:var(--tr-soft);
+  vertical-align:middle;
+}
+.topup-report-page .bank-logo{ margin-right:8px; }
+.topup-report-page .user-meta{ display:grid; gap:2px; }
+.topup-report-page .user-name{ color:var(--tr-text); }
+.topup-report-page .user-email,
+.topup-report-page .muted{ color:var(--tr-muted)!important; }
+
+/* สำคัญ: กัน mobile accordion โผล่ใน PC */
+.topup-report-page .mobile-only{ display:none!important; }
+.topup-report-page .desktop-only{ display:block!important; }
+
+/* ===== Mobile accordion ===== */
+.topup-report-page .tx-accordion-list{ display:grid; gap:10px; }
+.topup-report-page .tx-accordion{
+  border:1px solid var(--tr-border);
+  border-radius:20px;
+  background:var(--tr-soft);
+  overflow:hidden;
+}
+.topup-report-page .tx-accordion__head{
+  width:100%;
+  min-height:62px;
+  padding:14px 16px;
+  border:0;
+  background:transparent;
+  color:var(--tr-text);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  cursor:pointer;
+}
+.topup-report-page .tx-id{ color:var(--tr-accent-2); font-weight:1000; word-break:break-all; }
+.topup-report-page .tx-accordion__meta{ display:flex; align-items:center; gap:10px; color:var(--tr-muted); font-size:12px; }
+.topup-report-page .tx-toggle::before{ content:"⌄"; display:grid; place-items:center; width:30px; height:30px; border-radius:999px; border:1px solid var(--tr-border); }
+.topup-report-page .tx-accordion[data-open="1"] .tx-toggle::before{ transform:rotate(180deg); }
+.topup-report-page .tx-accordion__body{ display:none; padding:0 16px 16px; }
+.topup-report-page .tx-accordion[data-open="1"] .tx-accordion__body{ display:block; }
+.topup-report-page .tx-row{ display:grid; grid-template-columns:110px minmax(0,1fr); gap:12px; padding:12px 0; border-top:1px solid var(--tr-border); }
+.topup-report-page .tx-label{ color:var(--tr-muted); font-weight:900; }
+.topup-report-page .tx-value{ color:var(--tr-text); min-width:0; }
+.topup-report-page .pill{ display:inline-flex; align-items:center; border-radius:999px; padding:8px 12px; font-weight:1000; }
+.topup-report-page .pill--completed{ background:color-mix(in srgb,var(--tr-green) 18%, transparent); color:var(--tr-green); }
+.topup-report-page .pill--pending{ background:color-mix(in srgb,var(--tr-accent) 18%, transparent); color:var(--tr-accent-2); }
+.topup-report-page .pill--reject,
+.topup-report-page .pill--rejected,
+.topup-report-page .pill--failed{ background:color-mix(in srgb,var(--tr-red) 18%, transparent); color:var(--tr-red); }
+
+
+/* ===== Yearly summary ===== */
+.topup-report-page .yearly-table{ min-width:980px; }
+.topup-report-page .month-name{ color:var(--tr-text); font-size:16px; }
+.topup-report-page .is-empty-month{ opacity:.58; }
+.topup-report-page .method-chip-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.topup-report-page .method-chip{
+  display:inline-grid;
+  gap:2px;
+  min-width:138px;
+  padding:9px 11px;
+  border:1px solid var(--tr-border);
+  border-radius:16px;
+  background:rgba(255,255,255,.035);
+}
+.topup-report-page .method-chip b{ color:var(--tr-accent-2); font-size:12px; }
+.topup-report-page .method-chip em{ color:var(--tr-muted); font-style:normal; font-size:11px; }
+.topup-report-page .method-chip strong{ color:var(--tr-green); font-size:13px; }
+
+/* ===== Empty ===== */
+.topup-report-page .empty-history{
+  display:grid;
+  place-items:center;
+  gap:8px;
+  padding:54px 18px;
+  text-align:center;
+  color:var(--tr-muted);
+}
+.topup-report-page .empty-history img{ width:80px; opacity:.85; }
+.topup-report-page .empty-title{ color:var(--tr-text); font-size:22px; font-weight:1000; }
+
+/* ===== Manual Topup Modal ===== */
+.topup-report-page .hidden{ display:none!important; }
+.topup-report-page .modal{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+.topup-report-page .modal .overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.66);
+  backdrop-filter:blur(12px);
+}
+.topup-report-page .dialog{
+  position:relative;
+  z-index:1;
+  width:min(520px,calc(100vw - 28px));
+  max-height:min(82vh,720px);
+  overflow:auto;
+  padding:20px;
+  animation: trModalIn .22s ease both;
+}
+.topup-report-page .dialog .hdr{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.topup-report-page .dialog .title{ font-size:20px; font-weight:1000; color:var(--tr-text); }
+.topup-report-page .icon.close{
+  width:42px; height:42px; border-radius:16px; border:1px solid var(--tr-border);
+  background:var(--tr-soft); color:var(--tr-text); font-size:24px; cursor:pointer;
+}
+.topup-report-page .sep{ border:0; border-top:1px solid var(--tr-border); margin:14px 0; }
+.topup-report-page .body form{ display:grid; gap:14px; }
+.topup-report-page label{ color:var(--tr-text); font-weight:900; }
+.topup-report-page .input,
+.topup-report-page input[type="text"],
+.topup-report-page input[type="number"]{
+  width:100%;
+  min-height:46px;
+  margin-top:7px;
+  border:1px solid var(--tr-border);
+  border-radius:14px;
+  background:color-mix(in srgb,var(--tr-page) 72%, transparent);
+  color:var(--tr-text);
+  padding:0 14px;
+  outline:0;
+}
+.topup-report-page .input:focus,
+.topup-report-page input:focus{ border-color:color-mix(in srgb,var(--tr-accent) 62%, var(--tr-border)); box-shadow:0 0 0 4px color-mix(in srgb,var(--tr-accent) 14%, transparent); }
+.topup-report-page .soft{ background:var(--tr-soft); }
+.topup-report-page .mt{ margin-top:12px; }
+.topup-report-page .mt-sm{ margin-top:7px; }
+.topup-report-page .d-flex{ display:flex; }
+.topup-report-page .justify-content-center{ justify-content:center; }
+.topup-report-page .block{ width:100%; }
+
+/* Period Control responsive */
+@media (max-width: 1180px){
+  .topup-report-page .period-control-head{
+    grid-template-columns:1fr;
+  }
+  .topup-report-page .period-current{
+    align-items:flex-start;
+    text-align:left;
+  }
+  .topup-report-page .period-control-card .report-mode-tabs{
+    justify-content:stretch;
+    width:100%;
+  }
+  .topup-report-page .period-control-card .report-mode-tabs .btn{
+    flex:1;
+  }
+  .topup-report-page .period-control-body{
+    justify-content:stretch;
+  }
+  .topup-report-page .period-control-card .month-toolbar{
+    width:100%;
+  }
+}
+@media (max-width: 760px){
+  .topup-report-page .period-control-card{
+    padding:16px;
+    border-radius:26px;
+  }
+  .topup-report-page .period-title-wrap{
+    align-items:flex-start;
+  }
+  .topup-report-page .period-icon{
+    width:52px;
+    height:52px;
+    flex-basis:52px;
+  }
+  .topup-report-page .period-copy h2{
+    font-size:26px;
+  }
+  .topup-report-page .period-control-card .month-toolbar{
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr) 48px;
+    gap:8px;
+  }
+  .topup-report-page .period-control-card .month-toolbar .btn:last-child{
+    grid-column:1 / -1;
+  }
+  .topup-report-page .period-control-card .month-ctrl{
+    order:0;
+    flex:initial;
+    width:100%;
+  }
+  .topup-report-page .period-control-card #monthInput{
+    width:100%;
+  }
+}
+@media (max-width: 520px){
+  .topup-report-page .period-title-wrap{
+    flex-direction:column;
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1200px){
+  .topup-report-page .grid.cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 760px){
+  .topup-report-page{ padding:12px; }
+  .topup-report-page .page-head{ border-radius:24px; padding:24px; }
+  .topup-report-page .grid.cards,
+  .topup-report-page .grid.cards:first-of-type{ grid-template-columns:1fr; }
+  .topup-report-page .month-toolbar{ justify-content:stretch; flex-wrap:wrap; }
+  .topup-report-page .month-ctrl{ flex:1 1 100%; order:-1; }
+  .topup-report-page #monthInput{ width:100%; }
+  .topup-report-page .month-toolbar .btn{ flex:1; }
+  .topup-report-page .desktop-only{ display:none!important; }
+  .topup-report-page .mobile-only{ display:grid!important; }
+  .topup-report-page .history-wrapper{ padding:12px; }
+  .topup-report-page .tx-row{ grid-template-columns:1fr; gap:5px; }
+}
+
+@keyframes trFadeUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+@keyframes trModalIn{ from{ opacity:0; transform:translateY(12px) scale(.985); } to{ opacity:1; transform:translateY(0) scale(1); } }
+@keyframes trPicker{ from{ opacity:0; transform:translateY(8px) scale(.98); } to{ opacity:1; transform:none; } }
+
+@media (prefers-reduced-motion: reduce){
+  .topup-report-page *,
+  .topup-report-page *::before,
+  .topup-report-page *::after{ animation:none!important; transition:none!important; }
+}
+</style>
+
+</div>
+
+<script>
+  // dropdown perpage
+  (function(){
+    const btn  = document.getElementById('ppBtn');
+    const menu = document.getElementById('ppMenu');
+    const valEl= document.getElementById('ppVal');
+    if (!btn || !menu) return;
+
+    const toggle = ()=>{ menu.hidden = !menu.hidden; };
+    const close  = (e)=>{ if (!menu.hidden && !e.target.closest('.perpage-control')) menu.hidden = true; };
+
+    btn.addEventListener('click', toggle);
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', e=>{ if (e.key==='Escape') menu.hidden = true; });
+
+    menu.querySelectorAll('.pp-item').forEach(it=>{
+      it.addEventListener('click', ()=>{
+        const v = it.dataset.val;
+        valEl.textContent = v;
+        menu.hidden = true;
+        // ไปหน้าแรกของเพจใหม่
+        const url = new URL(location.href);
+        url.searchParams.set('perpage', v);
+        url.searchParams.set('page', '1');
+        location.href = url.toString();
+      });
+    });
+  })();
+</script>
+
+<script>
+  // ====== Utils ======
+  function debounce(fn, ms=250){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+  function renderUserDatalist(items){
+    const dl = document.getElementById('userList');
+    if (!dl) return;
+    dl.innerHTML = '';
+    (items||[]).forEach(u=>{
+      const opt = document.createElement('option');
+      opt.value = u.username;
+      opt.label = `${u.username}${u.email?' · '+u.email:''}`;
+      dl.appendChild(opt);
+    });
+  }
+
+  const doUserSearch = debounce(async function(q){
+    try{
+      const url = q && q.length
+        ? `/admin/api/users/search?q=${encodeURIComponent(q)}&limit=20`
+        : `/admin/api/users/search?limit=20`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (j?.ok) renderUserDatalist(j.items);
+    }catch{}
+  }, 250);
+
+  // ====== Mobile accordion toggle ======
+  (function initTxAccordion(){
+    document.querySelectorAll('.tx-accordion')?.forEach(card=>{
+      card.querySelector('.tx-accordion__head')?.addEventListener('click', ()=>{
+        card.dataset.open = (card.dataset.open === '1' ? '0' : '1');
+      });
+    });
+  })();
+
+  // ====== Modal controls ======
+  function openManualTopupModal(txId = null, amount = null, suggestedUsername = ''){
+    const modal = document.getElementById("manualTopupModal");
+    modal.classList.remove("hidden");
+
+    const form = document.getElementById("manualTopupForm");
+    form.reset();
+    document.getElementById("manualTopupStatus").innerHTML = "";
+
+    window.currentTxId = txId;
+
+    const amtInput = document.getElementById("manualAmount");
+    if (amount){
+      amtInput.value = Number(amount).toFixed(2);
+      amtInput.readOnly = true;
+      amtInput.style.opacity = "0.7";
+    } else {
+      amtInput.value = "";
+      amtInput.readOnly = false;
+      amtInput.style.opacity = "1";
+    }
+
+    const userInput = document.getElementById('manualUsername');
+    if (suggestedUsername && suggestedUsername !== 'null'){
+      userInput.value = suggestedUsername;
+      doUserSearch(suggestedUsername); // preload
+    } else {
+      userInput.value = '';
+      doUserSearch('');                 // preload 20 รายการแรก
+    }
+
+    setTimeout(()=>{ userInput.dispatchEvent(new Event('input')); }, 50);
+  }
+
+  function closeManualTopupModal(){
+    document.getElementById("manualTopupModal").classList.add("hidden");
+    document.getElementById("manualTopupStatus").innerHTML = "";
+  }
+
+  document.getElementById("manualTopupClose")?.addEventListener('click', closeManualTopupModal);
+  document.getElementById("manualTopupModal")?.addEventListener("click",(e)=>{ if(e.target.dataset.close==="1") closeManualTopupModal(); });
+  document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeManualTopupModal(); });
+
+  // ====== Submit manual topup ======
+  async function submitManualTopup(ev) {
+    ev.preventDefault();
+    const username = document.getElementById("manualUsername").value.trim();
+    const amount   = parseFloat(document.getElementById("manualAmount").value || 0);
+    const txId     = window.currentTxId || null;
+
+    if (!username || !(amount > 0)) {
+      document.getElementById("manualTopupStatus").innerHTML =
+        '<div class="card soft">❌ กรุณากรอกข้อมูลให้ครบถ้วน</div>';
+      return false;
+    }
+
+    document.getElementById("manualTopupStatus").innerHTML =
+      '<div class="muted">⏳ กำลังทำรายการ...</div>';
+
+    try {
+      const res = await fetch("/admin/manual-topup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, amount, txId }),
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById("manualTopupStatus").innerHTML = `
+          <div class="card soft">
+            ✅ เติมเงินสำเร็จให้ผู้ใช้ <b>${username}</b><br>
+            <b>จำนวน:</b> ${amount.toLocaleString()} บาท
+          </div>`;
+        setTimeout(() => closeManualTopupModal(), 1200);
+        setTimeout(() => window.location.reload(), 1400);
+      } else {
+        document.getElementById("manualTopupStatus").innerHTML =
+          '<div class="card soft">❌ ' + (data.error || "เกิดข้อผิดพลาด") + "</div>";
+      }
+    } catch (err) {
+      document.getElementById("manualTopupStatus").innerHTML =
+        '<div class="card soft">❌ ขัดข้อง: ' + err.message + "</div>";
+    }
+  }
+
+  // ====== Reject Tx (ใช้ uiConfirm จาก layout.ejs) ======
+  async function rejectTx(id){
+    if (!id) return alert('ไม่พบรหัสรายการ');
+
+    const ok = await (window.uiConfirm?.({
+      variant: 'danger',
+      title: 'ยืนยันปฏิเสธรายการ?',
+      sub: 'การปฏิเสธจะเปลี่ยนสถานะเป็น Reject และไม่เพิ่มยอดผู้ใช้',
+      okText: 'ปฏิเสธ',
+      cancelText: 'ยกเลิก',
+      focus: 'cancel'
+    }) || Promise.resolve(confirm('ยืนยันปฏิเสธรายการนี้?')));
+
+    if (!ok) return;
+
+    try {
+      const r = await fetch(`/admin/topup/${encodeURIComponent(id)}/reject`, {
+        method:'POST', headers:{'Content-Type':'application/json'}
+      });
+      const j = await r.json().catch(()=> ({}));
+      if (!r.ok || !j.ok) throw new Error(j?.error || 'ปฏิเสธไม่สำเร็จ');
+
+      await window.uiConfirm?.({
+        variant:'success',
+        title:'สำเร็จ',
+        sub:'ปฏิเสธรายการเรียบร้อย',
+        okText:'ปิด',
+        cancelText:'Cancel'
+      });
+
+      location.reload();
+    } catch(err){
+      await window.uiConfirm?.({
+        variant:'danger',
+        title:'ล้มเหลว',
+        sub:String(err?.message || err),
+        okText:'ลองอีกครั้ง',
+        cancelText:'ปิด'
+      });
+    }
+  }
+</script>
+
+<script>
+(function(){
+  const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const IS_YEAR_MODE = <%- safeJson(IS_YEAR_MODE) %>;
+
+  const input   = document.getElementById('monthInput');
+  const btnOpen = document.getElementById('btnOpenPicker');
+  const popup   = document.getElementById('monthPicker');
+  const yearEl  = document.getElementById('mpYear');
+  const grid    = document.getElementById('mpGrid');
+  const btnPrevY= document.getElementById('mpPrevYear');
+  const btnNextY= document.getElementById('mpNextYear');
+  const btnOK   = document.getElementById('mpOK');
+  const btnClear= document.getElementById('mpClear');
+  const btnThis = document.getElementById('mpThisMonth');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnThisMonth = document.getElementById('btnThisMonth');
+  const btnModeMonth = document.getElementById('btnModeMonth');
+  const btnModeYear = document.getElementById('btnModeYear');
+  const toolbarEl = document.querySelector('.period-control-card .month-toolbar') || document.querySelector('.month-toolbar');
+  const card = popup?.querySelector('.mp-card');
+
+  if (!input || !popup || !card) return;
+
+  const now = new Date();
+  let selYear  = now.getFullYear();
+  let selMonth = now.getMonth();
+  let tempYear, tempMonth;
+
+  const rawValue = (input.value || '').trim();
+  if (IS_YEAR_MODE) {
+    const yy = Number(rawValue.slice(0,4));
+    if (yy) selYear = yy;
+  } else {
+    const monthStrInit = rawValue.slice(0,7);
+    if (monthStrInit){
+      const [yy,mm] = monthStrInit.split('-').map(n=>+n);
+      if (yy && mm){ selYear = yy; selMonth = mm-1; }
+    }
+  }
+  tempYear = selYear;
+  tempMonth = selMonth;
+
+  function toYYYYMM(y,m){ return `${y}-${String(m+1).padStart(2,'0')}`; }
+  function goMonth(monthStr){
+    const u = new URL(location.href);
+    u.searchParams.set('mode', 'month');
+    u.searchParams.set('month', monthStr);
+    u.searchParams.delete('year');
+    location.href = u.toString();
+  }
+  function goYear(year){
+    const u = new URL(location.href);
+    u.searchParams.set('mode', 'year');
+    u.searchParams.set('year', String(year));
+    u.searchParams.delete('month');
+    location.href = u.toString();
+  }
+  function goSelected(){
+    if (IS_YEAR_MODE) goYear(tempYear);
+    else goMonth(toYYYYMM(tempYear, tempMonth));
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+  btnModeMonth?.addEventListener('click', ()=> goMonth(toYYYYMM(selYear, selMonth)));
+  btnModeYear?.addEventListener('click', ()=> goYear(selYear));
+
+  btnPrev?.addEventListener('click', ()=>{
+    if (IS_YEAR_MODE) return goYear(selYear - 1);
+    const d = new Date(selYear, selMonth-1, 1);
+    goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
+  });
+  btnNext?.addEventListener('click', ()=>{
+    if (IS_YEAR_MODE) return goYear(selYear + 1);
+    const d = new Date(selYear, selMonth+1, 1);
+    goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
+  });
+  btnThisMonth?.addEventListener('click', ()=>{
+    IS_YEAR_MODE ? goYear(now.getFullYear()) : goMonth(toYYYYMM(now.getFullYear(), now.getMonth()));
+  });
+
+  function renderGrid(){
+    if (!yearEl || !grid) return;
+    yearEl.textContent = IS_YEAR_MODE ? 'เลือกปี' : String(tempYear + 543);
+    grid.innerHTML = '';
+
+    if (IS_YEAR_MODE) {
+      const startYear = tempYear - 5;
+      for (let i=0;i<12;i++){
+        const y = startYear + i;
+        const b = document.createElement('button');
+        b.type='button';
+        b.className = 'mp-m'
+          + (y === selYear ? ' active' : '')
+          + (y === now.getFullYear() ? ' current' : '');
+        b.textContent = String(y + 543);
+        b.setAttribute('role','gridcell');
+        b.addEventListener('click', ()=>{
+          tempYear = y;
+          [...grid.children].forEach(c=>c.classList.remove('active'));
+          b.classList.add('active');
+        });
+        grid.appendChild(b);
+      }
+      return;
+    }
+
+    for (let m=0;m<12;m++){
+      const b = document.createElement('button');
+      b.type='button';
+      b.className = 'mp-m'
+        + (m===tempMonth && tempYear===selYear ? ' active' : '')
+        + (m===now.getMonth() && tempYear===now.getFullYear() ? ' current' : '');
+      b.textContent = MONTH_NAMES_TH[m];
+      b.setAttribute('role','gridcell');
+      b.addEventListener('click', ()=>{
+        tempMonth = m;
+        [...grid.children].forEach(c=>c.classList.remove('active'));
+        b.classList.add('active');
+      });
+      grid.appendChild(b);
+    }
+  }
+
+  function positionAnchored(){
+    const rect = toolbarEl?.getBoundingClientRect();
+    const cardW = Math.min(342, Math.round(window.innerWidth * 0.92));
+    const cardH = card.offsetHeight || 330;
+    let left = rect ? rect.left + (rect.width/2) - (cardW/2) : (window.innerWidth-cardW)/2;
+    let top = rect ? rect.bottom + 10 : (window.innerHeight-cardH)/2;
+    left = clamp(left, 12, window.innerWidth - cardW - 12);
+    top = clamp(top, 12, window.innerHeight - cardH - 12);
+    card.style.setProperty('--mp-left', `${Math.round(left)}px`);
+    card.style.setProperty('--mp-top', `${Math.round(top)}px`);
+  }
+  function onRelayout(){
+    if (popup.hasAttribute('hidden')) return;
+    positionAnchored();
+  }
+  function openPicker(){
+    if (!popup.hasAttribute('hidden')) return;
+    tempYear = selYear;
+    tempMonth = selMonth;
+    renderGrid();
+    popup.removeAttribute('hidden');
+    popup.setAttribute('aria-hidden','false');
+    requestAnimationFrame(positionAnchored);
+    setTimeout(()=> popup.querySelector('.mp-m.active, .mp-m.current, .mp-m')?.focus(), 0);
+    window.addEventListener('resize', onRelayout, {passive:true});
+    window.addEventListener('scroll', onRelayout, {passive:true});
+  }
+  function closePicker(){
+    popup.setAttribute('hidden','');
+    popup.setAttribute('aria-hidden','true');
+    window.removeEventListener('resize', onRelayout);
+    window.removeEventListener('scroll', onRelayout);
+  }
+
+  btnOpen?.addEventListener('click', openPicker);
+  input?.addEventListener('click', openPicker);
+  popup?.querySelector('[data-close-month-picker]')?.addEventListener('click', closePicker);
+  btnPrevY?.addEventListener('click', ()=>{
+    tempYear += IS_YEAR_MODE ? -12 : -1;
+    renderGrid();
+  });
+  btnNextY?.addEventListener('click', ()=>{
+    tempYear += IS_YEAR_MODE ? 12 : 1;
+    renderGrid();
+  });
+  btnOK?.addEventListener('click', ()=>{
+    closePicker();
+    goSelected();
+  });
+  btnClear?.addEventListener('click', ()=>{
+    closePicker();
+    IS_YEAR_MODE ? goYear(now.getFullYear()) : goMonth(toYYYYMM(now.getFullYear(), now.getMonth()));
+  });
+  btnThis?.addEventListener('click', ()=>{
+    tempYear = now.getFullYear();
+    tempMonth = now.getMonth();
+    renderGrid();
+  });
+  window.addEventListener('keydown', (e)=>{
+    if (e.key==='Escape' && !popup.hasAttribute('hidden')) closePicker();
+  });
+
+  window.__topupPeriodPicker__ = { openPicker, closePicker, positionAnchored };
+})();
+</script>

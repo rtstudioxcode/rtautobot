@@ -1,0 +1,1941 @@
+
+<%
+  const wallets = (webWallets || []).filter(w => w && w.isActive !== false);
+  const BANK_LABELS = {
+    bbl:'ธนาคารกรุงเทพ', kbank:'ธนาคารกสิกรไทย', ktb:'ธนาคารกรุงไทย',
+    bay:'ธนาคารกรุงศรีอยุธยา', scb:'ธนาคารไทยพาณิชย์', tmb:'ทหารไทยธนชาต (TTB)',
+    cimb:'ธนาคารซีไอเอ็มบีไทย', uob:'ธนาคารยูโอบี', gsb:'ธนาคารออมสิน',
+    baac:'ธ.เพื่อการเกษตรและสหกรณ์การเกษตร', kkb:'ธนาคารเกียรตินาคินภัทร',
+    lhfg:'ธนาคารแลนด์ แอนด์ เฮ้าส์', icbc:'ธนาคารไอซีบีซี (ไทย)',
+    tisco:'ธนาคารทิสโก้', tw:'TrueMoney Wallet', qr:'PromptPay QR',
+    manual:'แอดมิน', admin:'แอดมิน'
+  };
+  const hasAny = wallets.length > 0;
+  const completedCount = (transactions || []).filter(t => String(t.status || '').toLowerCase() === 'completed').length;
+  const pendingCount = (transactions || []).filter(t => String(t.status || '').toLowerCase() === 'pending').length;
+%>
+
+<div class="topup-enterprise">
+  <section class="tp-hero" aria-label="Topup header">
+    <div class="tp-hero-glow tp-hero-glow-a"></div>
+    <div class="tp-hero-glow tp-hero-glow-b"></div>
+
+    <div class="tp-hero-content">
+      <div>
+        <div class="tp-eyebrow"><span></span> TOPUP CENTER</div>
+        <h1>เติมเครดิตอัตโนมัติ</h1>
+        <p>เลือกช่องทาง กรอกยอด สแกนจ่าย และรอระบบตรวจสอบยอดอัตโนมัติ</p>
+      </div>
+
+      <div class="tp-hero-metrics" aria-label="Topup summary">
+        <div class="tp-metric">
+          <small>ช่องทางพร้อมใช้</small>
+          <b><%= wallets.length.toLocaleString('th-TH') %></b>
+        </div>
+        <div class="tp-metric">
+          <small>เติมเครดิตสำเร็จ</small>
+          <b><%= completedCount.toLocaleString('th-TH') %></b>
+        </div>
+        <div class="tp-metric">
+          <small>รอดำเนินการ</small>
+          <b><%= pendingCount.toLocaleString('th-TH') %></b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tabs tp-main-tabs" role="tablist" aria-label="Topup tabs">
+    <button class="tab active" data-tab="tab-topup" type="button" role="tab" aria-selected="true">
+      <span class="tab-ico">✦</span>
+      <span>การเติมเครดิต</span>
+    </button>
+    <button class="tab" data-tab="tab-history" type="button" role="tab" aria-selected="false">
+      <span class="tab-ico">◷</span>
+      <span>ประวัติการเติมเงิน</span>
+    </button>
+  </div>
+
+  <section id="tab-topup" class="tabpane show" role="tabpanel">
+    <div class="tp-layout">
+      <aside class="tp-side-card">
+        <div class="tp-section-head compact">
+          <div>
+            <span>Payment methods</span>
+            <h2>ช่องทางเติมเงิน</h2>
+          </div>
+        </div>
+
+        <% if (!hasAny) { %>
+          <div class="tp-empty">
+            <div class="tp-empty-icon">⌁</div>
+            <h3>ยังไม่มีช่องทางพร้อมใช้งาน</h3>
+            <p>โปรดรอแอดมินเปิดช่องทางเติมเงิน</p>
+          </div>
+        <% } else { %>
+          <div class="tab-bar tp-wallet-rail" role="tablist" aria-label="Wallet methods">
+            <% wallets.forEach((w, i) => {
+              const code = String(w.accountCode || '').toLowerCase();
+              const isTW = code === 'tw';
+              const expireText = isTW || code === 'qr' ? '5 นาที' : '15 นาที';
+            %>
+              <button class="tab-btn tp-wallet-tab <%= i === 0 ? 'active' : '' %>" data-tab="wallet-<%= i %>" type="button" role="tab" aria-selected="<%= i === 0 ? 'true' : 'false' %>">
+                <span class="tp-wallet-icon-wrap">
+                  <img src="/static/assets/payment/<%= code %>.webp" alt="<%= code %>" loading="lazy" />
+                </span>
+                <span class="tp-wallet-copy">
+                  <strong><%= BANK_LABELS[code] || code.toUpperCase() %></strong>
+                  <small><%= isTW ? 'TrueWallet QR' : 'PromptPay QR' %> · <%= expireText %></small>
+                </span>
+                <span class="tp-wallet-arrow">›</span>
+              </button>
+            <% }) %>
+          </div>
+        <% } %>
+      </aside>
+
+      <main class="tp-main-card">
+        <% if (wallets.length === 0) { %>
+          <div class="tp-empty large">
+            <div class="tp-empty-icon">◌</div>
+            <h3>ยังไม่มีช่องทางเติมเงินที่พร้อมใช้งาน</h3>
+            <p>เมื่อเปิดใช้งานแล้ว รายการช่องทางจะปรากฏที่นี่</p>
+          </div>
+        <% } else { %>
+          <% wallets.forEach((w, i) => {
+            const code = String(w.accountCode || '').toLowerCase();
+            const isTW = code === 'tw';
+            const expireText = isTW || code === 'qr' ? '5 นาที' : '15 นาที';
+            const methodTitle = BANK_LABELS[code] || code.toUpperCase();
+          %>
+            <div class="tab-content tp-wallet-panel <%= i === 0 ? 'active' : '' %>" id="wallet-<%= i %>">
+              <div class="tp-payment-header">
+                <div class="tp-payment-brand">
+                  <div class="tp-payment-logo">
+                    <img src="/static/assets/payment/<%= code %>.webp" alt="<%= code %>" loading="lazy" />
+                  </div>
+                  <div>
+                    <span><%= isTW ? 'TrueMoney Wallet' : 'Bank Transfer' %></span>
+                    <h2><%= methodTitle %></h2>
+                    <p><%= w.accountName || 'RTSMM' %></p>
+                  </div>
+                </div>
+                <div class="tp-expire-badge">
+                  <small>กรุณาทำรายการใน</small>
+                  <b><%= expireText %></b>
+                </div>
+              </div>
+
+              <div class="tp-checkout-grid">
+                <section class="tp-form-card">
+                  <form
+                    id="<%= isTW ? 'topupForm' : 'createTopupForm' %>-<%= i %>"
+                    class="form topupForm tp-form"
+                    data-wallet-code="<%= code %>"
+                    data-wallet-index="<%= i %>"
+                    onsubmit="return <%= isTW ? 'submitTopup(event)' : 'submitqrTopup(event)' %>"
+                  >
+                    <label class="tp-label" for="amount-<%= i %>">จำนวนเงินที่ต้องการเติม</label>
+                    <div class="tp-amount-shell">
+                      <span>฿</span>
+                      <input
+                        id="amount-<%= i %>"
+                        name="amount"
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputmode="numeric"
+                        required
+                        placeholder="เช่น 100"
+                        autocomplete="off"
+                        oninput="this.value=this.value.replace(/[^\d]/g,''); updateqrSummary(<%= i %>)"
+                      />
+                    </div>
+
+                    <div class="tp-quick-grid" aria-label="Quick amounts">
+                      <% [50,100,300,500,1000,3000].forEach(v => { %>
+                        <button type="button" class="tp-chip" data-amount="<%= v %>">฿<%= v.toLocaleString('th-TH') %></button>
+                      <% }) %>
+                    </div>
+
+                    <div class="tp-summary-strip">
+                      <span>ยอดเติม</span>
+                      <b>฿<span id="summaryAmount-<%= i %>">—</span></b>
+                    </div>
+
+                    <button class="tp-primary-btn" type="submit">
+                      <span class="btn-shine"></span>
+                      <span><%= isTW ? 'สร้าง QR TrueWallet' : 'สร้างรายการโอนเงิน' %></span>
+                      <i>→</i>
+                    </button>
+                  </form>
+                </section>
+
+                <section class="tp-info-card">
+                  <div class="tp-account-card">
+                    <div class="tp-account-icon">
+                      <img src="/static/assets/payment/<%= code %>.webp" alt="<%= code %>" loading="lazy" />
+                    </div>
+                    <div>
+                      <small>บัญชีปลายทาง</small>
+                      <strong><%= w.accountName || 'RTSMM' %></strong>
+                      <span><%= isTW ? 'สแกน QRCode ด้วยแอป TrueMoney Wallet เท่านั้น' : 'สแกน QRCode ได้ทุกธนาคาร' %></span>
+                    </div>
+                  </div>
+
+                  <div class="tp-alert-card">
+                    <span>⚠</span>
+                    <div>
+                      <b>โปรดโอนยอดให้ตรงตามระบบ</b>
+                      <p><%= isTW ? 'ใช้แอป TrueMoney Wallet สแกน QR และรอระบบตรวจสอบอัตโนมัติ' : 'ระบบจะสุ่มเศษสตางค์เพื่อจับคู่รายการ กรุณาโอนครั้งเดียวตามยอดที่แสดง' %></p>
+                    </div>
+                  </div>
+
+                  <div class="tp-steps-card">
+                    <h3><%= isTW ? 'วิธีเติมผ่าน TrueWallet' : 'วิธีโอนผ่านธนาคาร' %></h3>
+                    <ol>
+                      <li>กรอกจำนวนเงินที่ต้องการเติม</li>
+                      <li>กดปุ่มสร้างรายการเติมเงิน</li>
+                      <li><%= isTW ? 'เปิดแอป TrueMoney Wallet แล้วสแกน QR' : 'เปิดแอปธนาคาร แล้วสแกน QR Code' %></li>
+                      <li>โอนตามยอดที่ระบบแสดงเท่านั้น</li>
+                      <li>รอระบบตรวจสอบและเติมเครดิตอัตโนมัติ</li>
+                    </ol>
+                  </div>
+                </section>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </main>
+    </div>
+  </section>
+
+  <section id="tab-history" class="tabpane" role="tabpanel">
+    <div class="tp-history-card">
+      <div class="tp-section-head">
+        <div>
+          <span>Transaction history</span>
+          <h2>ประวัติการเติมเงินล่าสุด</h2>
+        </div>
+        <div class="tp-history-count"><%= (transactions || []).length.toLocaleString('th-TH') %> รายการ</div>
+      </div>
+
+      <% if (transactions && transactions.length) { %>
+        <table class="history-table tp-history-table d-desktop">
+          <thead>
+            <tr>
+              <th>วันที่ / เวลา</th>
+              <th>ช่องทาง</th>
+              <th class="right">จำนวนเงิน</th>
+              <th class="right">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0; i < transactions.length; i++) {
+               var tx = transactions[i];
+               var methodCode = String(tx.method || '').toLowerCase();
+               var methodName = BANK_LABELS[methodCode] || 'ไม่ระบุ';
+               var st = String(tx.status || '').toLowerCase();
+               var statusLabel = (st === 'completed') ? 'สำเร็จ'
+                               : (st === 'pending')   ? 'รอดำเนินการ'
+                               : (st === 'failed')    ? 'ล้มเหลว'
+                               : (st === 'reject')    ? 'ยกเลิก'
+                               : (st === 'canceled' || st === 'cancelled') ? 'ยกเลิก' : st;
+               var ts = tx.createdAt;
+               var amountNum = Number(tx.amount) || 0;
+          %>
+            <tr data-status="<%= st %>">
+              <td class="mono">
+                <%= new Date(ts).toLocaleString('th-TH',{ timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) %>
+              </td>
+              <td>
+                <span class="method tp-method">
+                  <img class="method-ico" src="/static/assets/payment/<%= methodCode %>.webp" alt="<%= methodName %>" width="24" height="24" loading="lazy" />
+                  <span><%= methodName %></span>
+                </span>
+              </td>
+              <td class="amount right"><span class="money">฿<%= amountNum.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></span></td>
+              <td class="status-cell right">
+                <span class="pill sm st-<%= st %>">
+                  <i class="st-ico" aria-hidden="true"></i>
+                  <span class="txt"><%= statusLabel %></span>
+                </span>
+              </td>
+            </tr>
+          <% } %>
+          </tbody>
+        </table>
+
+        <div class="history-list tp-history-list d-mobile">
+        <% for (var j = 0; j < transactions.length; j++) {
+             var t = transactions[j];
+             var mCode = String(t.method || '').toLowerCase();
+             var mName = BANK_LABELS[mCode] || 'ไม่ระบุ';
+             var st2 = String(t.status || '').toLowerCase();
+             var stLabel = (st2 === 'completed') ? 'สำเร็จ'
+                         : (st2 === 'pending')   ? 'รอดำเนินการ'
+                         : (st2 === 'failed')    ? 'ล้มเหลว'
+                         : (st2 === 'reject')    ? 'ยกเลิก'
+                         : (st2 === 'canceled' || st2 === 'cancelled') ? 'ยกเลิก' : st2;
+             var ts2 = t.createdAt;
+             var amt = Number(t.amount) || 0;
+        %>
+          <details class="hx-card" data-status="<%= st2 %>">
+            <summary class="hx-head">
+              <span class="hx-date mono"><%= new Date(ts2).toLocaleString('th-TH',{ timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) %></span>
+              <button class="hx-toggle" type="button" aria-label="toggle"></button>
+            </summary>
+            <div class="hx-body">
+              <div class="hx-row"><div class="hx-label">ช่องทาง</div><div class="hx-val method"><img class="method-ico" src="/static/assets/payment/<%= mCode %>.webp" alt="<%= mName %>" width="22" height="22" loading="lazy"/><span><%= mName %></span></div></div>
+              <div class="hx-row"><div class="hx-label">จำนวนเงิน</div><div class="hx-val money">฿<%= amt.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></div></div>
+              <div class="hx-row"><div class="hx-label">สถานะ</div><div class="hx-val"><span class="pill sm st-<%= st2 %>"><i class="st-ico" aria-hidden="true"></i><span class="txt"><%= stLabel %></span></span></div></div>
+            </div>
+          </details>
+        <% } %>
+        </div>
+      <% } else { %>
+        <div class="tp-empty large">
+          <div class="tp-empty-icon">◌</div>
+          <h3>ยังไม่มีรายการเติมเงิน</h3>
+          <p>เมื่อมีการเติมเครดิต รายการล่าสุดจะแสดงที่นี่</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <div id="qrModal" class="hidden modal tp-qr-modal">
+    <div class="overlay" data-close="1"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+      <button class="icon close" id="qrClose" aria-label="ปิด">×</button>
+      <div class="tp-modal-head">
+        <div class="tp-modal-clock" aria-hidden="true">
+          <span class="clock-face">
+            <i class="clock-hand hour"></i>
+            <i class="clock-hand minute"></i>
+            <i class="clock-hand second"></i>
+            <i class="clock-center"></i>
+          </span>
+        </div>
+        <span id="qrCountdown" aria-live="polite">หมดอายุใน 05:00</span>
+        <h3 id="qrTitle">สแกน QRCode เพื่อเติมเงิน</h3>
+      </div>
+
+      <div class="body">
+        <div class="qr-img-wrap">
+          <div class="tp-qr-ring"><img id="qrImage" src="" alt="QR Code" class="qr-img" /></div>
+        </div>
+
+        <div id="qrMeta" class="qr-meta">
+          <div data-for="bankOnly">
+            <div class="tp-pay-amount">ยอดที่ต้องโอน: <b><span id="qrAmount">—</span> บาท</b></div>
+            <div class="tp-warning-line">โปรดโอนตามยอดที่แสดงเท่านั้น ไม่งั้นเครดิตไม่เข้า</div>
+            <div class="tp-expire-line">ระยะเวลาทำรายการ: <span id="qrExpireHintBank">—</span></div>
+          </div>
+
+          <div data-for="twOnly" style="display:none">
+            <div class="tp-pay-amount">ยอดเติม: <b><span id="qrAmountTw"></span> บาท</b></div>
+            <div class="tp-warning-line">โปรดโอนในระยะเวลาที่กำหนด ห้ามปิดหน้านี้จนกว่าจะสำเร็จ</div>
+            <div class="tp-expire-line">ระยะเวลาทำรายการ: <span id="qrExpireHintTw">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer" id="qrFooterTw" style="display:none">
+</div>
+
+      <div id="qrStatus" class="mt"></div>
+    </div>
+  </div>
+
+  <div id="resp" class="mt"></div>
+</div>
+
+<dialog id="topupNoticeModal" class="toast-modal tp-enterprise-notice" aria-labelledby="topupNoticeTitle" aria-describedby="topupNoticeText">
+  <div class="toast-card" role="alertdialog">
+    <div class="notice-glow notice-glow-a" aria-hidden="true"></div>
+    <div class="notice-glow notice-glow-b" aria-hidden="true"></div>
+
+    <div class="toast-headbar">
+      <div class="toast-badge" aria-hidden="true">
+        <span class="notice-badge-core">⚠</span>
+        <span class="notice-badge-ring"></span>
+      </div>
+      <div class="toast-headtxt">
+        <span class="notice-kicker">Payment Notice</span>
+        <h3 class="toast-title" id="topupNoticeTitle">แจ้งเตือนก่อนเติมเงิน</h3>
+        <div class="muted" id="topupNoticeText">อ่านเงื่อนไขสำคัญก่อนสร้างรายการ เพื่อให้ระบบตรวจยอดได้อัตโนมัติ</div>
+      </div>
+    </div>
+
+    <div class="toast-body">
+      <ul class="notice-list">
+        <li><span class="notice-dot">01</span><span>ในส่วนการเติมเงินแบบสแกน QR Code ของธนาคาร</span></li>
+        <li><span class="notice-dot">02</span><span>ผู้ใช้งานต้องกรอกจำนวนให้ตรงกับหน้าเว็บ</span></li>
+        <li><span class="notice-dot">03</span><span>หากกรอกจำนวนไม่ตรง ระบบจะไม่สามารถเติมเครดิตให้อัตโนมัติ</span></li>
+        <li><span class="notice-dot">04</span><span>หลีกเลี่ยงการโอนเงินช่วง 23:30 - 01:30 น. เพราะระบบธนาคารอัปเดตข้อมูลช้า</span></li>
+        <li><span class="notice-dot">05</span><span>หากเติมเงินไม่เข้าเกิน 1 ชั่วโมง ให้ติดต่อไลน์แจ้งแอดมินทันที</span></li>
+      </ul>
+
+      <label class="notice-check-row" for="topupNoticeDontShow">
+        <input id="topupNoticeDontShow" type="checkbox" />
+        <span class="notice-check-ui" aria-hidden="true"></span>
+        <span class="notice-check-copy">
+          <b>ไม่แสดงอีกในวันนี้</b>
+          <small>ระบบจะจำค่าบนอุปกรณ์นี้เป็นเวลา 24 ชั่วโมง</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="toast-actions">
+      <button class="pill primary notice-accept-btn" id="topupNoticeClose" type="button">
+        <span class="btn-shine"></span>
+        <span>ปิดและยอมรับ</span>
+        <i aria-hidden="true">→</i>
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  const KEY = 'topup_notice_suppress_until_v1';
+  const modal = document.getElementById('topupNoticeModal');
+  const chk = document.getElementById('topupNoticeDontShow');
+  const btnClose = document.getElementById('topupNoticeClose');
+
+  function shouldShow(){
+    try {
+      const v = localStorage.getItem(KEY);
+      if (!v) return true;
+      const ts = Number(v);
+      if (!Number.isFinite(ts)) return true;
+      return Date.now() > ts;
+    } catch(e){ return true; }
+  }
+
+  function setSuppressFor1Day(){
+    try { localStorage.setItem(KEY, String(Date.now() + 86400000)); } catch(e){}
+  }
+
+  function openNotice(){
+    if (!modal || modal.open) return;
+    modal.classList.remove('is-closing');
+    try { modal.showModal(); } catch(e){}
+  }
+
+  function closeNotice(){
+    if (!modal || !modal.open) return;
+    if (chk && chk.checked) setSuppressFor1Day();
+    modal.classList.add('is-closing');
+    window.setTimeout(() => {
+      try { if (modal.open) modal.close(); } catch(e){}
+      modal.classList.remove('is-closing');
+    }, 260);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try { if (shouldShow()) setTimeout(openNotice, 160); } catch(e){}
+  });
+
+  btnClose?.addEventListener('click', closeNotice);
+  modal?.addEventListener('cancel', (ev) => { ev.preventDefault(); closeNotice(); });
+})();
+</script>
+
+<script>
+  let currentTxId = null;
+  let txWatcher = null;
+
+  function startTxWatcher(txId, timeoutSec = 300){
+    stopTxWatcher();
+    const started = Date.now();
+    let delay = 3000;
+    const tick = async () => {
+      try{
+        if (timeoutSec > 0 && Date.now() - started > timeoutSec*1000) { stopTxWatcher(); setQrExpiredState(txId); return; }
+        if (document.hidden) { txWatcher = setTimeout(tick, 10000); return; }
+        const r = await fetch(`/topup/tx/${txId}?_=${Date.now()}`, { cache: 'no-store' });
+        if (!r.ok) { txWatcher = setTimeout(tick, delay); return; }
+        const j = await r.json();
+        if (j?.ok && ['completed','failed','cancelled','canceled','reject'].includes(j.status)) {
+          stopTxWatcher(); closeQrModal();
+          if (j.status === 'completed') {
+            const amt = j.amount ?? j.paidAmount ?? j.displayAmount ?? j.total ?? j.credit ?? null;
+            const fmt = n => Number(n).toLocaleString(undefined,{ minimumFractionDigits:2, maximumFractionDigits:2 });
+            if (typeof notify?.success === 'function') notify.success('เติมเงินสำเร็จ', amt != null ? `เพิ่มเครดิต ฿${fmt(amt)}` : '');
+            setTimeout(()=> location.reload(), 900);
+          } else {
+            const msg = (j.status === 'failed') ? 'การชำระล้มเหลว กรุณาลองใหม่' : 'รายการถูกยกเลิก';
+            if (typeof notify?.error === 'function') notify.error('ไม่สำเร็จ', msg); else alert(msg);
+          }
+          return;
+        }
+        const age = Date.now() - started;
+        delay = age > 120000 ? 10000 : age > 45000 ? 6000 : 3000;
+      }catch(e){}
+      txWatcher = setTimeout(tick, delay);
+    };
+    tick();
+  }
+
+  function stopTxWatcher(){ if (txWatcher) clearTimeout(txWatcher); txWatcher = null; }
+  function fmtMoney(n){ try { return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return n; } }
+  function updateqrSummary(i){
+    const v = parseFloat(document.getElementById(`amount-${i}`)?.value || '0');
+    const el = document.getElementById(`summaryAmount-${i}`);
+    if (!el) return;
+    el.textContent = v >= 1 ? fmtMoney(Math.floor(v)) : '—';
+  }
+  function closeQr(i){ const box = document.getElementById(`qrBox-${i}`); if (box) box.style.display = 'none'; }
+
+  async function submitqrTopup(ev){
+    ev.preventDefault();
+    const form = ev.currentTarget;
+    const i = form.dataset.walletIndex;
+    const walletCode = String(form.dataset.walletCode || '').toLowerCase();
+    const amountEl = document.getElementById(`amount-${i}`);
+    const base = Math.floor(Number(amountEl?.value || 0));
+    if (!Number.isFinite(base) || base < 1) {
+      const msg = 'จำนวนเงินขั้นต่ำ 1 บาท';
+      window.showMsg ? window.showMsg({ variant:'error', title:'จำนวนเงินไม่ถูกต้อง', text: msg }) : alert(msg);
+      return false;
+    }
+    try {
+      const res = await fetch('/topup/create', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ amount: base, method: walletCode, accountCode: walletCode, walletCode }) });
+      const j = await res.json();
+      if (!res.ok || !j?.ok) {
+        const err = j?.error || j?.message || 'สร้างคำสั่งเติมเงินไม่สำเร็จ';
+        window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text: err }) : alert(err);
+        return false;
+      }
+      currentTxId = j.txId || j.id || j.pendingTxId;
+      if (j?.mustCancelOld || j?.expiredPending) { await showExpiredPendingModal(j, walletCode); return false; }
+      const finalAmount = Number(j.displayAmount ?? j.payAmount ?? j.amount ?? base);
+      const fallbackQrMap = {
+        kbank: '/static/assets/payment/qr-kbank.jpg',
+        scb: '/static/assets/payment/qr-scb.jpg',
+        qr: '/static/assets/payment/qrcode.png',
+      };
+      const qrUrl = j.qrUrl || fallbackQrMap[walletCode] || fallbackQrMap[j.method] || '';
+      const img = document.getElementById('qrImage');
+      if (img && qrUrl) {
+        img.onerror = () => console.error('[TOPUP QR IMAGE LOAD FAILED]', qrUrl);
+        img.src = `${qrUrl}?v=${Date.now()}`;
+      }
+      const amtEl = document.getElementById('qrAmount');
+      if (amtEl) amtEl.textContent = finalAmount.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+      openQrModal('bank', Number(j.expiresIn || 300));
+      startTxWatcher(currentTxId, Number(j.expiresIn || 300));
+    } catch (err) {
+      const msg = `ขัดข้อง: ${err.message}`;
+      window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text: msg }) : alert(msg);
+    }
+    return false;
+  }
+</script>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const fmt = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+  document.querySelectorAll('.tabs .tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tabs .tab').forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      document.querySelectorAll('.tabpane').forEach((p) => p.classList.remove('show'));
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+      document.getElementById(btn.dataset.tab)?.classList.add('show');
+    });
+  });
+
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+      document.getElementById(btn.dataset.tab)?.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.tp-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const form = chip.closest('form');
+      const input = form?.querySelector('input[name="amount"]');
+      if (!input) return;
+      input.value = chip.dataset.amount || '';
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      form.querySelectorAll('.tp-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  function computeSubtotal(base, walletCode){ return Math.round(base * 100) / 100; }
+  function fmt2(n){ try { return Number(n).toLocaleString(undefined,{ minimumFractionDigits:2, maximumFractionDigits:2 }); } catch { return n; } }
+  function bindTopupSummary(form){
+    const amt = form.querySelector('input[name="amount"]');
+    const sum = form.querySelector('[id^="summaryAmount-"]');
+    if (!amt || !sum) return;
+    const walletCode = form.dataset.walletCode || '';
+    const update = () => {
+      const base = Number(amt.value || 0);
+      if (!Number.isFinite(base) || base < 1){ sum.textContent = '—'; return; }
+      sum.textContent = fmt2(computeSubtotal(base, walletCode));
+    };
+    amt.addEventListener('input', update); amt.addEventListener('change', update); update();
+  }
+  document.querySelectorAll('.topupForm').forEach(bindTopupSummary);
+
+  let qrTimerId = null;
+  let qrExpireAt = null;
+  function formatMMSS(msLeft){ const s = Math.max(0, Math.ceil(msLeft/1000)); return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+  function formatExpireHint(seconds){ const sec = Math.max(1, Number(seconds || 300)); return `${Math.ceil(sec / 60)} นาที`; }
+  function setExpireHint(mode, seconds){ const text = formatExpireHint(seconds); const bankHint = document.getElementById('qrExpireHintBank'); const twHint = document.getElementById('qrExpireHintTw'); if (bankHint) bankHint.textContent = text; if (twHint) twHint.textContent = text; }
+  function clearQrCountdown(){ if (qrTimerId) clearInterval(qrTimerId); qrTimerId = null; const el = document.getElementById('qrCountdown'); if (el) el.textContent = 'หมดอายุใน --:--'; }
+  function setQrMode(mode){
+    window.qrMode = mode;
+    document.querySelectorAll('#qrMeta [data-for="bankOnly"]').forEach(e => e.style.display = (mode === 'bank' ? '' : 'none'));
+    document.querySelectorAll('#qrMeta [data-for="twOnly"]').forEach(e => e.style.display = (mode === 'tw' ? '' : 'none'));
+    const footerTw = document.getElementById('qrFooterTw'); if (footerTw) footerTw.style.display = 'none';
+  }
+  function setQrExpiredState(txId){
+    const img = document.getElementById('qrImage');
+    const ring = img?.closest?.('.tp-qr-ring');
+    if (img) img.classList.add('tp-qr-expired');
+    if (ring) ring.classList.add('tp-qr-expired-ring');
+    const status = document.getElementById('qrStatus');
+    if (status) {
+      status.innerHTML = `
+        <div class="tp-expired-box">
+          <b>รายการนี้หมดเวลาแล้ว</b>
+          <span>กรุณายกเลิกรายการเก่าก่อนทำรายการใหม่</span>
+          <button type="button" class="tp-cancel-old-btn" data-cancel-topup="${String(txId || '')}">ยกเลิกรายการเก่า</button>
+        </div>`;
+    }
+  }
+
+  function clearQrExpiredState(){
+    const img = document.getElementById('qrImage');
+    const ring = img?.closest?.('.tp-qr-ring');
+    if (img) img.classList.remove('tp-qr-expired');
+    if (ring) ring.classList.remove('tp-qr-expired-ring');
+    const status = document.getElementById('qrStatus');
+    if (status) status.innerHTML = '';
+  }
+
+  async function showExpiredPendingModal(tx, walletCode = ''){
+    currentTxId = tx.txId || tx.id || tx.pendingTxId || currentTxId;
+    window.currentTxId = currentTxId;
+    stopTxWatcher();
+    clearQrCountdown();
+    const mode = String(tx.method || walletCode || '').toLowerCase() === 'tw' ? 'tw' : 'bank';
+    setQrMode(mode);
+    setExpireHint(mode, Number(tx.expireMinutes || 5) * 60);
+    const finalAmount = Number(tx.displayAmount ?? tx.payAmount ?? tx.amount ?? 0);
+    const img = document.getElementById('qrImage');
+    if (img) {
+      const fallbackQrMap = { kbank:'/static/assets/payment/qr-kbank.jpg', scb:'/static/assets/payment/qr-scb.jpg', qr:'/static/assets/payment/qrcode.png' };
+      const qrUrl = tx.qrUrl || fallbackQrMap[String(tx.method || walletCode).toLowerCase()] || `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent('EXPIRED TOPUP ' + (currentTxId || ''))}`;
+      img.src = qrUrl.includes('?') ? `${qrUrl}&expired=${Date.now()}` : `${qrUrl}?expired=${Date.now()}`;
+    }
+    document.getElementById('qrMethod')?.replaceChildren(document.createTextNode(mode === 'tw' ? 'TrueMoney Wallet' : String(tx.method || walletCode || 'PromptPay').toUpperCase()));
+    document.getElementById('qrName')?.replaceChildren(document.createTextNode('รายการเก่าที่ยังไม่ได้ยกเลิก'));
+    document.getElementById('qrNumber')?.replaceChildren(document.createTextNode('-'));
+    const amtEl = document.getElementById(mode === 'tw' ? 'qrAmountTw' : 'qrAmount');
+    if (amtEl) amtEl.textContent = finalAmount.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+    const cd = document.getElementById('qrCountdown');
+    if (cd) cd.textContent = 'หมดเวลาแล้ว';
+    document.getElementById('qrModal')?.classList.remove('hidden');
+    setQrExpiredState(currentTxId);
+  }
+
+  document.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('[data-cancel-topup]');
+    if (!btn) return;
+    const txId = btn.dataset.cancelTopup || currentTxId || window.currentTxId;
+    if (!txId) return;
+    btn.disabled = true;
+    btn.textContent = 'กำลังยกเลิก...';
+    try {
+      const r = await fetch(`/topup/cancel/${encodeURIComponent(txId)}`, { method:'POST', headers:{ 'Content-Type':'application/json' } });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j?.ok) throw new Error(j?.message || 'ยกเลิกไม่สำเร็จ');
+      window.showMsg ? window.showMsg({ variant:'success', title:'ยกเลิกรายการแล้ว', text:'สามารถสร้างรายการเติมเงินใหม่ได้เลย' }) : alert('ยกเลิกรายการแล้ว');
+      closeQrModal();
+      setTimeout(() => location.reload(), 500);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'ยกเลิกรายการเก่า';
+      window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text:err.message }) : alert(err.message);
+    }
+  });
+
+  function startQrCountdown(seconds = 300){
+    clearQrCountdown();
+    const el = document.getElementById('qrCountdown');
+    qrExpireAt = Date.now() + seconds * 1000;
+    const tick = () => {
+      const left = qrExpireAt - Date.now();
+      if (left <= 0){ clearQrCountdown(); if (el) el.textContent = 'หมดเวลาแล้ว'; setQrExpiredState(currentTxId || window.currentTxId); return; }
+      if (el) el.textContent = `หมดอายุใน ${formatMMSS(left)}`;
+    };
+    tick(); qrTimerId = setInterval(tick, 1000);
+  }
+  function openQrModal(mode = 'bank', seconds = 300) {
+    const safeSeconds = Math.max(1, Number(seconds || 300));
+    setQrMode(mode); setExpireHint(mode, safeSeconds); clearQrExpiredState();
+    const m = document.getElementById('qrModal'); m?.classList.remove('hidden');
+    const status = document.getElementById('qrStatus'); if (status) status.innerHTML = '';
+    startQrCountdown(safeSeconds);
+  }
+  function closeQrModal(){
+    const m = document.getElementById('qrModal'); m?.classList.add('hidden');
+    const status = document.getElementById('qrStatus'); if (status) status.innerHTML = '';
+    clearQrCountdown(); stopTxWatcher();
+  }
+  document.getElementById('qrClose')?.addEventListener('click', closeQrModal);
+  document.getElementById('qrModal')?.addEventListener('click', (e)=>{ if (e.target.dataset.close === '1') closeQrModal(); });
+
+  let TW_LOCK = false;
+  async function submitTopup(ev) {
+    ev.preventDefault();
+    if (TW_LOCK) return false;
+    TW_LOCK = true;
+    try {
+      const form = ev.currentTarget || ev.target;
+      const walletCode = form.dataset.walletCode;
+      const amountEl = form.querySelector('input[name="amount"]');
+      const base = Math.floor(Number(amountEl?.value || 0));
+      if (walletCode !== 'tw') { document.querySelector('#resp').innerHTML = `<div class="tp-inline-error">❌ วิธีนี้รองรับเฉพาะ TrueWallet</div>`; TW_LOCK = false; return false; }
+      if (!Number.isFinite(base) || base < 1) { document.querySelector('#resp').innerHTML = `<div class="tp-inline-error">❌ จำนวนเงินขั้นต่ำ 1 บาท</div>`; TW_LOCK = false; return false; }
+
+      const cRes = await fetch('/topup/create', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ amount: base, method:'tw', accountCode:'tw', walletCode:'tw' }) });
+      const c = await cRes.json();
+      if (!cRes.ok || !c?.ok) {
+        if (c?.pendingTxId) window.currentTxId = c.pendingTxId;
+        else { const err = c?.error || 'สร้างคำสั่งเติมเงินไม่สำเร็จ'; window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text:err }) : alert(err); TW_LOCK = false; return false; }
+      } else window.currentTxId = c.txId || c.id || c.pendingTxId;
+      currentTxId = window.currentTxId;
+      if (c?.mustCancelOld || c?.expiredPending) { await showExpiredPendingModal(c, 'tw'); TW_LOCK = false; return false; }
+
+      const finalPayAmount = Number(c?.displayAmount ?? c?.payAmount ?? c?.amount ?? base);
+      const gRes = await fetch('/topup/truewallet/gen/link', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ amount: finalPayAmount }) });
+      const g = await gRes.json();
+      if (!gRes.ok || !g?.url) { const err = g?.message || 'ไม่สามารถสร้างลิงก์ TrueWallet ได้'; window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text:err }) : alert(err); TW_LOCK = false; return false; }
+
+      try { stopTxWatcher(); } catch {}
+      const img = document.getElementById('qrImage');
+      if (img) img.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(g.url)}`;
+      document.getElementById('qrMethod')?.replaceChildren(document.createTextNode('TrueMoney Wallet'));
+      document.getElementById('qrName')?.replaceChildren(document.createTextNode(g.accountName || 'RTSMM'));
+      document.getElementById('qrNumber')?.replaceChildren(document.createTextNode(g.accountNumber || '-'));
+      document.getElementById('qrAmountTw')?.replaceChildren(document.createTextNode(finalPayAmount.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 })));
+      const expireSec = Number(c?.expiresIn || 300);
+      openQrModal('tw', expireSec);
+      startTxWatcher(window.currentTxId, expireSec);
+      return false;
+    } catch (err) {
+      const msg = `ขัดข้อง: ${err.message}`;
+      window.showMsg ? window.showMsg({ variant:'error', title:'ไม่สำเร็จ', text: msg }) : alert(msg);
+      return false;
+    } finally { TW_LOCK = false; }
+  }
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.history-list .hx-card[open]').forEach(el => el.removeAttribute('open'));
+  });
+</script>
+
+<style>
+/* =========================================================
+   TOPUP ENTERPRISE HIGH-END UI
+   Theme-aware: uses layout variables first, with safe fallback.
+   Supported layout vars: --page, --card, --text, --muted, --border, --accent
+========================================================= */
+.topup-enterprise{
+  --tp-page: var(--page, #08090d);
+  --tp-card: var(--card, #12141b);
+  --tp-card-2: color-mix(in srgb, var(--card, #12141b) 86%, #ffffff 5%);
+  --tp-text: var(--text, #f6f2e8);
+  --tp-muted: var(--muted, #9aa1ad);
+  --tp-border: var(--border, rgba(255,255,255,.10));
+  --tp-accent: var(--accent, #e8bc53);
+  --tp-accent-2: #f7da7c;
+  --tp-danger: #ff6262;
+  --tp-success: #4ade80;
+  --tp-shadow: rgba(0,0,0,.34);
+  --tp-soft: rgba(255,255,255,.055);
+  color: var(--tp-text);
+  position: relative;
+  isolation: isolate;
+  padding: clamp(12px, 2vw, 24px) 0 34px;
+}
+:where(html[data-theme="light"], html.light, body.light, [data-theme="light"]) .topup-enterprise{
+  --tp-page: var(--page, #f6f7fb);
+  --tp-card: var(--card, #ffffff);
+  --tp-card-2: #fbfcff;
+  --tp-text: var(--text, #151820);
+  --tp-muted: var(--muted, #667085);
+  --tp-border: var(--border, rgba(15,23,42,.12));
+  --tp-soft: rgba(15,23,42,.045);
+  --tp-shadow: rgba(15,23,42,.12);
+}
+.topup-enterprise *{ box-sizing:border-box; }
+.topup-enterprise button,
+.topup-enterprise input{ font: inherit; }
+
+.tp-hero{
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--tp-border);
+  border-radius: 30px;
+  padding: clamp(22px, 3.2vw, 42px);
+  background:
+    radial-gradient(circle at 14% 0%, color-mix(in srgb, var(--tp-accent) 22%, transparent) 0%, transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(255,255,255,.13) 0%, transparent 30%),
+    linear-gradient(135deg, color-mix(in srgb, var(--tp-card) 82%, #000 18%), var(--tp-card-2));
+  box-shadow: 0 24px 70px var(--tp-shadow), inset 0 1px 0 rgba(255,255,255,.08);
+  margin-bottom: 18px;
+}
+.tp-hero-glow{ position:absolute; border-radius:999px; filter: blur(8px); opacity:.55; pointer-events:none; animation: tpFloat 7s ease-in-out infinite; }
+.tp-hero-glow-a{ width:220px; height:220px; background:color-mix(in srgb, var(--tp-accent) 32%, transparent); right:8%; top:-90px; }
+.tp-hero-glow-b{ width:150px; height:150px; background:rgba(99,102,241,.20); left:12%; bottom:-75px; animation-delay:-2.4s; }
+@keyframes tpFloat{ 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(0,12px,0) scale(1.05); } }
+.tp-hero-content{ position:relative; display:flex; justify-content:space-between; gap:28px; align-items:flex-end; }
+.tp-eyebrow{ display:inline-flex; align-items:center; gap:10px; color:var(--tp-accent-2); font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; margin-bottom:12px; }
+.tp-eyebrow span{ width:9px; height:9px; border-radius:50%; background:var(--tp-accent); box-shadow:0 0 18px var(--tp-accent); }
+.tp-hero h1{ margin:0; font-size:clamp(28px, 4vw, 48px); letter-spacing:-.04em; line-height:1.04; }
+.tp-hero p{ margin:12px 0 0; color:var(--tp-muted); max-width:720px; line-height:1.65; }
+.tp-hero-metrics{ display:grid; grid-template-columns:repeat(3, minmax(92px,1fr)); gap:10px; min-width:min(420px,100%); }
+.tp-metric{ padding:14px 16px; border-radius:18px; border:1px solid var(--tp-border); background:rgba(255,255,255,.05); backdrop-filter:blur(12px); }
+.tp-metric small{ display:block; color:var(--tp-muted); font-size:12px; margin-bottom:4px; }
+.tp-metric b{ font-size:24px; color:var(--tp-text); }
+
+.tabs.tp-main-tabs{
+  width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding:8px; border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)), color-mix(in srgb, var(--tp-card) 88%, transparent);
+  border:1px solid var(--tp-border); box-shadow:0 18px 42px var(--tp-shadow), inset 0 1px 0 rgba(255,255,255,.06); margin:0 0 18px;
+  backdrop-filter:blur(14px);
+}
+.tabs .tab{
+  position:relative; width:100%; border:0; border-radius:18px; padding:16px 18px; cursor:pointer; color:var(--tp-muted); background:transparent;
+  display:flex; align-items:center; justify-content:center; gap:10px; font-weight:600; transition:transform .22s ease, color .22s ease, background .22s ease, box-shadow .22s ease;
+}
+.tabs .tab:hover{ transform:translateY(-1px); color:var(--tp-text); background:var(--tp-soft); }
+.tabs .tab.active{ color:#17130a; background:linear-gradient(135deg, #ffe28a, #e8bc53 54%, #bd8626); box-shadow:0 14px 30px color-mix(in srgb, var(--tp-accent) 27%, transparent), inset 0 1px 0 rgba(255,255,255,.52); }
+.tabs .tab::after,.tabs .tab.active::after{ display:none!important; content:none!important; }
+.tab-ico{ display:grid; place-items:center; width:22px; height:22px; border-radius:999px; background:rgba(0,0,0,.12); }
+.tabpane{ display:none; animation:tpFadeUp .34s ease both; }
+.tabpane.show{ display:block; }
+@keyframes tpFadeUp{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+
+.tp-layout{ display:grid; grid-template-columns:minmax(280px, 360px) minmax(0,1fr); gap:18px; align-items:start; }
+.tp-side-card,.tp-main-card,.tp-history-card{ border:1px solid var(--tp-border); border-radius:28px; background:linear-gradient(180deg, color-mix(in srgb, var(--tp-card) 92%, #fff 3%), var(--tp-card)); box-shadow:0 20px 54px var(--tp-shadow), inset 0 1px 0 rgba(255,255,255,.055); }
+.tp-side-card{ padding:18px; position:sticky; top:16px; }
+.tp-main-card,.tp-history-card{ padding:clamp(16px,2vw,22px); overflow:hidden; }
+.tp-section-head{ display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
+.tp-section-head span{ display:block; color:var(--tp-accent); font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+.tp-section-head h2{ margin:0; font-size:clamp(20px,2vw,26px); letter-spacing:-.03em; }
+.tp-section-head.compact{ margin-bottom:12px; }
+.tp-history-count{ padding:8px 12px; border-radius:999px; background:var(--tp-soft); color:var(--tp-muted); border:1px solid var(--tp-border); }
+
+.tp-wallet-rail{ display:grid; gap:10px; border:0; margin:0; padding:0; overflow:visible; }
+.tp-wallet-tab{ width:100%; border:1px solid transparent; border-radius:20px; background:transparent; padding:12px; display:grid; grid-template-columns:48px 1fr 22px; gap:12px; align-items:center; color:var(--tp-text); cursor:pointer; text-align:left; transition:transform .22s ease, border .22s ease, background .22s ease, box-shadow .22s ease; }
+.tp-wallet-tab:hover{ transform:translateX(3px); background:var(--tp-soft); border-color:var(--tp-border); }
+.tp-wallet-tab.active{ background:linear-gradient(135deg, color-mix(in srgb, var(--tp-accent) 16%, transparent), var(--tp-soft)); border-color:color-mix(in srgb, var(--tp-accent) 34%, var(--tp-border)); box-shadow:0 10px 28px color-mix(in srgb, var(--tp-accent) 12%, transparent); }
+.tp-wallet-icon-wrap{ width:48px; height:48px; border-radius:16px; display:grid; place-items:center; background:rgba(255,255,255,.08); border:1px solid var(--tp-border); }
+.tp-wallet-icon-wrap img,.tp-payment-logo img,.tp-account-icon img{ width:28px; height:28px; object-fit:contain; }
+.tp-wallet-copy strong{ display:block; font-size:14px; line-height:1.25; }
+.tp-wallet-copy small{ display:block; color:var(--tp-muted); margin-top:3px; font-size:12px; }
+.tp-wallet-arrow{ color:var(--tp-accent); font-size:24px; line-height:1; }
+
+.tp-wallet-panel{ display:none; }
+.tp-wallet-panel.active{ display:block; animation:tpFadeUp .34s ease both; }
+.tp-payment-header{ display:flex; justify-content:space-between; gap:18px; align-items:center; margin-bottom:18px; }
+.tp-payment-brand{ display:flex; align-items:center; gap:14px; min-width:0; }
+.tp-payment-logo{ width:64px; height:64px; border-radius:22px; display:grid; place-items:center; background:linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); border:1px solid var(--tp-border); box-shadow:inset 0 1px 0 rgba(255,255,255,.09); }
+.tp-payment-logo img{ width:36px; height:36px; }
+.tp-payment-brand span{ color:var(--tp-accent); font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.12em; }
+.tp-payment-brand h2{ margin:3px 0; font-size:clamp(22px,2.8vw,34px); letter-spacing:-.04em; }
+.tp-payment-brand p{ margin:0; color:var(--tp-muted); }
+.tp-expire-badge{ flex:0 0 auto; padding:12px 16px; border-radius:18px; background:var(--tp-soft); border:1px solid var(--tp-border); text-align:center; }
+.tp-expire-badge small{ display:block; color:var(--tp-muted); font-size:12px; }
+.tp-expire-badge b{ color:var(--tp-accent-2); font-size:18px; }
+
+.tp-checkout-grid{ display:grid; grid-template-columns:minmax(0,1.04fr) minmax(280px,.8fr); gap:18px; }
+.tp-form-card,.tp-info-card{ border:1px solid var(--tp-border); border-radius:24px; background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); padding:18px; }
+.tp-form{ display:grid; gap:14px; }
+.tp-label{ font-weight:800; color:var(--tp-text); }
+.tp-amount-shell{ display:flex; align-items:center; gap:12px; border:1px solid color-mix(in srgb, var(--tp-accent) 28%, var(--tp-border)); border-radius:22px; background:color-mix(in srgb, var(--tp-page) 58%, var(--tp-card)); padding:8px 16px; box-shadow:inset 0 1px 0 rgba(255,255,255,.04); }
+.tp-amount-shell span{ color:var(--tp-accent); font-weight:900; font-size:24px; }
+.tp-amount-shell input{ width:100%; border:0; outline:0; background:transparent; color:var(--tp-text); font-size:clamp(28px,4vw,46px); font-weight:400; letter-spacing:-.04em; padding:12px 0; }
+.tp-amount-shell input::placeholder{ color:color-mix(in srgb, var(--tp-muted) 30%, transparent); }
+.tp-quick-grid{ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+.tp-chip{ border:1px solid var(--tp-border); border-radius:14px; padding:10px 8px; background:var(--tp-soft); color:var(--tp-muted); cursor:pointer; transition:.2s ease; }
+.tp-chip:hover,.tp-chip.active{ color:#18130a; background:linear-gradient(135deg,#ffe28a,#e8bc53); transform:translateY(-1px); border-color:transparent; }
+.tp-summary-strip{ display:flex; justify-content:space-between; align-items:center; padding:13px 14px; border-radius:18px; background:var(--tp-soft); border:1px solid var(--tp-border); color:var(--tp-muted); }
+.tp-summary-strip b{ color:var(--tp-text); font-size:18px; }
+.tp-primary-btn{ position:relative; overflow:hidden; border:0; border-radius:18px; padding:15px 18px; min-height:54px; background:linear-gradient(135deg,#ffe28a 0%, #e8bc53 55%, #b98626 100%); color:#17130a; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 16px 32px color-mix(in srgb, var(--tp-accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.58); transition:transform .2s ease, filter .2s ease; }
+.tp-primary-btn:hover{ transform:translateY(-2px); filter:saturate(1.08); }
+.tp-primary-btn.compact{ width:auto; min-height:44px; padding:12px 16px; }
+.btn-shine{ position:absolute; inset:-60% auto -60% -40%; width:38%; transform:rotate(18deg); background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation:tpShine 3.8s ease-in-out infinite; }
+@keyframes tpShine{ 0%,45%{ left:-50%; } 70%,100%{ left:120%; } }
+
+.tp-info-card{ display:grid; gap:12px; }
+.tp-account-card,.tp-alert-card,.tp-steps-card{ border:1px solid var(--tp-border); border-radius:20px; background:color-mix(in srgb, var(--tp-card) 84%, transparent); padding:14px; }
+.tp-account-card{ display:flex; gap:12px; align-items:center; }
+.tp-account-icon{ width:50px; height:50px; border-radius:16px; background:var(--tp-soft); border:1px solid var(--tp-border); display:grid; place-items:center; flex:0 0 auto; }
+.tp-account-card small{ display:block; color:var(--tp-muted); }
+.tp-account-card strong{ display:block; margin:2px 0; }
+.tp-account-card span{ display:block; color:var(--tp-muted); font-size:13px; }
+.tp-alert-card{ display:flex; gap:12px; }
+.tp-alert-card>span{ color:var(--tp-accent); font-size:22px; }
+.tp-alert-card b{ display:block; margin-bottom:4px; }
+.tp-alert-card p,.tp-steps-card p{ margin:0; color:var(--tp-muted); line-height:1.55; }
+.tp-steps-card h3{ margin:0 0 10px; }
+.tp-steps-card ol{ margin:0; padding-left:20px; color:var(--tp-muted); line-height:1.8; }
+.tp-steps-card li::marker{ color:var(--tp-accent); font-weight:900; }
+
+.tp-history-card{ margin-top:0; }
+.d-desktop{ display:table; }
+.d-mobile{ display:none; }
+.tp-history-table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:22px; border:1px solid var(--tp-border); background:var(--tp-card); }
+.tp-history-table th,.tp-history-table td{ padding:15px 16px; text-align:left; border-bottom:1px solid var(--tp-border); }
+.tp-history-table th{ color:var(--tp-muted); font-size:13px; font-weight:300; background:var(--tp-soft); }
+.tp-history-table tr:last-child td{ border-bottom:0; }
+.tp-history-table tbody tr{ transition:background .2s ease; }
+.tp-history-table tbody tr:hover{ background:var(--tp-soft); }
+.right{ text-align:right!important; }
+td.right,
+th.right{
+  text-align: right;
+}
+
+.status-cell.right .pill{
+  display: inline-flex;
+}
+.method,.tp-method{ display:flex; align-items:center; gap:10px; }
+.method-ico{ width:24px; height:24px; object-fit:contain; border-radius:7px; }
+.money{ color:var(--tp-accent-2); font-weight:600; }
+.pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; color:#f8fafc; border:1px solid rgba(255,255,255,.10); background:#30343a; box-shadow:inset 1px 1px 2px rgba(255,255,255,.12), inset -2px -2px 4px rgba(0,0,0,.42), 0 4px 12px rgba(0,0,0,.18); font-weight:800; }
+.pill.sm{ padding:7px 10px; font-size:13px; }
+.pill .st-ico{ width:16px; height:16px; border-radius:50%; background:center/contain no-repeat; flex:0 0 16px; }
+.pill.st-completed{ background:linear-gradient(145deg,#0b3d2e,#144f3d); }
+.pill.st-completed .st-ico{ background-image:url('/static/assets/status/completed.png'); }
+.pill.st-pending{ background:linear-gradient(145deg,#2e3136,#383c42); }
+.pill.st-pending .st-ico{ background-image:url('/static/assets/status/processing.png'); }
+.pill.st-failed,.pill.st-reject,.pill.st-canceled,.pill.st-cancelled{ background:linear-gradient(145deg,#6f1f1f,#4d0f10); }
+.pill.st-failed .st-ico,.pill.st-reject .st-ico,.pill.st-canceled .st-ico,.pill.st-cancelled .st-ico{ background-image:url('/static/assets/status/canceled.png'); }
+
+.hx-card{ border:1px solid var(--tp-border); background:var(--tp-card); border-radius:18px; margin:12px 0; overflow:hidden; box-shadow:0 12px 28px var(--tp-shadow); }
+.hx-head{ display:flex; align-items:center; justify-content:space-between; padding:14px; list-style:none; cursor:pointer; }
+.hx-head::-webkit-details-marker{ display:none; }
+.hx-toggle{ border:0; background:transparent; color:var(--tp-muted); font-size:18px; line-height:1; padding:2px 6px; border-radius:8px; }
+.hx-card .hx-toggle::before{ content:'＋'; }
+.hx-card[open] .hx-toggle::before{ content:'−'; }
+.hx-body{ padding:12px 14px 14px; border-top:1px dashed var(--tp-border); animation:tpFadeUp .18s ease-out; }
+.hx-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; }
+.hx-label{ color:var(--tp-muted); }
+.hx-val.money{ font-weight:600; color:var(--tp-accent-2); }
+
+.tp-empty{ text-align:center; padding:24px; color:var(--tp-muted); }
+.tp-empty.large{ padding:58px 18px; }
+.tp-empty-icon{ width:58px; height:58px; border-radius:20px; margin:0 auto 12px; display:grid; place-items:center; color:var(--tp-accent); background:var(--tp-soft); border:1px solid var(--tp-border); font-size:24px; }
+.tp-empty h3{ margin:0 0 6px; color:var(--tp-text); }
+.tp-empty p{ margin:0; }
+
+.modal.hidden{ display:none; }
+.modal{ position:fixed; inset:0; z-index:1000; }
+.modal .overlay{ position:absolute; inset:0; background:rgba(0,0,0,.62); backdrop-filter:blur(9px); }
+.tp-qr-modal .dialog{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(440px, calc(100vw - 24px)); max-height:calc(100vh - 28px); overflow:auto; border-radius:28px; padding:18px; background:linear-gradient(180deg, color-mix(in srgb, var(--tp-card) 94%, #fff 4%), var(--tp-card)); border:1px solid var(--tp-border); box-shadow:0 28px 90px rgba(0,0,0,.48); animation:tpModalIn .24s ease both; }
+@keyframes tpModalIn{ from{ opacity:0; transform:translate(-50%,-48%) scale(.96); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+.tp-qr-modal .close{ position:absolute; right:14px; top:12px; width:34px; height:34px; border:0; border-radius:999px; background:var(--tp-soft); color:var(--tp-text); cursor:pointer; font-size:22px; }
+.tp-modal-head{ text-align:center; padding-top:10px; }
+/* ===== Animated Clock Icon in QR Modal ===== */
+.tp-modal-clock{
+  width:68px;
+  height:68px;
+  margin:0 auto 12px;
+  border-radius:24px;
+  display:grid;
+  place-items:center;
+  position:relative;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,.82), transparent 24%),
+    linear-gradient(135deg, #ffe28a 0%, #e8bc53 48%, #9f6d1f 100%);
+  box-shadow:
+    0 0 34px color-mix(in srgb, var(--tp-accent) 34%, transparent),
+    0 14px 28px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.48),
+    inset 0 -10px 20px rgba(75,45,8,.20);
+  animation:clockFloat 2.8s ease-in-out infinite;
+}
+
+.tp-modal-clock::before{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius:28px;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--tp-accent) 30%, transparent), transparent 68%);
+  opacity:.72;
+  z-index:-1;
+  animation:clockGlow 2.4s ease-in-out infinite;
+}
+
+.clock-face{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  position:relative;
+  display:block;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 50%, rgba(20,17,10,.08), rgba(20,17,10,.18));
+  border:3px solid rgba(24,19,10,.82);
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.35),
+    0 4px 10px rgba(0,0,0,.22);
+}
+
+.clock-face::before,
+.clock-face::after{
+  content:"";
+  position:absolute;
+  background:rgba(24,19,10,.72);
+  border-radius:999px;
+}
+
+.clock-face::before{
+  width:4px;
+  height:4px;
+  top:4px;
+  left:50%;
+  transform:translateX(-50%);
+  box-shadow:
+    0 30px 0 rgba(24,19,10,.72),
+    15px 15px 0 rgba(24,19,10,.72),
+    -15px 15px 0 rgba(24,19,10,.72);
+}
+
+.clock-face::after{
+  width:3px;
+  height:3px;
+  top:8px;
+  left:8px;
+  opacity:.65;
+  box-shadow:
+    23px 0 0 rgba(24,19,10,.72),
+    23px 23px 0 rgba(24,19,10,.72),
+    0 23px 0 rgba(24,19,10,.72);
+}
+
+.clock-hand{
+  position:absolute;
+  left:50%;
+  bottom:50%;
+  transform-origin:50% 100%;
+  border-radius:999px;
+  background:#17130a;
+  z-index:2;
+}
+
+.clock-hand.hour{
+  width:4px;
+  height:12px;
+  margin-left:-2px;
+  animation:clockHour 43200s linear infinite;
+}
+
+.clock-hand.minute{
+  width:3px;
+  height:16px;
+  margin-left:-1.5px;
+  background:#2a210f;
+  animation:clockMinute 3600s linear infinite;
+}
+
+.clock-hand.second{
+  width:2px;
+  height:18px;
+  margin-left:-1px;
+  background:#f43f5e;
+  box-shadow:0 0 8px rgba(244,63,94,.45);
+  animation:clockSecond 60s steps(60, end) infinite;
+}
+
+.clock-center{
+  position:absolute;
+  width:8px;
+  height:8px;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#17130a;
+  border:2px solid #ffe28a;
+  z-index:4;
+}
+
+@keyframes clockSecond{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes clockMinute{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes clockHour{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes clockFloat{
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-3px) scale(1.035); }
+}
+
+@keyframes clockGlow{
+  0%,100%{ opacity:.45; transform:scale(.96); }
+  50%{ opacity:.82; transform:scale(1.08); }
+}
+.tp-modal-head span{ color:var(--tp-accent-2); font-weight:900; }
+.tp-modal-head h3{ margin:8px 0 14px; }
+.tp-qr-modal .body{ display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
+.qr-img-wrap{ display:flex; justify-content:center; width:80%; }
+.tp-qr-ring{ position:relative; border-radius:28px; padding:10px; background:conic-gradient(from 180deg, transparent, color-mix(in srgb, var(--tp-accent) 70%, transparent), transparent 38%); }
+.tp-qr-ring::before{ content:''; position:absolute; inset:2px; border-radius:26px; background:var(--tp-card); }
+.qr-img{ position:relative; display:block; width:min(320px, 76vw); height:auto; border-radius:20px; background:#fff; padding:8px; box-shadow:0 10px 28px rgba(0,0,0,.32); }
+.qr-meta{ width:100%; line-height:1.65; }
+.tp-pay-amount{ font-size:16px; }
+.tp-pay-amount b{ color:var(--tp-accent-2); }
+.tp-warning-line{ margin-top:8px; color:var(--tp-accent-2); font-weight:400; font-size: 14px; text-align: center; }
+.tp-expire-line{ margin-top:5px; color:var(--tp-muted); }
+.tp-modal-kv{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--tp-border); }
+.tp-modal-kv span{ color:var(--tp-muted); }
+.tp-status-note,.tp-inline-error{ margin-top:12px; border:1px solid var(--tp-border); border-radius:16px; padding:12px; background:var(--tp-soft); color:var(--tp-text); }
+.tp-status-note.success{ border-color:color-mix(in srgb, var(--tp-success) 45%, var(--tp-border)); }
+.tp-status-note.error,.tp-inline-error{ border-color:color-mix(in srgb, var(--tp-danger) 45%, var(--tp-border)); }
+
+.tp-enterprise-notice{
+  --tn-card: var(--tp-card, var(--card, #14151b));
+  --tn-card-2: color-mix(in srgb, var(--tn-card) 86%, #ffffff 4%);
+  --tn-page: var(--tp-page, var(--page, #08090d));
+  --tn-text: var(--tp-text, var(--text, #fff7e8));
+  --tn-muted: var(--tp-muted, var(--muted, #c8bd9d));
+  --tn-border: var(--tp-border, var(--border, rgba(255,255,255,.12)));
+  --tn-gold: var(--tp-accent, var(--accent, #e8bc53));
+  --tn-gold-2: #ffe493;
+  --tn-amber: #d29326;
+  --tn-danger: #ff6b5f;
+  width:min(560px, calc(100vw - 28px));
+  max-width:none;
+  padding:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--tn-text);
+  overflow:visible;
+}
+.tp-enterprise-notice::backdrop{
+  background:
+    radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--tn-gold) 18%, transparent), transparent 30%),
+    radial-gradient(circle at 88% 88%, rgba(91,95,255,.16), transparent 34%),
+    rgba(0,0,0,.68);
+  -webkit-backdrop-filter: blur(18px) saturate(128%);
+  backdrop-filter: blur(18px) saturate(128%);
+  animation: tnBackdropIn .32s ease both;
+}
+.tp-enterprise-notice .toast-card{
+  position:relative;
+  overflow:hidden;
+  width:100%;
+  border-radius:34px;
+  isolation:isolate;
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--tn-card) 94%, #fff 5%),
+      color-mix(in srgb, var(--tn-card) 88%, #000 12%) 64%,
+      color-mix(in srgb, #261d10 22%, var(--tn-card))) padding-box,
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--tn-gold-2) 88%, transparent),
+      rgba(255,255,255,.10) 22%,
+      color-mix(in srgb, var(--tn-gold) 56%, transparent) 48%,
+      rgba(114,78,18,.42) 100%) border-box;
+  border:1px solid transparent;
+  color:var(--tn-text);
+  box-shadow:
+    0 38px 120px rgba(0,0,0,.55),
+    0 12px 32px color-mix(in srgb, var(--tn-gold) 14%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.12);
+  transform-origin:center;
+  animation: tnCardIn .42s cubic-bezier(.16,1,.3,1) both;
+}
+.tp-enterprise-notice.is-closing .toast-card{ animation:tnCardOut .24s ease forwards; }
+.tp-enterprise-notice.is-closing::backdrop{ animation:tnBackdropOut .24s ease forwards; }
+.tp-enterprise-notice .toast-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(255,255,255,.10) 28%, transparent 42%),
+    radial-gradient(circle at 50% 0%, rgba(255,228,147,.16), transparent 42%);
+  opacity:.72;
+  z-index:-1;
+}
+.tp-enterprise-notice .toast-card::after{
+  content:"";
+  position:absolute;
+  left:28px;
+  right:28px;
+  top:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,228,147,.82), transparent);
+  opacity:.9;
+}
+.tp-enterprise-notice .notice-glow{
+  position:absolute;
+  pointer-events:none;
+  border-radius:999px;
+  filter:blur(12px);
+  z-index:-1;
+  opacity:.6;
+  animation:tnGlowFloat 6.8s ease-in-out infinite;
+}
+.tp-enterprise-notice .notice-glow-a{
+  width:190px;
+  height:190px;
+  right:-74px;
+  top:-78px;
+  background:color-mix(in srgb, var(--tn-gold) 28%, transparent);
+}
+.tp-enterprise-notice .notice-glow-b{
+  width:150px;
+  height:150px;
+  left:-70px;
+  bottom:-72px;
+  background:rgba(96,80,255,.18);
+  animation-delay:-2.4s;
+}
+.tp-enterprise-notice .toast-headbar{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:24px 24px 20px;
+  color:var(--tn-text);
+  background:
+    radial-gradient(circle at 16% 6%, rgba(255,255,255,.18), transparent 30%),
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--tn-gold-2) 22%, transparent),
+      color-mix(in srgb, var(--tn-amber) 18%, transparent) 52%,
+      transparent);
+}
+.tp-enterprise-notice .toast-headbar::after{
+  content:"";
+  position:absolute;
+  left:24px;
+  right:24px;
+  bottom:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--tn-gold) 46%, transparent), transparent);
+}
+.tp-enterprise-notice .toast-badge{
+  position:relative;
+  width:62px;
+  height:62px;
+  flex:0 0 62px;
+  display:grid;
+  place-items:center;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255,255,255,.82), transparent 28%),
+    linear-gradient(135deg, #ffe493, #d8a134 60%, #8b5f18);
+  box-shadow:
+    0 18px 34px color-mix(in srgb, var(--tn-gold) 26%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.50),
+    inset 0 -10px 18px rgba(58,37,7,.18);
+  animation:tnBadgeFloat 2.8s ease-in-out infinite;
+}
+.tp-enterprise-notice .notice-badge-core{
+  position:relative;
+  z-index:2;
+  color:#1b1408;
+  font-size:28px;
+  line-height:1;
+  text-shadow:0 1px 0 rgba(255,255,255,.42);
+}
+.tp-enterprise-notice .notice-badge-ring{
+  position:absolute;
+  inset:-7px;
+  border-radius:26px;
+  border:1px solid color-mix(in srgb, var(--tn-gold-2) 42%, transparent);
+  opacity:.7;
+  animation:tnPulse 2.2s ease-in-out infinite;
+}
+.tp-enterprise-notice .notice-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+  color:var(--tn-gold-2);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.tp-enterprise-notice .notice-kicker::before{
+  content:"";
+  width:7px;
+  height:7px;
+  border-radius:999px;
+  background:var(--tn-gold);
+  box-shadow:0 0 18px var(--tn-gold);
+}
+.tp-enterprise-notice .toast-title{
+  margin:0;
+  font-size:clamp(22px, 4.6vw, 30px);
+  line-height:1.16;
+  letter-spacing:-.035em;
+}
+.tp-enterprise-notice .toast-headtxt .muted{
+  margin-top:6px;
+  color:var(--tn-muted)!important;
+  font-size:13px!important;
+  line-height:1.55;
+}
+.tp-enterprise-notice .toast-body{
+  padding:20px 24px 8px;
+}
+.tp-enterprise-notice .notice-list{
+  display:grid;
+  gap:10px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.tp-enterprise-notice .notice-list li{
+  display:grid;
+  grid-template-columns:42px 1fr;
+  align-items:start;
+  gap:12px;
+  padding:12px 13px;
+  border-radius:18px;
+  border:1px solid color-mix(in srgb, var(--tn-border) 78%, transparent);
+  background:linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  color:color-mix(in srgb, var(--tn-text) 82%, var(--tn-muted));
+  line-height:1.55;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+  opacity:0;
+  transform:translateY(10px);
+  animation:tnItemIn .42s cubic-bezier(.16,1,.3,1) forwards;
+}
+.tp-enterprise-notice .notice-list li:nth-child(1){ animation-delay:.08s; }
+.tp-enterprise-notice .notice-list li:nth-child(2){ animation-delay:.13s; }
+.tp-enterprise-notice .notice-list li:nth-child(3){ animation-delay:.18s; }
+.tp-enterprise-notice .notice-list li:nth-child(4){ animation-delay:.23s; }
+.tp-enterprise-notice .notice-list li:nth-child(5){ animation-delay:.28s; }
+.tp-enterprise-notice .notice-dot{
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:13px;
+  color:#17130a;
+  font-size:11px;
+  font-weight:950;
+  background:linear-gradient(135deg, #ffe493, #d59b25);
+  box-shadow:0 8px 18px color-mix(in srgb, var(--tn-gold) 18%, transparent), inset 0 1px 0 rgba(255,255,255,.42);
+}
+.tp-enterprise-notice .notice-check-row{
+  position:relative;
+  display:grid;
+  grid-template-columns:48px 1fr;
+  align-items:center;
+  gap:12px;
+  margin-top:16px;
+  padding:13px;
+  border-radius:20px;
+  cursor:pointer;
+  user-select:none;
+  border:1px solid color-mix(in srgb, var(--tn-border) 82%, transparent);
+  background:color-mix(in srgb, var(--tn-page) 42%, transparent);
+  transition:transform .2s ease, border-color .2s ease, background .2s ease;
+}
+.tp-enterprise-notice .notice-check-row:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb, var(--tn-gold) 40%, var(--tn-border));
+  background:color-mix(in srgb, var(--tn-gold) 7%, transparent);
+}
+.tp-enterprise-notice .notice-check-row input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.tp-enterprise-notice .notice-check-ui{
+  width:46px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.035));
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.38);
+  position:relative;
+  transition:.24s ease;
+}
+.tp-enterprise-notice .notice-check-ui::before{
+  content:"";
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#f5f5f2;
+  box-shadow:0 5px 14px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.75);
+  transition:transform .24s cubic-bezier(.2,.8,.2,1), background .24s ease;
+}
+.tp-enterprise-notice .notice-check-row input:checked + .notice-check-ui{
+  background:linear-gradient(135deg, #36d56d, #20a955);
+  box-shadow:0 0 22px rgba(54,213,109,.26), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.tp-enterprise-notice .notice-check-row input:checked + .notice-check-ui::before{
+  transform:translateX(18px);
+}
+.tp-enterprise-notice .notice-check-copy b{
+  display:block;
+  color:var(--tn-text);
+  font-size:14px;
+}
+.tp-enterprise-notice .notice-check-copy small{
+  display:block;
+  color:var(--tn-muted);
+  margin-top:2px;
+  font-size:12px;
+}
+.tp-enterprise-notice .toast-actions{
+  display:flex;
+  justify-content:flex-end;
+  padding:16px 24px 24px;
+}
+.tp-enterprise-notice .notice-accept-btn{
+  position:relative;
+  overflow:hidden;
+  min-height:48px;
+  border:0!important;
+  border-radius:999px;
+  padding:0 20px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:#17130a!important;
+  font-weight:950;
+  background:linear-gradient(135deg,#fff0a7 0%, #e8bc53 54%, #b98222 100%)!important;
+  box-shadow:
+    0 16px 34px color-mix(in srgb, var(--tn-gold) 24%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.62)!important;
+  transition:transform .2s ease, filter .2s ease, box-shadow .2s ease;
+}
+.tp-enterprise-notice .notice-accept-btn:hover{
+  transform:translateY(-2px);
+  filter:saturate(1.08) brightness(1.03);
+  box-shadow:0 20px 42px color-mix(in srgb, var(--tn-gold) 30%, transparent), inset 0 1px 0 rgba(255,255,255,.70)!important;
+}
+.tp-enterprise-notice .notice-accept-btn i{
+  font-style:normal;
+  font-size:18px;
+  transition:transform .2s ease;
+}
+.tp-enterprise-notice .notice-accept-btn:hover i{ transform:translateX(3px); }
+@keyframes tnBackdropIn{ from{opacity:0} to{opacity:1} }
+@keyframes tnBackdropOut{ to{opacity:0} }
+@keyframes tnCardIn{ from{opacity:0; transform:translateY(18px) scale(.94); filter:blur(10px)} to{opacity:1; transform:none; filter:none} }
+@keyframes tnCardOut{ to{opacity:0; transform:translateY(10px) scale(.965); filter:blur(8px)} }
+@keyframes tnItemIn{ to{opacity:1; transform:none} }
+@keyframes tnBadgeFloat{ 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-4px) rotate(-2deg)} }
+@keyframes tnPulse{ 0%,100%{transform:scale(.96); opacity:.38} 50%{transform:scale(1.06); opacity:.86} }
+@keyframes tnGlowFloat{ 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,12px,0) scale(1.06)} }
+@media (max-width:560px){
+  .tp-enterprise-notice{ width:min(100%, calc(100vw - 20px)); }
+  .tp-enterprise-notice .toast-card{ border-radius:28px; }
+  .tp-enterprise-notice .toast-headbar{ padding:20px 18px 17px; align-items:flex-start; }
+  .tp-enterprise-notice .toast-badge{ width:54px; height:54px; flex-basis:54px; border-radius:20px; }
+  .tp-enterprise-notice .toast-body{ padding:16px 16px 6px; }
+  .tp-enterprise-notice .notice-list li{ grid-template-columns:38px 1fr; padding:10px; gap:10px; }
+  .tp-enterprise-notice .toast-actions{ padding:14px 16px 18px; }
+  .tp-enterprise-notice .notice-accept-btn{ width:100%; }
+}
+@media (prefers-reduced-motion: reduce){
+  .tp-enterprise-notice,
+  .tp-enterprise-notice *,
+  .tp-enterprise-notice::backdrop{ animation:none!important; transition:none!important; }
+}
+
+
+/* =========================================================
+   TOPUP QR MODAL — ENTERPRISE COMPACT RESPONSIVE THEME
+   ดำ/ทอง + รองรับ light/dark จาก layout.ejs
+   ลดขนาด QR และกล่องให้พอดี viewport ไม่ต้องมี scrollbar
+========================================================= */
+:root{
+  --tp-modal-page: var(--page, #08090d);
+  --tp-modal-card: var(--card, #15161b);
+  --tp-modal-text: var(--text, #fff6df);
+  --tp-modal-muted: var(--muted, #c7b98a);
+  --tp-modal-border: var(--border, rgba(255,255,255,.10));
+  --tp-modal-accent: var(--accent, #f4c95d);
+  --tp-modal-gold: #f4c95d;
+  --tp-modal-gold2: #b9892f;
+  --tp-modal-blue: #263660;
+  --tp-modal-shadow: rgba(0,0,0,.58);
+}
+
+html[data-theme="light"]{
+  --tp-modal-page: var(--page, #f7f3e8);
+  --tp-modal-card: var(--card, #fffaf0);
+  --tp-modal-text: var(--text, #17130a);
+  --tp-modal-muted: var(--muted, #6f6042);
+  --tp-modal-border: var(--border, rgba(23,19,10,.12));
+  --tp-modal-shadow: rgba(58,42,12,.20);
+}
+
+.topup-enterprise .tp-qr-modal,
+#qrModal.tp-qr-modal{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:99990 !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:clamp(10px, 2.2vw, 24px) !important;
+  isolation:isolate !important;
+}
+
+#qrModal.hidden{
+  display:none !important;
+}
+
+#qrModal.tp-qr-modal .overlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:0 !important;
+  background:
+    radial-gradient(circle at 18% 14%, color-mix(in srgb, var(--tp-modal-accent) 20%, transparent), transparent 28%),
+    radial-gradient(circle at 88% 78%, color-mix(in srgb, var(--tp-modal-blue) 28%, transparent), transparent 34%),
+    color-mix(in srgb, var(--tp-modal-page) 72%, rgba(0,0,0,.70)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(132%) !important;
+  backdrop-filter: blur(18px) saturate(132%) !important;
+}
+
+#qrModal.tp-qr-modal .dialog{
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  transform:none !important;
+  z-index:1 !important;
+  width:min(440px, calc(100vw - 24px)) !important;
+  max-height:calc(100dvh - 24px) !important;
+  overflow:visible !important;
+  border-radius:30px !important;
+  padding:0 !important;
+  color:var(--tp-modal-text) !important;
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--tp-modal-card) 96%, #ffffff 4%),
+      color-mix(in srgb, var(--tp-modal-card) 90%, #000000 10%) 55%,
+      color-mix(in srgb, var(--tp-modal-blue) 20%, var(--tp-modal-card))) padding-box,
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--tp-modal-accent) 72%, transparent),
+      color-mix(in srgb, var(--tp-modal-border) 62%, transparent) 48%,
+      color-mix(in srgb, var(--tp-modal-blue) 52%, transparent)) border-box !important;
+  border:1px solid transparent !important;
+  box-shadow:
+    0 28px 90px var(--tp-modal-shadow),
+    0 0 0 1px rgba(255,255,255,.035),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+  animation:tpEnterpriseModalIn .24s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+#qrModal.tp-qr-modal .dialog::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--tp-modal-accent) 20%, transparent), transparent 35%),
+    linear-gradient(115deg, rgba(255,255,255,.10), transparent 30%, rgba(255,255,255,.035) 70%, transparent);
+}
+
+#qrModal.tp-qr-modal .dialog::after{
+  content:"";
+  position:absolute;
+  left:28px;
+  right:28px;
+  top:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--tp-modal-accent) 88%, transparent), transparent);
+  pointer-events:none;
+}
+
+#qrModal.tp-qr-modal .close{
+  position:absolute !important;
+  top:14px !important;
+  right:14px !important;
+  z-index:4 !important;
+  width:40px !important;
+  height:40px !important;
+  border-radius:16px !important;
+  border:1px solid color-mix(in srgb, var(--tp-modal-border) 80%, transparent) !important;
+  color:var(--tp-modal-text) !important;
+  background:color-mix(in srgb, var(--tp-modal-card) 82%, transparent) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 12px 26px rgba(0,0,0,.18) !important;
+  cursor:pointer !important;
+  transition:transform .18s ease, background .18s ease, border-color .18s ease !important;
+}
+
+#qrModal.tp-qr-modal .close:hover{
+  transform:translateY(-1px) scale(1.03) !important;
+  background:color-mix(in srgb, var(--tp-modal-accent) 14%, var(--tp-modal-card)) !important;
+  border-color:color-mix(in srgb, var(--tp-modal-accent) 46%, var(--tp-modal-border)) !important;
+}
+
+#qrModal.tp-qr-modal .tp-modal-head{
+  position:relative !important;
+  z-index:2 !important;
+  padding:26px 22px 10px !important;
+  text-align:center !important;
+}
+
+#qrModal.tp-qr-modal .tp-modal-head > span{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:32px !important;
+  padding:7px 13px !important;
+  border-radius:999px !important;
+  color:#17130a !important;
+  background:linear-gradient(135deg, #ffe58f, var(--tp-modal-accent) 56%, var(--tp-modal-gold2)) !important;
+  box-shadow:0 12px 28px color-mix(in srgb, var(--tp-modal-accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,.56) !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+}
+
+#qrModal.tp-qr-modal .tp-modal-head h3{
+  margin:12px 0 0 !important;
+  font-size:clamp(24px, 3.1vw, 31px) !important;
+  letter-spacing:-.04em !important;
+  line-height:1.12 !important;
+  color:var(--tp-modal-text) !important;
+  text-wrap:balance !important;
+}
+
+#qrModal.tp-qr-modal .body{
+  position:relative !important;
+  z-index:2 !important;
+  padding:0 22px 16px !important;
+  gap:12px !important;
+  display:grid !important;
+  justify-items:center !important;
+}
+
+#qrModal.tp-qr-modal .tp-qr-ring{
+  padding:8px !important;
+  border-radius:28px !important;
+  background:
+    conic-gradient(from 180deg,
+      color-mix(in srgb, var(--tp-modal-accent) 18%, transparent),
+      color-mix(in srgb, var(--tp-modal-accent) 92%, transparent),
+      color-mix(in srgb, var(--tp-modal-blue) 44%, transparent),
+      color-mix(in srgb, var(--tp-modal-accent) 18%, transparent)) !important;
+  box-shadow:0 16px 36px rgba(0,0,0,.24), 0 0 30px color-mix(in srgb, var(--tp-modal-accent) 13%, transparent) !important;
+}
+
+#qrModal.tp-qr-modal .tp-qr-ring::before{
+  inset:2px !important;
+  border-radius:26px !important;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--tp-modal-card) 96%, #000),
+    color-mix(in srgb, var(--tp-modal-card) 88%, #000)) !important;
+}
+
+#qrModal.tp-qr-modal .qr-img{
+  width:min(270px, 63vw) !important;
+  max-width:270px !important;
+  aspect-ratio:1 / 1 !important;
+  border-radius:22px !important;
+  padding:9px !important;
+  box-shadow:0 16px 38px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06) !important;
+}
+
+#qrModal.tp-qr-modal .qr-meta{
+  width:100% !important;
+  border:1px solid color-mix(in srgb, var(--tp-modal-border) 82%, transparent) !important;
+  border-radius:22px !important;
+  padding:12px !important;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--tp-modal-card) 78%, rgba(255,255,255,.08)),
+      color-mix(in srgb, var(--tp-modal-card) 90%, transparent)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08) !important;
+  text-align:left !important;
+}
+
+#qrModal.tp-qr-modal .tp-pay-amount{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  padding:11px 13px !important;
+  border-radius:17px !important;
+  background:color-mix(in srgb, var(--tp-modal-accent) 10%, transparent) !important;
+  border:1px solid color-mix(in srgb, var(--tp-modal-accent) 18%, var(--tp-modal-border)) !important;
+}
+
+#qrModal.tp-qr-modal .tp-pay-amount b{
+  color:color-mix(in srgb, var(--tp-modal-accent) 88%, var(--tp-modal-text)) !important;
+  font-size:17px !important;
+}
+
+#qrModal.tp-qr-modal .tp-warning-line{
+  padding:10px 13px !important;
+  border-radius:17px !important;
+  margin-top:10px !important;
+  color:color-mix(in srgb, var(--tp-modal-accent) 70%, var(--tp-modal-text)) !important;
+  background:color-mix(in srgb, var(--tp-modal-accent) 9%, transparent) !important;
+  border:1px solid color-mix(in srgb, var(--tp-modal-accent) 15%, var(--tp-modal-border)) !important;
+  line-height:1.5 !important;
+}
+
+#qrModal.tp-qr-modal .tp-expire-line{
+  color:var(--tp-modal-muted) !important;
+  padding:8px 2px 0 !important;
+  text-align:center !important;
+  font-size:13px !important;
+}
+
+#qrModal.tp-qr-modal .tp-modal-kv{
+  align-items:center !important;
+  padding:9px 2px !important;
+}
+
+#qrModal.tp-qr-modal .footer{
+  position:relative !important;
+  z-index:2 !important;
+  padding:0 22px 20px !important;
+  display:flex !important;
+  justify-content:center !important;
+}
+
+#qrModal.tp-qr-modal #qrStatus{
+  position:relative !important;
+  z-index:2 !important;
+  padding:0 22px 20px !important;
+}
+
+#qrModal.tp-qr-modal .btn,
+#qrModal.tp-qr-modal .pill{
+  min-height:44px !important;
+  border-radius:16px !important;
+}
+
+@keyframes tpEnterpriseModalIn{
+  from{ opacity:0; transform:translateY(14px) scale(.968); filter:blur(4px); }
+  to{ opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+}
+
+@media (max-width: 640px){
+  #qrModal.tp-qr-modal{
+    padding:10px !important;
+  }
+
+  #qrModal.tp-qr-modal .dialog{
+    width:min(420px, calc(100vw - 20px)) !important;
+    max-height:calc(100dvh - 20px) !important;
+    border-radius:26px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-modal-head{
+    padding:22px 16px 8px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-modal-head h3{
+    font-size:clamp(22px, 7vw, 28px) !important;
+  }
+
+  #qrModal.tp-qr-modal .body{
+    padding:0 16px 14px !important;
+    gap:10px !important;
+  }
+
+  #qrModal.tp-qr-modal .qr-img{
+    width:min(238px, 62vw) !important;
+    max-width:238px !important;
+    padding:8px !important;
+    border-radius:20px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-qr-ring{
+    padding:7px !important;
+    border-radius:24px !important;
+  }
+
+  #qrModal.tp-qr-modal .qr-meta{
+    padding:10px !important;
+    border-radius:19px !important;
+  }
+
+  #qrModal.tp-qr-modal .footer,
+  #qrModal.tp-qr-modal #qrStatus{
+    padding-left:16px !important;
+    padding-right:16px !important;
+    padding-bottom:16px !important;
+  }
+}
+
+@media (max-height: 720px){
+  #qrModal.tp-qr-modal .tp-modal-head{
+    padding-top:18px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-modal-head h3{
+    font-size:clamp(21px, 4vh, 28px) !important;
+    margin-top:8px !important;
+  }
+
+  #qrModal.tp-qr-modal .body{
+    gap:8px !important;
+  }
+
+  #qrModal.tp-qr-modal .qr-img{
+    width:min(230px, 56vh, 60vw) !important;
+    max-width:230px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-qr-ring{
+    padding:6px !important;
+  }
+
+  #qrModal.tp-qr-modal .qr-meta{
+    padding:9px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-warning-line{
+    padding:9px 12px !important;
+    margin-top:8px !important;
+  }
+
+  #qrModal.tp-qr-modal .tp-expire-line{
+    padding-top:6px !important;
+  }
+}
+
+@media (max-width: 980px){
+  .tp-hero-content{ flex-direction:column; align-items:stretch; }
+  .tp-layout{ grid-template-columns:1fr; }
+  .tp-side-card{ position:relative; top:auto; }
+  .tp-wallet-rail{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tp-checkout-grid{ grid-template-columns:1fr; }
+}
+@media (max-width: 640px){
+  .topup-enterprise{ padding-top:8px; }
+  .tp-hero{ border-radius:24px; padding:22px; }
+  .tp-hero-metrics{ grid-template-columns:1fr; }
+  .tabs.tp-main-tabs{ gap:8px; padding:6px; border-radius:20px; }
+  .tabs .tab{ padding:13px 10px; border-radius:15px; font-size:14px; }
+  .tp-wallet-rail{ grid-template-columns:1fr; }
+  .tp-payment-header{ flex-direction:column; align-items:stretch; }
+  .tp-expire-badge{ width:100%; }
+  .tp-quick-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .d-desktop{ display:none!important; }
+  .d-mobile{ display:block!important; }
+  .tp-side-card,.tp-main-card,.tp-history-card{ border-radius:22px; padding:14px; }
+  .tp-amount-shell input{ font-size:34px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .topup-enterprise *, .topup-enterprise *::before, .topup-enterprise *::after{ animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+}
+</style>
+
+
+<style id="topup-no-manual-confirm-guard">
+  #confirmTopup,
+  button#confirmTopup,
+  [data-action="confirm-topup"]{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+.tp-qr-expired{
+  filter: grayscale(1) blur(5px) brightness(.82) contrast(.88) saturate(0) !important;
+  opacity:.72 !important;
+  transform:scale(1.025) !important;
+  pointer-events:none !important;
+  user-select:none !important;
+}
+.tp-qr-expired-ring{
+  position:relative !important;
+  overflow:hidden !important;
+  isolation:isolate !important;
+  background:
+    linear-gradient(135deg, rgba(0,0,0,.48), rgba(0,0,0,.22)),
+    conic-gradient(from 180deg,
+      color-mix(in srgb, var(--tp-danger, #ef4444) 34%, transparent),
+      color-mix(in srgb, var(--tp-modal-accent, #f6d36a) 56%, transparent),
+      color-mix(in srgb, var(--tp-danger, #ef4444) 34%, transparent)) !important;
+}
+.tp-qr-expired-ring::after{
+  content:'หมดอายุ' !important;
+  position:absolute !important;
+  inset:-18% !important;
+  z-index:5 !important;
+  display:grid !important;
+  place-items:center !important;
+  transform:rotate(-38deg) !important;
+  font-size:clamp(44px, 12vw, 88px) !important;
+  line-height:.9 !important;
+  font-weight:600 !important;
+  letter-spacing:-.08em !important;
+  color:rgba(190, 0, 0, .86) !important;
+  text-shadow:
+    0 2px 0 rgba(255,255,255,.08),
+    0 10px 28px rgba(0,0,0,.58) !important;
+  background:
+    radial-gradient(circle at center, rgba(0,0,0,.06), rgba(0,0,0,.13) 68%, rgba(0,0,0,.20)),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.08) 0 10px, rgba(255,255,255,.035) 10px 18px) !important;
+  border-radius:30px !important;
+  pointer-events:none !important;
+  user-select:none !important;
+}
+.tp-qr-expired-ring .qr-img{
+  box-shadow:inset 0 0 0 999px rgba(0,0,0,.12), 0 16px 38px rgba(0,0,0,.30) !important;
+}
+.tp-expired-box{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid color-mix(in srgb, var(--tp-danger, #ff6262) 45%, transparent);
+  border-radius:18px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--tp-danger, #ff6262) 14%, transparent), rgba(0,0,0,.16));
+  color:var(--tp-text, #fff);
+  display:grid;
+  gap:8px;
+  text-align:center;
+}
+.tp-expired-box b{ color:var(--tp-danger, #ff6262); font-size:15px; }
+.tp-expired-box span{ color:var(--tp-muted, #a5adba); font-size:13px; line-height:1.55; }
+.tp-cancel-old-btn{
+  justify-self:center;
+  border:1px solid color-mix(in srgb, var(--tp-danger, #ff6262) 55%, transparent);
+  color:#fff;
+  background:linear-gradient(135deg, #ff6262, #b91c1c);
+  border-radius:999px;
+  padding:10px 16px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 14px 30px rgba(185,28,28,.26);
+}
+.tp-cancel-old-btn:disabled{ opacity:.65; cursor:wait; }
+
+</style>

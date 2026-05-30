@@ -1,0 +1,1613 @@
+<%
+// monthStr รูปแบบ 'YYYY-MM' | yearStr รูปแบบ 'YYYY'
+const reportModeSafe = (typeof reportMode !== 'undefined' && reportMode === 'year') ? 'year' : 'month';
+const isYearMode = reportModeSafe === 'year';
+const [yy, mm] = (monthStr || '').split('-').map(Number);
+const selectedYear = Number(typeof yearStr !== 'undefined' && yearStr ? yearStr : (yy || new Date().getFullYear()));
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const headMonthLabel = isYearMode ? `ปี ${selectedYear + 543}` : `${MONTHS_TH[(mm||1)-1]} ${Number(yy || selectedYear) + 543}`;
+const totalCost = Number(monthTotals?.cost || 0);
+const totalSale = Number(monthTotals?.sale || 0);
+const totalCount = Number(monthTotals?.count || 0);
+const totalProfit = Number(monthTotals?.profit || 0);
+const profitRate = totalSale > 0 ? Math.round((totalProfit / totalSale) * 1000) / 10 : 0;
+const activeBuckets = Array.isArray(rows) ? rows.filter(r => Number(r.sale || 0) || Number(r.cost || 0) || Number(r.count || 0)).length : 0;
+const avgSale = activeBuckets > 0 ? totalSale / activeBuckets : 0;
+const avgProfit = activeBuckets > 0 ? totalProfit / activeBuckets : 0;
+const avgCost = activeBuckets > 0 ? totalCost / activeBuckets : 0;
+const periodUnit = isYearMode ? 'เดือน' : 'วัน';
+const detailKicker = isYearMode ? 'Monthly breakdown' : 'Daily breakdown';
+const selectedPeriodValue = isYearMode ? String(selectedYear) : String(monthStr || '');
+const __serviceBreakdown = Array.isArray(typeof serviceBreakdown !== 'undefined' ? serviceBreakdown : null) ? serviceBreakdown : [];
+const __orderDetailsRaw = (typeof orderDetails !== 'undefined' && orderDetails) ? orderDetails : {};
+const __detailTabs = [
+  { key:'smm', label:'SMM', icon:'📣', rows:Array.isArray(__orderDetailsRaw.smm) ? __orderDetailsRaw.smm : [] },
+  { key:'otp24', label:'OTP24', icon:'🔐', rows:Array.isArray(__orderDetailsRaw.otp24) ? __orderDetailsRaw.otp24 : [] },
+  { key:'apps', label:'Apps', icon:'📱', rows:Array.isArray(__orderDetailsRaw.apps) ? __orderDetailsRaw.apps : [] },
+];
+const __detailTotal = __detailTabs.reduce((sum,t)=>sum + t.rows.length, 0);
+
+function __cleanDisplay(v, max = 800) {
+  return String(v ?? '')
+    .replace(/&lt;\s*br\s*\/?\s*&gt;/gi, ' ')
+    .replace(/&lt;\s*hr[^&]*&gt;/gi, ' ')
+    .replace(/&lt;[^&]*&gt;/g, ' ')
+    .replace(/<\s*br\s*\/?\s*>/gi, ' ')
+    .replace(/<\s*hr[^>]*>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/(?:^|\s)(?:\.\/)?logstext\/[\w./-]+(?:\.txt)?(?=\s|$)/gi, ' ')
+    .replace(/(?:^|\s)[─━═_\-—]{6,}(?=\s|$)/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+function __isNoiseLine(v) {
+  const s = __cleanDisplay(v, 1000);
+  return !s
+    || /^(?:\.\/)?logstext\//i.test(s)
+    || /^[─━═_\-—]{6,}$/.test(s)
+    || /เพื่อความรวดเร็ว\s*\/?\s*ติดต่อสอบถาม\s*Facebook/i.test(s)
+    || /^สำเร็จ$/i.test(s);
+}
+
+const __serviceMaxSale = Math.max(1, ...__serviceBreakdown.map(s => Number(s.sale || 0)));
+const __serviceMaxCount = Math.max(1, ...__serviceBreakdown.map(s => Number(s.count || 0)));
+const __rowMaxSale = Math.max(1, ...(Array.isArray(rows) ? rows.map(r => Number(r.sale || 0)) : [0]));
+const __rowMaxProfit = Math.max(1, ...(Array.isArray(rows) ? rows.map(r => Math.abs(Number(r.profit || 0))) : [0]));
+
+const __trendRows = Array.isArray(rows) ? rows : [];
+const __trendLabels = __trendRows.map((r, idx) => isYearMode ? String(r.monthNo || idx + 1) : String(r.day || idx + 1));
+const __trendSaleVals = __trendRows.map(r => Number(r.sale || 0));
+const __trendCountVals = __trendRows.map(r => Number(r.count || 0));
+const __trendProfitVals = __trendRows.map(r => Number(r.profit || 0));
+const __trendCountMax = Math.max(1, ...__trendCountVals, 1);
+const __trendProfitMin = Math.min(0, ...__trendProfitVals, 0);
+const __trendProfitMax = Math.max(1, ...__trendProfitVals, 0);
+const __chartW = 1180;
+const __chartH = 290;
+const __padLeft = 18;
+const __padRight = 18;
+const __padTop = 18;
+const __padBottom = 38;
+const __plotW = Math.max(1, __chartW - __padLeft - __padRight);
+const __plotH = Math.max(1, __chartH - __padTop - __padBottom);
+const __pointCount = Math.max(__trendRows.length, 1);
+const __stepX = __pointCount > 1 ? (__plotW / (__pointCount - 1)) : 0;
+
+function rsScaleY(value, min, max) {
+  const range = (max - min) || 1;
+  return __padTop + (__plotH - (((Number(value || 0) - min) / range) * __plotH));
+}
+function rsPointX(index) {
+  if (__pointCount <= 1) return __padLeft + (__plotW / 2);
+  return __padLeft + (__stepX * index);
+}
+function rsBuildSeries(values, min, max) {
+  return values.map((v, i) => ({ x: rsPointX(i), y: rsScaleY(v, min, max), value: Number(v || 0), idx: i }));
+}
+function rsPath(points) {
+  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+}
+function rsAreaPath(points, baseY) {
+  if (!points.length) return '';
+  return `${rsPath(points)} L ${points[points.length - 1].x.toFixed(2)} ${baseY.toFixed(2)} L ${points[0].x.toFixed(2)} ${baseY.toFixed(2)} Z`;
+}
+const __salePoints = rsBuildSeries(__trendSaleVals, 0, __rowMaxSale);
+const __countPoints = rsBuildSeries(__trendCountVals, 0, __trendCountMax);
+const __profitPoints = rsBuildSeries(__trendProfitVals, __trendProfitMin, __trendProfitMax);
+const __salePath = rsPath(__salePoints);
+const __countPath = rsPath(__countPoints);
+const __profitPath = rsPath(__profitPoints);
+const __saleAreaPath = rsAreaPath(__salePoints, rsScaleY(0, 0, __rowMaxSale));
+const __profitZeroY = rsScaleY(0, __trendProfitMin, __trendProfitMax);
+const __gridLevels = [0, 0.25, 0.5, 0.75, 1].map(v => (__padTop + (__plotH * v)));
+%>
+
+
+<section class="report-enterprise" data-page="reportsummary">
+  <section class="rs-hero" aria-label="สรุปยอดขาย">
+    <div class="rs-orb rs-orb-a" aria-hidden="true"></div>
+    <div class="rs-orb rs-orb-b" aria-hidden="true"></div>
+
+    <div class="rs-hero-main">
+      <div class="rs-kicker"><span>✦</span> <%= isYearMode ? 'Yearly revenue intelligence' : 'Monthly revenue intelligence' %></div>
+      <h1><%= typeof title !== 'undefined' && title ? title : (isYearMode ? 'สรุปยอดขายรายปี' : 'สรุปยอดขายรายเดือน') %></h1>
+      <p>ดูภาพรวมต้นทุน ยอดขาย จำนวนบริการ และกำไร พร้อมสลับมุมมองรายเดือน/รายปีได้ในหน้าเดียว</p>
+    </div>
+
+    <div class="rs-hero-side" aria-label="ภาพรวมเดือนนี้">
+      <div class="rs-stat-chip">
+        <span class="rs-chip-label"><%= isYearMode ? 'ปีที่เลือก' : 'เดือนที่เลือก' %></span>
+        <strong><%= headMonthLabel %></strong>
+      </div>
+      <div class="rs-stat-chip">
+        <span class="rs-chip-label">Profit Rate</span>
+        <strong class="<%= totalProfit >= 0 ? 'rs-good' : 'rs-bad' %>"><%= profitRate.toLocaleString(undefined,{maximumFractionDigits:1}) %>%</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="rs-summary-grid" aria-label="สรุปยอดรวมตามช่วงที่เลือก">
+    <article class="rs-metric rs-metric-cost rs-anim" style="--delay:0ms">
+      <div class="rs-metric-glow" aria-hidden="true"></div>
+      <div class="rs-metric-top">
+        <span class="rs-metric-icon">🏷️</span>
+        <span class="rs-metric-badge">ต้นทุน</span>
+      </div>
+      <div class="rs-metric-body">
+        <h3>ยอดต้นทุนรวม</h3>
+        <div class="rs-big">฿<%= totalCost.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></div>
+        <p>ค่าใช้จ่ายรวมของบริการทั้งหมดในช่วงที่เลือก</p>
+      </div>
+      <div class="rs-metric-foot">
+        <span>เฉลี่ย / <%= periodUnit %></span>
+        <strong>฿<%= avgCost.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></strong>
+      </div>
+      <div class="rs-micro-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </article>
+
+    <article class="rs-metric rs-metric-sale rs-anim" style="--delay:70ms">
+      <div class="rs-metric-glow" aria-hidden="true"></div>
+      <div class="rs-metric-top">
+        <span class="rs-metric-icon">💰</span>
+        <span class="rs-metric-badge">ยอดขาย</span>
+      </div>
+      <div class="rs-metric-body">
+        <h3>ยอดขายรวม</h3>
+        <div class="rs-big">฿<%= totalSale.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></div>
+        <p>รายรับรวมจากออเดอร์ทั้งหมดใน<%= isYearMode ? 'ปีที่เลือก' : 'เดือนที่เลือก' %></p>
+      </div>
+      <div class="rs-metric-foot">
+        <span>เฉลี่ย / <%= periodUnit %></span>
+        <strong>฿<%= avgSale.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></strong>
+      </div>
+      <div class="rs-micro-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </article>
+
+    <article class="rs-metric rs-metric-count rs-anim" style="--delay:140ms">
+      <div class="rs-metric-glow" aria-hidden="true"></div>
+      <div class="rs-metric-top">
+        <span class="rs-metric-icon">🧾</span>
+        <span class="rs-metric-badge">ออเดอร์</span>
+      </div>
+      <div class="rs-metric-body">
+        <h3>บริการทั้งหมด</h3>
+        <div class="rs-big"><%= totalCount.toLocaleString() %> <small>รายการ</small></div>
+        <p>จำนวนบริการที่ถูกบันทึกในช่วงที่เลือก</p>
+      </div>
+      <div class="rs-metric-foot">
+        <span><%= isYearMode ? 'เดือนที่มีข้อมูล' : 'วันที่มีข้อมูล' %></span>
+        <strong><%= activeBuckets.toLocaleString() %> <%= periodUnit %></strong>
+      </div>
+      <div class="rs-micro-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </article>
+
+    <article class="rs-metric rs-metric-profit rs-anim" style="--delay:210ms">
+      <div class="rs-metric-glow" aria-hidden="true"></div>
+      <div class="rs-metric-top">
+        <span class="rs-metric-icon">📈</span>
+        <span class="rs-metric-badge <%= totalProfit >= 0 ? 'is-good' : 'is-bad' %>"><%= totalProfit >= 0 ? 'กำไร' : 'ติดลบ' %></span>
+      </div>
+      <div class="rs-metric-body">
+        <h3>กำไรรวม</h3>
+        <div class="rs-big">฿<%= totalProfit.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></div>
+        <p>อัตรากำไร <%= profitRate.toLocaleString(undefined,{maximumFractionDigits:1}) %>% จากยอดขายรวม</p>
+      </div>
+      <div class="rs-metric-foot">
+        <span>กำไรเฉลี่ย / <%= periodUnit %></span>
+        <strong>฿<%= avgProfit.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></strong>
+      </div>
+      <div class="rs-micro-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </article>
+  </section>
+
+  <section class="rs-toolbar-card rs-toolbar-card--luxury" aria-label="ตัวกรองรายงาน">
+    <div class="rs-toolbar-ambient" aria-hidden="true"></div>
+    <div class="rs-toolbar-ambient rs-toolbar-ambient--2" aria-hidden="true"></div>
+
+    <div class="rs-toolbar-left">
+      <div class="rs-toolbar-mark" aria-hidden="true">
+        <span class="rs-toolbar-mark__icon">📅</span>
+      </div>
+
+      <div class="rs-toolbar-copy">
+        <span class="rs-toolbar-mini-kicker">Enterprise Report Control</span>
+        <strong>เลือกรายงาน</strong>
+        <small>
+          สลับรายเดือน/รายปีเพื่อดู <b>ต้นทุน</b> <b>ยอดขาย</b> และ <b>กำไร</b> แบบเจาะลึกในหน้าเดียว
+        </small>
+      </div>
+    </div>
+
+    <div class="rs-toolbar-center">
+      <div class="rs-current-period-card" aria-label="ช่วงข้อมูลที่กำลังดู">
+        <span>กำลังดูข้อมูล</span>
+        <strong><%= headMonthLabel %></strong>
+      </div>
+
+      <div class="month-toolbar rs-month-toolbar-premium" role="group" aria-label="เลือกช่วงรายงาน">
+        <button class="rs-btn rs-btn-ghost" id="btnPrev" type="button" aria-label="ก่อนหน้า">‹</button>
+
+        <label class="month-ctrl rs-month-ctrl-premium">
+          <input id="monthInput" type="text" value="<%= selectedPeriodValue %>" readonly aria-label="เลือกช่วงรายงาน" />
+          <button class="rs-icon-btn" id="btnOpenPicker" type="button" aria-label="เปิดตัวเลือก">🗓️</button>
+        </label>
+
+        <button class="rs-btn rs-btn-ghost" id="btnNext" type="button" aria-label="ถัดไป">›</button>
+        <button class="rs-btn rs-btn-primary rs-btn-today" id="btnThisMonth" type="button"><%= isYearMode ? 'ปีนี้' : 'เดือนนี้' %></button>
+      </div>
+    </div>
+
+    <div class="rs-toolbar-right">
+      <div class="rs-mode-switch rs-mode-switch--premium" role="group" aria-label="เลือกมุมมองรายงาน">
+        <button class="rs-mode-btn <%= !isYearMode ? 'active' : '' %>" id="btnModeMonth" type="button">รายเดือน</button>
+        <button class="rs-mode-btn <%= isYearMode ? 'active' : '' %>" id="btnModeYear" type="button">รายปี</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popup: Month / Year Picker -->
+  <div id="monthPicker" class="mp-popup" hidden aria-hidden="true">
+    <div class="mp-backdrop" data-close-month-picker="1"></div>
+    <div class="mp-card" role="dialog" aria-modal="true" aria-label="เลือกช่วงรายงาน">
+      <div class="mp-head">
+        <button class="mp-nav" id="mpPrevYear" type="button" aria-label="ปีก่อนหน้า">‹</button>
+        <div class="mp-year" id="mpYear">2025</div>
+        <button class="mp-nav" id="mpNextYear" type="button" aria-label="ปีถัดไป">›</button>
+      </div>
+      <div class="mp-grid" id="mpGrid" role="grid" aria-label="รายการเดือนหรือปี"></div>
+      <div class="mp-actions">
+        <button class="rs-btn rs-btn-ghost" id="mpClear" type="button">ล้าง</button>
+        <div class="spacer"></div>
+        <button class="rs-btn rs-btn-ghost" id="mpThisMonth" type="button"><%= isYearMode ? 'ปีนี้' : 'เดือนนี้' %></button>
+        <button class="rs-btn rs-btn-primary" id="mpOK" type="button">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+
+  <section class="rs-service-intel rs-anim" aria-label="กราฟสรุปยอดตามบริการ">
+    <div class="rs-service-head">
+      <div>
+        <span class="rs-kicker mini"><span>✦</span> Service intelligence</span>
+        <h2>กราฟยอดขายตามบริการ</h2>
+        <p>รวมข้อมูลจาก <b>SMM</b>, <b>OTP24</b> และ <b>Apps</b> ในช่วงที่เลือกเดียวกับรายงานด้านบน</p>
+      </div>
+      <div class="rs-service-total">
+        <span>ยอดขายรวม</span>
+        <strong>฿<%= totalSale.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></strong>
+      </div>
+    </div>
+
+    <div class="rs-service-grid">
+      <% (__serviceBreakdown || []).forEach((svc, idx) => {
+           const sale = Number(svc.sale || 0);
+           const cost = Number(svc.cost || 0);
+           const count = Number(svc.count || 0);
+           const profit = Number(svc.profit || 0);
+           const salePct = Math.max(0, Math.min(100, (sale / __serviceMaxSale) * 100));
+           const countPct = Math.max(0, Math.min(100, (count / __serviceMaxCount) * 100));
+      %>
+        <article class="rs-service-card rs-service-<%= svc.key || idx %>" style="--delay:<%= 260 + (idx * 80) %>ms; --sale:<%= salePct %>%; --count:<%= countPct %>%">
+          <div class="rs-service-card-top">
+            <span class="rs-service-icon"><%= svc.icon || '✦' %></span>
+            <div>
+              <strong><%= svc.label || '-' %></strong>
+              <small><%= svc.title || 'Service' %></small>
+            </div>
+          </div>
+          <div class="rs-service-money">฿<%= sale.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></div>
+          <div class="rs-service-bars" aria-hidden="true">
+            <div class="rs-service-bar"><span style="width:var(--sale)"></span></div>
+            <div class="rs-service-bar rs-service-bar-count"><span style="width:var(--count)"></span></div>
+          </div>
+          <div class="rs-service-meta">
+            <span><b><%= count.toLocaleString() %></b> รายการ</span>
+            <span class="<%= profit >= 0 ? 'rs-good' : 'rs-bad' %>">กำไร ฿<%= profit.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></span>
+          </div>
+          <div class="rs-service-foot">
+            <span>ต้นทุน ฿<%= cost.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></span>
+            <strong><%= Number(svc.salePct || 0).toLocaleString(undefined,{maximumFractionDigits:1}) %>% ของยอดขาย</strong>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+
+    <div class="rs-trend-panel rs-trend-panel-line" aria-label="กราฟแนวโน้มตามช่วงเวลา">
+      <div class="rs-trend-head rs-trend-head-line">
+        <div>
+          <strong><%= isYearMode ? 'แนวโน้มรายเดือน' : 'แนวโน้มรายวัน' %></strong>
+          <span>กราฟเส้นสรุป ยอดขาย / กำไร / จำนวนรายการ</span>
+        </div>
+        <div class="rs-trend-legend" aria-label="คำอธิบายกราฟ">
+          <span class="rs-legend-item sale"><i></i>ยอดขาย</span>
+          <span class="rs-legend-item profit"><i></i>กำไร</span>
+          <span class="rs-legend-item count"><i></i>จำนวนรายการ</span>
+        </div>
+      </div>
+
+      <div class="rs-line-chart-shell">
+        <div class="rs-line-side rs-line-side-left">
+          <span>฿<%= __rowMaxSale.toLocaleString(undefined,{maximumFractionDigits:0}) %></span>
+          <span>฿<%= (__rowMaxSale * 0.5).toLocaleString(undefined,{maximumFractionDigits:0}) %></span>
+          <span>฿0</span>
+        </div>
+
+        <div class="rs-line-chart" role="img" aria-label="<%= isYearMode ? 'กราฟเส้นแนวโน้มรายเดือน' : 'กราฟเส้นแนวโน้มรายวัน' %>">
+          <svg class="rs-line-svg" viewBox="0 0 <%= __chartW %> <%= __chartH %>" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="rsSaleLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#fff0aa"/>
+                <stop offset="52%" stop-color="#efc661"/>
+                <stop offset="100%" stop-color="#b97712"/>
+              </linearGradient>
+              <linearGradient id="rsSaleFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(246,206,97,.34)"/>
+                <stop offset="100%" stop-color="rgba(246,206,97,0)"/>
+              </linearGradient>
+              <linearGradient id="rsProfitLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#8bf7d1"/>
+                <stop offset="100%" stop-color="#17ba76"/>
+              </linearGradient>
+              <linearGradient id="rsCountLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#8ee8ff"/>
+                <stop offset="100%" stop-color="#4f7cff"/>
+              </linearGradient>
+              <filter id="rsGlowGold" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="rsGlowSoft" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <% __gridLevels.forEach((gy, idx) => { %>
+              <line x1="<%= __padLeft %>" y1="<%= gy.toFixed(2) %>" x2="<%= (__chartW - __padRight) %>" y2="<%= gy.toFixed(2) %>" class="rs-svg-grid <%= idx === __gridLevels.length - 1 ? 'is-base' : '' %>" />
+            <% }) %>
+            <line x1="<%= __padLeft %>" y1="<%= __profitZeroY.toFixed(2) %>" x2="<%= (__chartW - __padRight) %>" y2="<%= __profitZeroY.toFixed(2) %>" class="rs-svg-zero" />
+
+            <% __trendLabels.forEach((label, idx) => { const x = rsPointX(idx); %>
+              <line x1="<%= x.toFixed(2) %>" y1="<%= __padTop %>" x2="<%= x.toFixed(2) %>" y2="<%= (__chartH - __padBottom) %>" class="rs-svg-vline" />
+            <% }) %>
+
+            <% if (__saleAreaPath) { %>
+              <path d="<%= __saleAreaPath %>" class="rs-sale-area" />
+            <% } %>
+            <% if (__salePath) { %>
+              <path d="<%= __salePath %>" class="rs-series-line rs-series-sale" />
+            <% } %>
+            <% if (__profitPath) { %>
+              <path d="<%= __profitPath %>" class="rs-series-line rs-series-profit" />
+            <% } %>
+            <% if (__countPath) { %>
+              <path d="<%= __countPath %>" class="rs-series-line rs-series-count" />
+            <% } %>
+
+            <% __salePoints.forEach((p, idx) => { const r = __trendRows[idx] || {}; const label = __trendLabels[idx] || String(idx + 1); %>
+              <g class="rs-point-group">
+                <title><%= label %> | ยอดขาย ฿<%= Number(r.sale || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %> | กำไร ฿<%= Number(r.profit || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %> | จำนวน <%= Number(r.count || 0).toLocaleString() %> รายการ</title>
+                <circle cx="<%= p.x.toFixed(2) %>" cy="<%= p.y.toFixed(2) %>" r="6.2" class="rs-point rs-point-sale" />
+                <% const pp = __profitPoints[idx]; if (pp) { %><circle cx="<%= pp.x.toFixed(2) %>" cy="<%= pp.y.toFixed(2) %>" r="5.1" class="rs-point rs-point-profit" /><% } %>
+                <% const cp = __countPoints[idx]; if (cp) { %><circle cx="<%= cp.x.toFixed(2) %>" cy="<%= cp.y.toFixed(2) %>" r="5.1" class="rs-point rs-point-count" /><% } %>
+              </g>
+            <% }) %>
+          </svg>
+
+          <div class="rs-chart-hovers" aria-label="รายละเอียดจุดกราฟ">
+            <% __salePoints.forEach((p, idx) => {
+              const r = __trendRows[idx] || {};
+              const label = __trendLabels[idx] || String(idx + 1);
+              const left = (p.x / __chartW) * 100;
+              const top = (p.y / __chartH) * 100;
+              const tipClass = [
+                top < 27 ? 'is-below' : '',
+                left < 12 ? 'is-left-edge' : '',
+                left > 88 ? 'is-right-edge' : ''
+              ].filter(Boolean).join(' ');
+            %>
+              <button type="button" class="rs-hover-dot <%= tipClass %>" style="--x:<%= left.toFixed(4) %>%; --y:<%= top.toFixed(4) %>%" aria-label="<%= label %> ยอดขาย <%= Number(r.sale || 0).toLocaleString() %> บาท กำไร <%= Number(r.profit || 0).toLocaleString() %> บาท จำนวน <%= Number(r.count || 0).toLocaleString() %> รายการ">
+                <span class="rs-chart-tip">
+                  <b><%= isYearMode ? 'เดือน' : 'วันที่' %> <%= label %></b>
+                  <span>ยอดขาย <strong>฿<%= Number(r.sale || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></strong></span>
+                  <span>กำไร <strong>฿<%= Number(r.profit || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></strong></span>
+                  <span>จำนวน <strong><%= Number(r.count || 0).toLocaleString() %> รายการ</strong></span>
+                </span>
+              </button>
+            <% }) %>
+          </div>
+
+          <div class="rs-line-xlabels" style="--label-count:<%= Math.max(__trendLabels.length, 1) %>" aria-hidden="true">
+            <% __trendLabels.forEach((label) => { %>
+              <span><%= label %></span>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- <section class="rs-table-card">
+    <div class="rs-table-head">
+      <div>
+        <span class="rs-kicker mini"><span>✦</span> <%= detailKicker %></span>
+        <h2><%= headMonthLabel %></h2>
+      </div>
+      <span class="rs-table-count"><%= Number(rows?.length || 0).toLocaleString() %> <%= periodUnit %></span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="tbl zebra">
+        <thead>
+          <tr>
+            <th><%= isYearMode ? 'เดือน' : 'วันที่' %></th>
+            <th>ต้นทุน</th>
+            <th>ยอดขาย</th>
+            <th>บริการทั้งหมด</th>
+            <th>กำไร</th>
+            <% if (isYearMode) { %><th>ดูรายการ</th><% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (rows && rows.length) { %>
+            <% rows.forEach((r, idx) => { %>
+              <tr style="--row-delay:<%= Math.min(idx * 18, 360) %>ms">
+                <td data-label="<%= isYearMode ? 'เดือน' : 'วันที่' %>">
+                  <span class="<%= isYearMode ? 'rs-period-pill' : 'rs-day-pill' %>"><%= isYearMode ? `${r.monthLabel} ${selectedYear + 543}` : r.day %></span>
+                </td>
+                <td data-label="ต้นทุน" class="rs-num rs-cost"><%= Number(r.cost || 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+                <td data-label="ยอดขาย" class="rs-num rs-sale"><%= Number(r.sale || 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+                <td data-label="บริการทั้งหมด" class="rs-num rs-count"><%= Number(r.count || 0).toLocaleString() %></td>
+                <td data-label="กำไร" class="rs-num <%= Number(r.profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
+                  <%= Number(r.profit || 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                </td>
+                <% if (isYearMode) { %>
+                  <td data-label="ดูรายการ">
+                    <a class="rs-view-link" href="?mode=month&month=<%= r.monthStr %>">ดูรายวัน</a>
+                  </td>
+                <% } %>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="<%= isYearMode ? 6 : 5 %>" class="rs-empty">
+                <div class="rs-empty-box">
+                  <strong>ยังไม่มีข้อมูลในช่วงนี้</strong>
+                  <span>ลองเลือกช่วงอื่น หรือรอให้ระบบซิงก์ข้อมูลคำสั่งซื้อก่อน</span>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section> -->
+
+  <section class="rs-detail-board rs-anim" aria-label="รายละเอียดคำสั่งซื้อแยกตามบริการ">
+    <div class="rs-detail-head">
+      <div>
+        <span class="rs-kicker mini"><span>✦</span> Service Order</span>
+        <h2>รายละเอียดลูกค้าที่ซื้อบริการ</h2>
+        <p>แยกแท็บตามบริการเพื่อเช็คได้ทันทีว่าใครซื้ออะไร รายละเอียดบริการอะไร และยอดเงินเท่าไหร่</p>
+      </div>
+      <span class="rs-detail-total"><%= Number(__detailTotal || 0).toLocaleString() %> รายการ</span>
+    </div>
+
+    <div class="rs-detail-tabs" role="tablist" aria-label="แท็บรายละเอียดบริการ">
+      <% __detailTabs.forEach((tab, idx) => { %>
+        <button class="rs-detail-tab <%= idx === 0 ? 'active' : '' %>" type="button" data-rs-tab="<%= tab.key %>" role="tab" aria-selected="<%= idx === 0 ? 'true' : 'false' %>">
+          <span><%= tab.icon %></span><b><%= tab.label %></b><em><%= tab.rows.length.toLocaleString() %></em>
+        </button>
+      <% }) %>
+    </div>
+
+    <% __detailTabs.forEach((tab, idx) => { %>
+      <div class="rs-detail-pane <%= idx === 0 ? 'active' : '' %>" data-rs-pane="<%= tab.key %>" role="tabpanel">
+        <% if (tab.rows.length) { %>
+          <div class="rs-order-grid">
+            <% tab.rows.forEach((o, i) => { %>
+              <article class="rs-order-card rs-order-<%= tab.key %>" style="--row-delay:<%= Math.min(i * 18, 420) %>ms">
+                <div class="rs-order-top">
+                  <div>
+                    <span class="rs-order-service"><%= __cleanDisplay(o.title, 180) || '-' %></span>
+                    <strong><%= o.customer || '-' %></strong>
+                    <small><%= o.customerSub || '-' %></small>
+                  </div>
+                  <span class="rs-order-status"><%= o.status || '-' %></span>
+                </div>
+                <div class="rs-order-detail">
+                  <% if (Array.isArray(o.detailRows) && o.detailRows.length) { %>
+                    <div class="rs-secret-rows">
+                      <% const __detailSeen = new Set(); %>
+                      <% o.detailRows.forEach((row) => { %>
+                        <% const __detailKey = __cleanDisplay([row.key, row.value].filter(Boolean).join(': '), 1000).replace(/\s+/g, ' ').replace(/(คืน(?:เครดิต|เงิน)\s*[:：]\s*)(?:฿\s*)?[0-9][0-9,]*(?:\.\d+)?\s*(?:เครดิต|บาท|THB)?/i, '$1AMOUNT').toLowerCase(); %>
+                        <% if (!__isNoiseLine(row.value) && !__detailSeen.has(__detailKey)) { __detailSeen.add(__detailKey); %>
+                          <div class="rs-secret-row <%= row.key ? '' : 'is-plain' %>">
+                            <% if (row.key) { %><b><%= __cleanDisplay(row.key, 80) %></b><% } %>
+                            <span><%= __cleanDisplay(row.value, 900) || '-' %></span>
+                          </div>
+                        <% } %>
+                      <% }) %>
+                    </div>
+                  <% } else { %>
+                    <%= __cleanDisplay(o.detail, 900) || '-' %>
+                  <% } %>
+                </div>
+                <div class="rs-order-meta">
+                  <span><b>เวลา</b><%= o.at || '-' %></span>
+                  <span><b>Order</b><%= o.orderId || '-' %></span>
+                  <span><b>จำนวน</b><%= Number(o.qty || 0).toLocaleString() %></span>
+                </div>
+                <div class="rs-order-extra"><%= __cleanDisplay(o.extra, 240) || '-' %></div>
+                <div class="rs-order-money">
+                  <% const __isRefundedOrder = String(o.status || '').toLowerCase() === 'refunded' || o.refundApplied === true; %>
+                  <span><b>ต้นทุน</b>฿<%= Number(o.cost || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></span>
+                  <span><b><%= __isRefundedOrder ? 'คืนเครดิต' : 'ยอดขาย' %></b>฿<%= Number(__isRefundedOrder ? (o.refundAmount || o.sale || 0) : (o.sale || 0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></span>
+                  <span class="<%= Number(o.profit || 0) >= 0 ? 'is-good' : 'is-bad' %>"><b>กำไร</b>฿<%= Number(o.profit || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) %></span>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="rs-detail-empty">
+            <strong>ยังไม่มีรายการในช่วงนี้</strong>
+            <span>แท็บนี้จะมีข้อมูลทันทีเมื่อมีคำสั่งซื้อสำเร็จในช่วงที่เลือก</span>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  </section>
+</section>
+
+<style>
+/* ===============================
+   Enterprise Report Summary Theme
+   - Local scoped CSS only
+   - Uses layout.ejs variables when available
+================================= */
+.report-enterprise{
+  --rs-page:var(--page,#08090d);
+  --rs-card:var(--card,#15161c);
+  --rs-card-2:color-mix(in srgb,var(--card,#15161c) 86%,var(--page,#08090d));
+  --rs-soft:color-mix(in srgb,var(--card,#15161c) 78%,transparent);
+  --rs-text:var(--text,#fff5df);
+  --rs-muted:var(--muted,#b9ad91);
+  --rs-border:var(--border,rgba(255,255,255,.11));
+  --rs-accent:var(--accent,#f4c65f);
+  --rs-accent-2:#d39a27;
+  --rs-green:#37dc82;
+  --rs-red:#ff5d72;
+  --rs-blue:#48b8ff;
+  --rs-shadow:rgba(0,0,0,.34);
+  color:var(--rs-text);
+  position:relative;
+  isolation:isolate;
+  padding:clamp(10px,1.4vw,18px);
+}
+html[data-theme="light"] .report-enterprise,
+body.light .report-enterprise,
+[data-bs-theme="light"] .report-enterprise{
+  --rs-page:var(--page,#f6f7fb);
+  --rs-card:var(--card,#ffffff);
+  --rs-card-2:#f9fafc;
+  --rs-soft:rgba(255,255,255,.72);
+  --rs-text:var(--text,#151821);
+  --rs-muted:var(--muted,#637083);
+  --rs-border:var(--border,rgba(20,28,42,.12));
+  --rs-shadow:rgba(30,41,59,.13);
+}
+.report-enterprise *{box-sizing:border-box}
+.report-enterprise :where(button,input){font:inherit}
+
+.rs-hero,
+.rs-toolbar-card,
+.rs-table-card,
+.rs-metric{
+  border:1px solid var(--rs-border);
+  background:
+    radial-gradient(circle at 18% 0%,color-mix(in srgb,var(--rs-accent) 16%,transparent),transparent 34%),
+    linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.014)),
+    var(--rs-card);
+  box-shadow:0 22px 54px var(--rs-shadow), inset 0 1px 0 rgba(255,255,255,.06);
+  border-radius:28px;
+}
+.rs-hero{
+  position:relative;
+  overflow:hidden;
+  min-height:220px;
+  padding:clamp(24px,4vw,44px);
+  display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(280px,.65fr);
+  gap:24px;
+  align-items:end;
+  animation:rsRise .58s cubic-bezier(.2,.85,.2,1) both;
+}
+.rs-orb{position:absolute;border-radius:999px;filter:blur(18px);opacity:.5;pointer-events:none;animation:rsFloat 8s ease-in-out infinite}
+.rs-orb-a{width:220px;height:220px;right:12%;top:-110px;background:color-mix(in srgb,var(--rs-accent) 42%,transparent)}
+.rs-orb-b{width:180px;height:180px;left:18%;bottom:-120px;background:rgba(126,87,255,.22);animation-delay:-2s}
+.rs-kicker{display:inline-flex;align-items:center;gap:8px;width:max-content;max-width:100%;padding:8px 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--rs-accent) 46%,var(--rs-border));background:color-mix(in srgb,var(--rs-accent) 10%,transparent);color:var(--rs-accent);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.rs-kicker.mini{font-size:11px;padding:6px 10px;margin-bottom:8px}
+.rs-hero h1{margin:18px 0 10px;font-size:clamp(36px,5.6vw,78px);line-height:.95;font-weight:950;letter-spacing:-.055em;color:var(--rs-text)}
+.rs-hero p{margin:0;max-width:760px;color:color-mix(in srgb,var(--rs-muted) 86%,var(--rs-text));font-size:clamp(15px,1.3vw,20px);line-height:1.75;font-weight:700}
+.rs-hero-side{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.rs-stat-chip{min-height:98px;padding:18px;border-radius:22px;border:1px solid var(--rs-border);background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));display:flex;flex-direction:column;justify-content:center;gap:6px;backdrop-filter:blur(12px);animation:rsSlide .6s cubic-bezier(.2,.85,.2,1) both .15s}
+.rs-chip-label{color:var(--rs-muted);font-size:12px;font-weight:600}
+.rs-stat-chip strong{font-size:clamp(20px,2vw,28px);color:var(--rs-accent)}
+.rs-good{color:var(--rs-green)!important}.rs-bad{color:var(--rs-red)!important}
+
+.rs-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+  margin:18px 0;
+}
+.rs-metric{
+  --metric-color:var(--rs-accent);
+  --metric-color-2:var(--rs-accent-2);
+  position:relative;
+  overflow:hidden;
+  min-height:208px;
+  padding:18px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:12px;
+  border-radius:28px;
+  animation:rsRise .54s cubic-bezier(.2,.85,.2,1) both;
+  animation-delay:var(--delay,0ms);
+  background:
+    radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--metric-color) 24%,transparent),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.064),rgba(255,255,255,.018) 42%,rgba(0,0,0,.10)),
+    var(--rs-card);
+}
+.rs-metric::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--metric-color) 42%,transparent),transparent 36%,color-mix(in srgb,var(--rs-border) 80%,transparent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  pointer-events:none;
+  opacity:.9;
+}
+.rs-metric::after{
+  content:"";
+  position:absolute;
+  right:-42px;
+  bottom:-74px;
+  width:230px;
+  height:150px;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--metric-color) 30%,transparent),transparent 68%);
+  filter:blur(6px);
+  opacity:.8;
+  pointer-events:none;
+}
+.rs-metric-glow{
+  position:absolute;
+  inset:auto 18px 14px auto;
+  width:48%;
+  height:58px;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--metric-color) 55%,transparent),transparent);
+  transform:rotate(-10deg);
+  opacity:.38;
+  filter:blur(.4px);
+  pointer-events:none;
+}
+.rs-metric-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rs-metric-icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:17px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--metric-color) 28%,transparent),color-mix(in srgb,var(--metric-color) 11%,transparent));
+  box-shadow:0 16px 32px color-mix(in srgb,var(--metric-color) 18%,transparent), inset 0 1px 0 rgba(255,255,255,.16);
+}
+.rs-metric-badge{
+  border:1px solid color-mix(in srgb,var(--metric-color) 24%,var(--rs-border));
+  background:color-mix(in srgb,var(--rs-card) 72%,transparent);
+  color:color-mix(in srgb,var(--metric-color) 72%,var(--rs-text));
+  border-radius:999px;
+  padding:7px 11px;
+  font-size:12px;
+  font-weight:650;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+.rs-metric-badge.is-good{--metric-color:var(--rs-green)}
+.rs-metric-badge.is-bad{--metric-color:var(--rs-red)}
+.rs-metric-body{position:relative;z-index:2;align-self:center}
+.rs-metric h3{margin:0 0 8px;color:color-mix(in srgb,var(--rs-muted) 86%,var(--rs-text));font-size:14px;font-weight:650;letter-spacing:-.01em}
+.rs-big{
+  color:var(--metric-color);
+  font-size:clamp(28px,2.9vw,42px);
+  line-height:1;
+  font-weight:650;
+  letter-spacing:-.045em;
+  text-shadow:0 10px 28px color-mix(in srgb,var(--metric-color) 18%,transparent);
+  word-break:break-word;
+}
+.rs-big small{font-size:.55em;letter-spacing:-.02em;color:color-mix(in srgb,var(--metric-color) 86%,var(--rs-text))}
+.rs-metric-body p{margin:10px 0 0;color:var(--rs-muted);font-size:12.5px;line-height:1.45;font-weight:750;max-width:94%}
+.rs-metric-foot{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:40px;
+  padding:9px 11px;
+  border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--metric-color) 16%,var(--rs-border));
+  background:color-mix(in srgb,var(--rs-page) 34%,transparent);
+}
+.rs-metric-foot span{color:var(--rs-muted);font-size:11.5px;font-weight:850}
+.rs-metric-foot strong{color:var(--rs-text);font-size:13px;font-weight:950;white-space:nowrap}
+.rs-micro-chart{position:absolute;right:20px;bottom:70px;width:128px;height:42px;display:flex;align-items:flex-end;gap:5px;opacity:.72;pointer-events:none;z-index:1}
+.rs-micro-chart i{display:block;width:16px;border-radius:999px;background:linear-gradient(180deg,color-mix(in srgb,var(--metric-color) 80%,white),color-mix(in srgb,var(--metric-color) 32%,transparent));box-shadow:0 0 18px color-mix(in srgb,var(--metric-color) 20%,transparent)}
+.rs-micro-chart i:nth-child(1){height:14px}.rs-micro-chart i:nth-child(2){height:20px}.rs-micro-chart i:nth-child(3){height:28px}.rs-micro-chart i:nth-child(4){height:24px}.rs-micro-chart i:nth-child(5){height:36px}
+.rs-metric-cost{--metric-color:#f1d58a;--metric-color-2:#c9a046}
+.rs-metric-sale{--metric-color:var(--rs-accent);--metric-color-2:var(--rs-accent-2)}
+.rs-metric-count{--metric-color:var(--rs-blue);--metric-color-2:#2563eb}
+.rs-metric-profit{--metric-color:var(--rs-green);--metric-color-2:#059669}
+.rs-muted{color:var(--rs-muted)}.rs-accent{color:var(--rs-accent)}.rs-info{color:var(--rs-blue)}.rs-success{color:var(--rs-green)}.rs-danger{color:var(--rs-red)}
+
+.rs-toolbar-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(260px,1.1fr) minmax(210px,.7fr) auto;
+  align-items:center;
+  gap:14px;
+  padding:18px;
+  margin:16px 0;
+  border-radius:26px;
+  animation:rsRise .58s cubic-bezier(.2,.85,.2,1) both .12s;
+  overflow:visible;
+}
+.rs-toolbar-card::before{
+  content:"";
+  position:absolute;
+  inset:12px auto 12px 50%;
+  width:1px;
+  background:linear-gradient(180deg,transparent,var(--rs-border),transparent);
+  opacity:.8;
+}
+.rs-toolbar-copy{display:flex;align-items:center;gap:12px;min-width:0}
+.rs-toolbar-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:16px;background:color-mix(in srgb,var(--rs-accent) 18%,transparent);box-shadow:0 14px 28px color-mix(in srgb,var(--rs-accent) 14%,transparent)}
+.rs-toolbar-copy strong{display:block;color:var(--rs-text);font-size:16px;font-weight:950;line-height:1.2}
+.rs-toolbar-copy small{display:block;color:var(--rs-muted);font-size:12.5px;font-weight:750;margin-top:4px;line-height:1.45;max-width:460px}
+.rs-current-month{
+  min-height:54px;
+  padding:10px 16px;
+  border-radius:18px;
+  border:1px solid var(--rs-border);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--rs-accent) 10%,transparent),color-mix(in srgb,var(--rs-soft) 86%,transparent));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:2px;
+  text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.rs-current-month span{font-size:11px;color:var(--rs-muted);font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+.rs-current-month strong{font-size:16px;color:var(--rs-accent);font-weight:950;line-height:1.15}
+.month-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:flex-end;
+  padding:6px;
+  border-radius:21px;
+  border:1px solid var(--rs-border);
+  background:color-mix(in srgb,var(--rs-page) 72%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  width:max-content;
+  justify-self:end;
+}
+.rs-btn,.rs-icon-btn{border:0;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease,color .18s ease,filter .18s ease}
+.rs-btn{min-height:44px;padding:9px 15px;border-radius:15px;font-weight:650;color:var(--rs-text);white-space:nowrap}
+.rs-btn:hover,.rs-icon-btn:hover{transform:translateY(-1px)}
+.rs-btn-ghost{background:var(--rs-soft);border:1px solid var(--rs-border);color:var(--rs-text)}
+.rs-btn-ghost:hover{background:color-mix(in srgb,var(--rs-soft) 82%,var(--rs-accent));box-shadow:0 10px 22px color-mix(in srgb,var(--rs-shadow) 72%,transparent)}
+.rs-btn-primary{background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);color:#17130a;box-shadow:0 14px 30px color-mix(in srgb,var(--rs-accent) 23%,transparent)}
+.month-ctrl{display:flex;align-items:center;min-height:46px;border:1px solid color-mix(in srgb,var(--rs-accent) 36%,var(--rs-border));border-radius:17px;background:color-mix(in srgb,var(--rs-card) 75%,var(--rs-page));box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.month-ctrl input{width:124px;background:transparent;border:0;outline:0;color:var(--rs-text);font-weight:650;padding:0 12px;text-align:center;cursor:pointer;letter-spacing:.02em}
+.rs-icon-btn{width:40px;height:40px;margin-right:3px;border-radius:14px;background:color-mix(in srgb,var(--rs-accent) 16%,transparent);border:1px solid var(--rs-border);color:var(--rs-text)}
+
+.rs-table-card{margin-top:16px;padding:0;overflow:hidden;animation:rsRise .58s cubic-bezier(.2,.85,.2,1) both .18s}
+.rs-table-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid var(--rs-border);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
+.rs-table-head h2{margin:0;font-size:clamp(22px,2vw,30px);color:var(--rs-text)}
+.rs-table-count{padding:8px 13px;border-radius:999px;border:1px solid var(--rs-border);background:var(--rs-soft);color:var(--rs-accent);font-weight:650}
+.table-wrap{overflow:auto;max-width:100%}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;color:var(--rs-text);min-width:760px}
+.tbl th,.tbl td{padding:15px 16px;border-bottom:1px solid var(--rs-border);text-align:right;transition:background .16s ease,box-shadow .16s ease,transform .16s ease;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl thead th{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--rs-card) 92%,black);color:color-mix(in srgb,var(--rs-accent) 72%,var(--rs-text));font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:950}
+.tbl tbody tr{animation:rsRow .42s ease both;animation-delay:var(--row-delay,0ms)}
+.tbl.zebra tbody tr:nth-child(odd) td{background:color-mix(in srgb,var(--rs-card) 88%,transparent)}
+.tbl.zebra tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--rs-card) 78%,var(--rs-page))}
+.tbl.zebra tbody tr:hover td{background:color-mix(in srgb,var(--rs-accent) 9%,var(--rs-card));transform:translateY(-1px)}
+.tbl.zebra tbody tr:hover td:first-child{box-shadow:inset 4px 0 0 var(--rs-accent)}
+.rs-day-pill{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:7px 11px;border-radius:999px;background:var(--rs-soft);border:1px solid var(--rs-border);font-weight:950;color:var(--rs-accent)}
+.rs-num{font-weight:600}.rs-cost{color:var(--rs-muted)}.rs-sale{color:var(--rs-green)}.rs-count{color:var(--rs-blue)}
+.text-success{color:var(--rs-green)!important;font-weight:650}.text-danger{color:var(--rs-red)!important;font-weight:650}
+.rs-empty{padding:34px!important;text-align:center!important;background:transparent!important}
+.rs-empty-box{display:grid;gap:6px;place-items:center;padding:26px;border:1px dashed var(--rs-border);border-radius:22px;background:var(--rs-soft);color:var(--rs-muted)}
+.rs-empty-box strong{color:var(--rs-text);font-size:18px}
+
+/* Month picker: true top-layer style */
+.mp-popup[hidden]{display:none!important}
+.mp-popup{position:fixed;inset:0;z-index:2147483000;display:block;pointer-events:none}
+.mp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.18);backdrop-filter:blur(2px);opacity:0;pointer-events:auto}
+.mp-card{position:fixed;left:var(--mp-left,50%);top:var(--mp-top,50%);width:min(342px,calc(100vw - 24px));border-radius:24px;border:1px solid var(--rs-border);background:linear-gradient(180deg,color-mix(in srgb,var(--rs-card) 96%,transparent),color-mix(in srgb,var(--rs-page) 30%,var(--rs-card)));color:var(--rs-text);box-shadow:0 30px 90px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.08);padding:14px;pointer-events:auto;animation:rsPicker .2s ease both;overflow:hidden}
+.mp-card::before{content:"";position:absolute;inset:-60px -80px auto auto;width:180px;height:180px;border-radius:999px;background:color-mix(in srgb,var(--rs-accent) 22%,transparent);filter:blur(20px);pointer-events:none}
+.mp-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px 12px;border-bottom:1px solid var(--rs-border)}
+.mp-year{font-size:20px;font-weight:650;color:var(--rs-accent)}
+.mp-nav{width:40px;height:40px;border-radius:14px;border:1px solid var(--rs-border);background:var(--rs-soft);color:var(--rs-text);cursor:pointer;font-size:24px;line-height:1;transition:transform .18s ease,background .18s ease}
+.mp-nav:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--rs-accent) 14%,transparent)}
+.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 0}
+.mp-m{min-height:44px;border:1px solid var(--rs-border);background:color-mix(in srgb,var(--rs-page) 55%,transparent);color:var(--rs-text);border-radius:15px;cursor:pointer;font-weight:950;transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.mp-m:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--rs-accent) 45%,var(--rs-border));background:color-mix(in srgb,var(--rs-accent) 12%,transparent)}
+.mp-m.active{color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);border-color:transparent;box-shadow:0 10px 22px color-mix(in srgb,var(--rs-accent) 25%,transparent)}
+.mp-m.current:not(.active){border-color:color-mix(in srgb,var(--rs-accent) 48%,var(--rs-border));color:var(--rs-accent)}
+.mp-actions{display:flex;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--rs-border)}
+.spacer{flex:1}
+
+@keyframes rsRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes rsSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes rsFloat{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,18px,0) scale(1.04)}}
+@keyframes rsRow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rsPicker{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
+
+.rs-mode-switch{display:flex;align-items:center;gap:6px;padding:5px;border-radius:18px;border:1px solid var(--rs-border);background:color-mix(in srgb,var(--rs-page) 68%,transparent);width:max-content;justify-self:end}
+.rs-mode-switch .rs-mode-btn{min-height:40px;border-radius:13px;padding:8px 13px;border:1px solid transparent;background:transparent;color:var(--rs-muted);font-weight:950;cursor:pointer;transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease}
+.rs-mode-switch .rs-mode-btn:hover{transform:translateY(-1px);color:var(--rs-text);background:var(--rs-soft)}
+.rs-mode-switch .rs-mode-btn.active{background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);color:#17130a;box-shadow:0 10px 22px color-mix(in srgb,var(--rs-accent) 22%,transparent)}
+.rs-view-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);color:#17130a!important;text-decoration:none;font-weight:950;box-shadow:0 10px 22px color-mix(in srgb,var(--rs-accent) 18%,transparent)}
+.rs-period-pill{display:inline-flex;align-items:center;justify-content:center;min-width:94px;padding:7px 12px;border-radius:999px;background:var(--rs-soft);border:1px solid var(--rs-border);font-weight:950;color:var(--rs-accent)}
+
+@media (prefers-reduced-motion:reduce){.report-enterprise *{animation:none!important;transition:none!important}}
+@media (max-width:1180px){.rs-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rs-hero{grid-template-columns:1fr}.rs-hero-side{max-width:620px}}
+@media (max-width:760px){
+  .report-enterprise{padding:8px}
+  .rs-hero{padding:24px;border-radius:24px;min-height:auto}
+  .rs-hero-side{grid-template-columns:1fr}
+  .rs-summary-grid{grid-template-columns:1fr;gap:10px}
+  .rs-toolbar-card{grid-template-columns:1fr;padding:14px;gap:10px}
+  .rs-toolbar-card::before{display:none}
+  .rs-current-month{min-height:48px;align-items:flex-start;text-align:left}
+  .rs-mode-switch{width:100%;justify-content:center}
+  .month-toolbar{justify-content:stretch;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;width:100%;justify-self:stretch}
+  .month-toolbar .rs-btn-primary{grid-column:1/-1}
+  .month-ctrl{width:100%}.month-ctrl input{width:100%}
+  .rs-table-head{align-items:flex-start;flex-direction:column}
+  .tbl{min-width:0;border-spacing:0 10px;padding:0 12px 12px}
+  .tbl thead{display:none}
+  .tbl tbody tr{display:block;border:1px solid var(--rs-border);border-radius:20px;overflow:hidden;background:var(--rs-card);margin-bottom:10px}
+  .tbl th,.tbl td{display:flex;align-items:center;justify-content:space-between;text-align:right!important;white-space:normal;border-bottom:1px solid var(--rs-border);padding:12px 14px;background:transparent!important;gap:18px}
+  .tbl td:last-child{border-bottom:0}
+  .tbl td::before{content:attr(data-label);color:var(--rs-muted);font-weight:900;text-align:left}
+  .tbl td:first-child{justify-content:space-between!important}
+  .rs-empty{display:block!important}
+}
+@media (max-width:420px){.rs-hero h1{font-size:36px}.rs-big{font-size:24px}.mp-grid{grid-template-columns:repeat(2,1fr)}}
+
+
+/* =========================================================
+   REPORT SUMMARY — PREMIUM TOOLBAR / ENTERPRISE HIGH-END
+   Override เฉพาะส่วนเลือกช่วงรายงาน
+========================================================= */
+.report-enterprise .rs-toolbar-card.rs-toolbar-card--luxury{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(260px, 1.05fr) minmax(540px, 1.25fr) auto;
+  align-items:center;
+  gap:24px;
+  padding:20px;
+  margin:18px 0;
+  border-radius:32px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 84%, rgba(255,255,255,.05));
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.06), rgba(255,255,255,.018) 38%, rgba(255,255,255,.01)),
+    linear-gradient(135deg, color-mix(in srgb,var(--rs-card) 92%, #0b0d14), color-mix(in srgb,var(--rs-page) 68%, #08090d));
+  box-shadow:
+    0 24px 64px rgba(0,0,0,.36),
+    inset 0 1px 0 rgba(255,255,255,.07),
+    inset 0 0 0 1px rgba(255,255,255,.015);
+  isolation:isolate;
+}
+.report-enterprise .rs-toolbar-card--luxury::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.045), transparent);
+  opacity:.28;
+  pointer-events:none;
+}
+.report-enterprise .rs-toolbar-ambient{
+  position:absolute;
+  width:340px;
+  height:340px;
+  border-radius:999px;
+  background:radial-gradient(circle, color-mix(in srgb,var(--rs-accent) 22%, transparent), transparent 68%);
+  filter:blur(20px);
+  top:-180px;
+  left:-80px;
+  opacity:.82;
+  pointer-events:none;
+  z-index:0;
+}
+.report-enterprise .rs-toolbar-ambient--2{
+  width:280px;
+  height:280px;
+  left:auto;
+  right:-80px;
+  top:auto;
+  bottom:-170px;
+  background:radial-gradient(circle, rgba(92,128,255,.18), transparent 70%);
+}
+.report-enterprise .rs-toolbar-left,
+.report-enterprise .rs-toolbar-center,
+.report-enterprise .rs-toolbar-right{
+  position:relative;
+  z-index:1;
+}
+.report-enterprise .rs-toolbar-left{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  min-width:0;
+}
+.report-enterprise .rs-toolbar-mark{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  border:1px solid color-mix(in srgb,var(--rs-accent) 24%, var(--rs-border));
+  background:
+    linear-gradient(145deg, color-mix(in srgb,var(--rs-accent) 20%, transparent), color-mix(in srgb,var(--rs-card) 70%, transparent));
+  box-shadow:
+    0 18px 36px color-mix(in srgb,var(--rs-accent) 14%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.09);
+}
+.report-enterprise .rs-toolbar-mark__icon{
+  font-size:24px;
+  line-height:1;
+}
+.report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.report-enterprise .rs-toolbar-mini-kicker{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--rs-accent) 32%, var(--rs-border));
+  background:color-mix(in srgb,var(--rs-accent) 10%, transparent);
+  color:var(--rs-accent);
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy strong{
+  font-size:30px;
+  line-height:1.05;
+  font-weight:950;
+  color:var(--rs-text);
+  letter-spacing:-.03em;
+}
+.report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy small{
+  margin-top:2px;
+  color:color-mix(in srgb,var(--rs-muted) 90%, var(--rs-text));
+  font-size:13.5px;
+  line-height:1.6;
+  font-weight:700;
+  max-width:430px;
+}
+.report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy small b{
+  color:var(--rs-accent);
+  font-weight:900;
+}
+.report-enterprise .rs-toolbar-center{
+  display:grid;
+  gap:14px;
+  justify-items:center;
+  align-items:center;
+}
+.report-enterprise .rs-current-period-card{
+  width:min(100%, 580px);
+  min-height:68px;
+  padding:12px 18px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 78%, rgba(255,255,255,.06));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    color-mix(in srgb,var(--rs-card) 82%, var(--rs-page));
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  text-align:center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 14px 32px rgba(0,0,0,.18);
+}
+.report-enterprise .rs-current-period-card span{
+  font-size:12px;
+  font-weight:850;
+  color:var(--rs-muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.report-enterprise .rs-current-period-card strong{
+  font-size:28px;
+  line-height:1;
+  font-weight:950;
+  color:var(--rs-accent);
+  letter-spacing:-.03em;
+}
+.report-enterprise .rs-month-toolbar-premium{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:8px;
+  border-radius:24px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 84%, rgba(255,255,255,.04));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    color-mix(in srgb,var(--rs-page) 75%, var(--rs-card));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 16px 34px rgba(0,0,0,.18);
+  width:max-content;
+  max-width:100%;
+  justify-self:center;
+}
+.report-enterprise .rs-month-toolbar-premium .rs-btn,
+.report-enterprise .rs-month-toolbar-premium .rs-icon-btn{
+  min-height:48px;
+  border-radius:18px;
+  font-weight:900;
+}
+.report-enterprise .rs-month-toolbar-premium .rs-btn{
+  min-width:48px;
+  padding:0 16px;
+}
+.report-enterprise .rs-month-toolbar-premium .rs-btn-ghost{
+  border:1px solid color-mix(in srgb,var(--rs-border) 84%, rgba(255,255,255,.06));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    color-mix(in srgb,var(--rs-soft) 84%, var(--rs-page));
+  color:var(--rs-text);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.report-enterprise .rs-month-toolbar-premium .rs-btn-ghost:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--rs-accent) 42%, var(--rs-border));
+  background:color-mix(in srgb,var(--rs-accent) 8%, var(--rs-soft));
+}
+.report-enterprise .rs-month-toolbar-premium .rs-btn-primary,
+.report-enterprise .rs-month-toolbar-premium .rs-btn-today{
+  background:linear-gradient(135deg,#ffe38f 0%, #efc660 50%, #c78f27 100%);
+  color:#17130a;
+  box-shadow:
+    0 14px 26px color-mix(in srgb,var(--rs-accent) 22%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.28);
+}
+.report-enterprise .rs-month-ctrl-premium{
+  display:flex;
+  align-items:center;
+  min-height:50px;
+  padding:0 4px 0 0;
+  border-radius:20px;
+  border:1px solid color-mix(in srgb,var(--rs-accent) 36%, var(--rs-border));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    color-mix(in srgb,var(--rs-card) 82%, var(--rs-page));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 10px 22px rgba(0,0,0,.12);
+}
+.report-enterprise .rs-month-ctrl-premium input{
+  width:150px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--rs-text);
+  text-align:center;
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:.02em;
+  padding:0 14px;
+  cursor:pointer;
+}
+.report-enterprise .rs-month-ctrl-premium .rs-icon-btn{
+  width:42px;
+  height:42px;
+  margin-right:3px;
+  border-radius:15px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 82%, rgba(255,255,255,.04));
+  background:
+    linear-gradient(135deg, color-mix(in srgb,var(--rs-accent) 20%, transparent), color-mix(in srgb,var(--rs-card) 70%, transparent));
+  color:var(--rs-text);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+.report-enterprise .rs-toolbar-right{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+}
+.report-enterprise .rs-mode-switch.rs-mode-switch--premium{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 82%, rgba(255,255,255,.05));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    color-mix(in srgb,var(--rs-page) 78%, var(--rs-card));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 16px 36px rgba(0,0,0,.16);
+  width:max-content;
+  justify-self:end;
+}
+.report-enterprise .rs-mode-switch--premium .rs-mode-btn{
+  min-width:88px;
+  min-height:44px;
+  padding:0 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  border-radius:16px;
+  color:var(--rs-text);
+  background:transparent;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+  border:1px solid transparent;
+  cursor:pointer;
+}
+.report-enterprise .rs-mode-switch--premium .rs-mode-btn:hover{
+  transform:translateY(-1px);
+  color:var(--rs-accent);
+  background:color-mix(in srgb,var(--rs-accent) 8%, transparent);
+}
+.report-enterprise .rs-mode-switch--premium .rs-mode-btn.active{
+  background:linear-gradient(135deg,#ffe38f 0%, #efc660 50%, #c78f27 100%);
+  color:#17130a;
+  box-shadow:
+    0 12px 24px color-mix(in srgb,var(--rs-accent) 18%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.25);
+}
+@media (max-width: 1280px){
+  .report-enterprise .rs-toolbar-card.rs-toolbar-card--luxury{
+    grid-template-columns:1fr;
+    gap:18px;
+  }
+  .report-enterprise .rs-toolbar-right{
+    justify-content:flex-start;
+  }
+  .report-enterprise .rs-toolbar-center{
+    justify-items:stretch;
+  }
+  .report-enterprise .rs-current-period-card{
+    width:100%;
+  }
+  .report-enterprise .rs-month-toolbar-premium{
+    width:100%;
+    justify-content:center;
+  }
+}
+@media (max-width: 780px){
+  .report-enterprise .rs-toolbar-card.rs-toolbar-card--luxury{
+    padding:16px;
+    border-radius:26px;
+  }
+  .report-enterprise .rs-toolbar-left{
+    align-items:flex-start;
+  }
+  .report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy strong{
+    font-size:24px;
+  }
+  .report-enterprise .rs-current-period-card strong{
+    font-size:22px;
+  }
+  .report-enterprise .rs-month-toolbar-premium{
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr) 48px;
+    width:100%;
+    justify-content:stretch;
+  }
+  .report-enterprise .rs-month-toolbar-premium .rs-btn-today{
+    grid-column:1 / -1;
+  }
+  .report-enterprise .rs-month-ctrl-premium{
+    width:100%;
+  }
+  .report-enterprise .rs-month-ctrl-premium input{
+    width:100%;
+  }
+  .report-enterprise .rs-toolbar-right{
+    width:100%;
+  }
+  .report-enterprise .rs-mode-switch.rs-mode-switch--premium{
+    width:100%;
+  }
+  .report-enterprise .rs-mode-switch--premium .rs-mode-btn{
+    flex:1;
+    min-width:0;
+  }
+}
+@media (max-width: 520px){
+  .report-enterprise .rs-toolbar-left{
+    flex-direction:column;
+    gap:12px;
+  }
+  .report-enterprise .rs-toolbar-mark{
+    width:52px;
+    height:52px;
+  }
+  .report-enterprise .rs-toolbar-card--luxury .rs-toolbar-copy small{
+    max-width:none;
+  }
+}
+
+
+/* =========================================================
+   SERVICE INTELLIGENCE GRAPH — SMM / OTP24 / Apps
+========================================================= */
+.report-enterprise .rs-service-intel{
+  position:relative;
+  overflow:hidden;
+  margin:18px 0;
+  padding:20px;
+  border-radius:32px;
+  border:1px solid color-mix(in srgb,var(--rs-border) 86%,transparent);
+  background:
+    radial-gradient(620px 240px at 12% 0%, color-mix(in srgb,var(--rs-accent) 16%,transparent), transparent 66%),
+    radial-gradient(520px 220px at 92% 12%, rgba(80,145,255,.13), transparent 68%),
+    linear-gradient(145deg,color-mix(in srgb,var(--rs-card) 94%,#000),color-mix(in srgb,var(--rs-page) 78%,#1a1206));
+  box-shadow:0 26px 82px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.07);
+}
+.report-enterprise .rs-service-intel::before{content:"";position:absolute;inset:-1px;pointer-events:none;background:linear-gradient(110deg,transparent,rgba(255,255,255,.065),transparent);transform:translateX(-120%);animation:rsSheen 9s ease-in-out infinite}
+.report-enterprise .rs-service-head{position:relative;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
+.report-enterprise .rs-service-head h2{margin:6px 0 4px;color:var(--rs-text);font-size:clamp(24px,3vw,34px);letter-spacing:-.03em}
+.report-enterprise .rs-service-head p{margin:0;color:var(--rs-muted);line-height:1.65}.report-enterprise .rs-service-head b{color:var(--rs-accent)}
+.report-enterprise .rs-service-total{min-width:210px;padding:14px 16px;border-radius:22px;border:1px solid color-mix(in srgb,var(--rs-accent) 38%,var(--rs-border));background:color-mix(in srgb,var(--rs-accent) 8%,transparent);text-align:right}
+.report-enterprise .rs-service-total span{display:block;color:var(--rs-muted);font-weight:850;font-size:12px}.report-enterprise .rs-service-total strong{display:block;color:var(--rs-accent);font-size:22px;font-weight:950;margin-top:4px}
+.report-enterprise .rs-service-grid{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.report-enterprise .rs-service-card{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--rs-accent) 28%,var(--rs-border));border-radius:26px;padding:17px;background:linear-gradient(155deg,color-mix(in srgb,var(--rs-card) 92%,#000),color-mix(in srgb,var(--rs-page) 72%,#191006));box-shadow:0 18px 54px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.055);animation:rsRise .58s cubic-bezier(.2,.85,.2,1) both var(--delay,0ms)}
+.report-enterprise .rs-service-card::after{content:"";position:absolute;right:-44px;top:-48px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--rs-accent) 22%,transparent),transparent 68%);filter:blur(2px)}
+.report-enterprise .rs-service-card-top{position:relative;z-index:1;display:flex;gap:12px;align-items:center}.report-enterprise .rs-service-icon{width:48px;height:48px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#fff2ab,var(--rs-accent),#a66b17);box-shadow:0 14px 34px color-mix(in srgb,var(--rs-accent) 22%,transparent);font-size:22px}.report-enterprise .rs-service-card-top strong{display:block;font-size:18px;color:var(--rs-text)}.report-enterprise .rs-service-card-top small{display:block;color:var(--rs-muted);font-weight:800;margin-top:2px}
+.report-enterprise .rs-service-money{position:relative;z-index:1;margin:18px 0 12px;font-size:clamp(24px,3vw,36px);font-weight:950;letter-spacing:-.04em;color:var(--rs-text)}
+.report-enterprise .rs-service-bars{display:grid;gap:9px;margin-bottom:13px}.report-enterprise .rs-service-bar{height:12px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;border:1px solid color-mix(in srgb,var(--rs-border) 70%,transparent)}.report-enterprise .rs-service-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#9b6818,var(--rs-accent),#fff1aa);box-shadow:0 0 20px color-mix(in srgb,var(--rs-accent) 26%,transparent);animation:rsBarIn .8s cubic-bezier(.2,.85,.2,1) both}.report-enterprise .rs-service-bar-count span{background:linear-gradient(90deg,#355dff,#6ad5ff,#c5f2ff)}
+.report-enterprise .rs-service-meta,.report-enterprise .rs-service-foot{display:flex;justify-content:space-between;gap:10px;color:var(--rs-muted);font-size:12px;font-weight:850}.report-enterprise .rs-service-foot{margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rs-border) 70%,transparent)}.report-enterprise .rs-service-meta b{color:var(--rs-text)}
+.report-enterprise .rs-trend-panel{position:relative;margin-top:16px;border-radius:24px;border:1px solid color-mix(in srgb,var(--rs-border) 82%,transparent);background:color-mix(in srgb,var(--rs-page) 46%,transparent);padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+.report-enterprise .rs-trend-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}.report-enterprise .rs-trend-head strong{color:var(--rs-text);font-size:18px}.report-enterprise .rs-trend-head span{color:var(--rs-muted);font-weight:750;font-size:12px}
+.report-enterprise .rs-trend-chart{height:210px;display:flex;align-items:flex-end;gap:6px;padding:10px 4px 0;overflow:auto}.report-enterprise .rs-trend-col{min-width:18px;flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.report-enterprise .rs-trend-col i{width:100%;height:var(--h);min-height:6px;border-radius:999px 999px 6px 6px;background:linear-gradient(180deg,#fff0a8,var(--rs-accent),#7a4a0d);box-shadow:0 0 18px color-mix(in srgb,var(--rs-accent) 18%,transparent);animation:rsGrowY .82s cubic-bezier(.2,.85,.2,1) both}.report-enterprise .rs-trend-col b{width:58%;height:var(--ph);min-height:4px;border-radius:999px 999px 6px 6px;background:linear-gradient(180deg,#35df94,#128a58);opacity:.86}.report-enterprise .rs-trend-col b.is-minus{background:linear-gradient(180deg,#ff8b8b,#b6223a)}.report-enterprise .rs-trend-col em{font-style:normal;color:var(--rs-muted);font-size:10px;font-weight:850}
+@keyframes rsSheen{0%,55%{transform:translateX(-120%)}75%,100%{transform:translateX(120%)}}@keyframes rsBarIn{from{width:0}to{width:var(--sale,100%)}}@keyframes rsGrowY{from{height:4px;opacity:.35}to{opacity:1}}
+@media(max-width:980px){.report-enterprise .rs-service-head{flex-direction:column}.report-enterprise .rs-service-total{width:100%;text-align:left}.report-enterprise .rs-service-grid{grid-template-columns:1fr}.report-enterprise .rs-trend-chart{height:180px}.report-enterprise .rs-trend-col{min-width:22px}}
+
+.report-enterprise .rs-trend-panel-line{padding:18px;background:
+  radial-gradient(560px 180px at 18% 0%, color-mix(in srgb,var(--rs-accent) 10%, transparent), transparent 68%),
+  linear-gradient(145deg,color-mix(in srgb,var(--rs-card) 94%,#000),color-mix(in srgb,var(--rs-page) 72%,#14100a));
+  overflow:visible;
+  isolation:isolate;
+}
+.report-enterprise .rs-trend-head-line{align-items:flex-start;gap:18px;flex-wrap:wrap}
+.report-enterprise .rs-trend-head-line strong{display:block;font-size:20px;font-weight:950;letter-spacing:-.02em}
+.report-enterprise .rs-trend-head-line span{display:block;margin-top:6px;color:var(--rs-muted);font-size:12.5px;font-weight:750}
+.report-enterprise .rs-trend-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}
+.report-enterprise .rs-legend-item{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--rs-border) 80%,transparent);background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012));color:var(--rs-text);font-size:12px;font-weight:850;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.report-enterprise .rs-legend-item i{display:block;width:24px;height:4px;border-radius:999px;background:linear-gradient(90deg,#fff0aa,#efc661,#b97712);box-shadow:0 0 14px rgba(239,198,97,.35)}
+.report-enterprise .rs-legend-item.profit i{background:linear-gradient(90deg,#8bf7d1,#17ba76);box-shadow:0 0 14px rgba(23,186,118,.28)}
+.report-enterprise .rs-legend-item.count i{background:linear-gradient(90deg,#8ee8ff,#4f7cff);box-shadow:0 0 14px rgba(79,124,255,.28)}
+.report-enterprise .rs-line-chart-shell{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:stretch;margin-top:10px}
+.report-enterprise .rs-line-side{display:flex;flex-direction:column;justify-content:space-between;padding:12px 0 38px;color:color-mix(in srgb,var(--rs-muted) 88%,var(--rs-text));font-size:11px;font-weight:850}
+.report-enterprise .rs-line-chart{position:relative;min-height:290px;border:1px solid color-mix(in srgb,var(--rs-border) 72%,transparent);border-radius:22px;padding:8px 10px 14px;background:
+  radial-gradient(460px 140px at 50% 0%, rgba(246,206,97,.09), transparent 70%),
+  linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 14px 34px rgba(0,0,0,.18);
+  overflow:visible;
+  isolation:isolate;
+}
+.report-enterprise .rs-line-chart::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 28%, rgba(255,255,255,.02));mask-image:linear-gradient(180deg, #000, transparent 90%)}
+.report-enterprise .rs-line-svg{display:block;width:100%;height:290px;overflow:visible}
+.report-enterprise .rs-svg-grid{stroke:rgba(255,255,255,.08);stroke-width:1;stroke-dasharray:4 9}
+.report-enterprise .rs-svg-grid.is-base{stroke:rgba(255,255,255,.14);stroke-dasharray:none}
+.report-enterprise .rs-svg-vline{stroke:rgba(255,255,255,.03);stroke-width:1}
+.report-enterprise .rs-svg-zero{stroke:rgba(23,186,118,.22);stroke-width:1.2;stroke-dasharray:5 8}
+.report-enterprise .rs-sale-area{fill:url(#rsSaleFill)}
+.report-enterprise .rs-series-line{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:4.5}
+.report-enterprise .rs-series-sale{stroke:url(#rsSaleLine)}
+.report-enterprise .rs-series-profit{stroke:url(#rsProfitLine);stroke-width:3.2}
+.report-enterprise .rs-series-count{stroke:url(#rsCountLine);stroke-width:3.2}
+.report-enterprise .rs-point{stroke:#080a0d;stroke-width:2}
+.report-enterprise .rs-point-sale{fill:#f5d46d;filter:drop-shadow(0 0 8px rgba(245,212,109,.38))}
+.report-enterprise .rs-point-profit{fill:#1fca84;filter:drop-shadow(0 0 7px rgba(31,202,132,.28))}
+.report-enterprise .rs-point-count{fill:#72d6ff;filter:drop-shadow(0 0 7px rgba(114,214,255,.26))}
+.report-enterprise .rs-point-group{transition:transform .18s ease}
+.report-enterprise .rs-point-group:hover{transform:scale(1.06)}
+.report-enterprise .rs-line-xlabels{position:relative;z-index:1;display:grid;grid-template-columns:repeat(var(--label-count, 1), minmax(0,1fr));gap:0;margin-top:-4px;padding:0 6px}
+.report-enterprise .rs-line-xlabels span{text-align:center;color:color-mix(in srgb,var(--rs-muted) 90%,var(--rs-text));font-size:10px;font-weight:900}
+.report-enterprise .rs-line-chart .rs-line-xlabels{--label-count:""}
+@media(max-width:980px){
+  .report-enterprise .rs-line-chart-shell{grid-template-columns:1fr}
+  .report-enterprise .rs-line-side-left{display:none}
+  .report-enterprise .rs-line-chart{min-height:250px}
+  .report-enterprise .rs-line-svg{height:250px}
+}
+@media(max-width:640px){
+  .report-enterprise .rs-trend-legend{width:100%}
+  .report-enterprise .rs-legend-item{flex:1;justify-content:center;padding-inline:10px}
+  .report-enterprise .rs-line-xlabels span{font-size:9px}
+}
+
+
+/* =========================================================
+   MODERN LINE CHART + SERVICE ORDER DETAILS
+========================================================= */
+.report-enterprise .rs-line-chart{
+  background:
+    radial-gradient(520px 180px at 50% 0%, color-mix(in srgb,var(--rs-accent) 10%,transparent), transparent 70%),
+    linear-gradient(180deg,color-mix(in srgb,var(--rs-card) 92%,#050505),color-mix(in srgb,var(--rs-page) 82%,#070707));
+}
+.report-enterprise .rs-series-line{stroke-width:3.25;filter:none!important;opacity:.98}
+.report-enterprise .rs-series-profit,.report-enterprise .rs-series-count{stroke-width:2.65;opacity:.88}
+.report-enterprise .rs-sale-area{opacity:.20}
+.report-enterprise .rs-point{stroke:color-mix(in srgb,var(--rs-page) 92%,#000);stroke-width:2;filter:none!important;transition:r .16s ease, opacity .16s ease}
+.report-enterprise .rs-point-sale{fill:#f2ca5b}.report-enterprise .rs-point-profit{fill:#22c987}.report-enterprise .rs-point-count{fill:#69b9ff}
+.report-enterprise .rs-chart-hovers{position:absolute;inset:0 0 28px 0;pointer-events:none;z-index:30;overflow:visible}
+.report-enterprise .rs-hover-dot{position:absolute;left:var(--x);top:var(--y);width:26px;height:26px;transform:translate(-50%,-50%);border:0;border-radius:50%;background:transparent;pointer-events:auto;cursor:crosshair;padding:0;z-index:40}
+.report-enterprise .rs-hover-dot::before{content:"";position:absolute;inset:8px;border-radius:50%;background:#f3cd65;box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 0 4px color-mix(in srgb,var(--rs-accent) 48%,transparent);transition:transform .16s ease, background .16s ease}
+.report-enterprise .rs-hover-dot:hover::before,.report-enterprise .rs-hover-dot:focus-visible::before{transform:scale(1.35);background:#fff2a3}
+.report-enterprise .rs-chart-tip{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%) translateY(8px);min-width:228px;padding:12px 13px;border-radius:18px;border:1px solid color-mix(in srgb,var(--rs-accent) 42%,var(--rs-border));background:linear-gradient(145deg,rgba(17,17,20,.985),rgba(8,8,10,.985));box-shadow:0 22px 54px rgba(0,0,0,.48);opacity:0;visibility:hidden;transition:.16s ease;text-align:left;white-space:nowrap;z-index:80;pointer-events:none}
+.report-enterprise .rs-chart-tip b{display:block;color:var(--rs-accent);font-size:12px;margin-bottom:6px}.report-enterprise .rs-chart-tip span{display:flex;justify-content:space-between;gap:18px;color:var(--rs-muted);font-size:12px;line-height:1.7}.report-enterprise .rs-chart-tip strong{color:var(--rs-text)}
+.report-enterprise .rs-hover-dot:hover,.report-enterprise .rs-hover-dot:focus-visible{z-index:90}
+.report-enterprise .rs-hover-dot:hover .rs-chart-tip,.report-enterprise .rs-hover-dot:focus-visible .rs-chart-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.report-enterprise .rs-hover-dot.is-below .rs-chart-tip{bottom:auto;top:calc(100% + 14px);transform:translateX(-50%) translateY(-8px)}
+.report-enterprise .rs-hover-dot.is-below:hover .rs-chart-tip,.report-enterprise .rs-hover-dot.is-below:focus-visible .rs-chart-tip{transform:translateX(-50%) translateY(0)}
+.report-enterprise .rs-hover-dot.is-left-edge .rs-chart-tip{left:-6px;transform:translateY(8px)}
+.report-enterprise .rs-hover-dot.is-left-edge:hover .rs-chart-tip,.report-enterprise .rs-hover-dot.is-left-edge:focus-visible .rs-chart-tip{transform:translateY(0)}
+.report-enterprise .rs-hover-dot.is-right-edge .rs-chart-tip{left:auto;right:-6px;transform:translateY(8px)}
+.report-enterprise .rs-hover-dot.is-right-edge:hover .rs-chart-tip,.report-enterprise .rs-hover-dot.is-right-edge:focus-visible .rs-chart-tip{transform:translateY(0)}
+.report-enterprise .rs-hover-dot.is-below.is-left-edge .rs-chart-tip,.report-enterprise .rs-hover-dot.is-below.is-right-edge .rs-chart-tip{transform:translateY(-8px)}
+.report-enterprise .rs-hover-dot.is-below.is-left-edge:hover .rs-chart-tip,.report-enterprise .rs-hover-dot.is-below.is-left-edge:focus-visible .rs-chart-tip,.report-enterprise .rs-hover-dot.is-below.is-right-edge:hover .rs-chart-tip,.report-enterprise .rs-hover-dot.is-below.is-right-edge:focus-visible .rs-chart-tip{transform:translateY(0)}
+.report-enterprise .rs-detail-board{position:relative;overflow:hidden;margin:18px 0;padding:20px;border-radius:32px;border:1px solid var(--rs-border);background:radial-gradient(720px 260px at 10% 0%,color-mix(in srgb,var(--rs-accent) 13%,transparent),transparent 68%),linear-gradient(145deg,color-mix(in srgb,var(--rs-card) 96%,#000),color-mix(in srgb,var(--rs-page) 82%,#171008));box-shadow:0 24px 74px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06)}
+.report-enterprise .rs-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}.report-enterprise .rs-detail-head h2{margin:5px 0 4px;font-size:clamp(24px,3vw,34px);letter-spacing:-.03em;color:var(--rs-text)}.report-enterprise .rs-detail-head p{margin:0;color:var(--rs-muted);line-height:1.6}.report-enterprise .rs-detail-total{white-space:nowrap;padding:10px 15px;border-radius:999px;border:1px solid color-mix(in srgb,var(--rs-accent) 40%,var(--rs-border));background:color-mix(in srgb,var(--rs-accent) 9%,transparent);color:var(--rs-accent);font-weight:950}
+.report-enterprise .rs-detail-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.report-enterprise .rs-detail-tab{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--rs-border);border-radius:999px;background:rgba(255,255,255,.035);color:var(--rs-muted);padding:10px 14px;font-weight:900;cursor:pointer;transition:.18s ease}.report-enterprise .rs-detail-tab em{font-style:normal;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--rs-text)}.report-enterprise .rs-detail-tab.active{border-color:color-mix(in srgb,var(--rs-accent) 62%,var(--rs-border));color:var(--rs-accent);background:color-mix(in srgb,var(--rs-accent) 12%,transparent);box-shadow:0 14px 36px color-mix(in srgb,var(--rs-accent) 12%,transparent)}
+.report-enterprise .rs-detail-pane{display:none}.report-enterprise .rs-detail-pane.active{display:block}.report-enterprise .rs-order-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.report-enterprise .rs-order-card{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--rs-border) 88%,transparent);border-radius:24px;padding:15px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));animation:rsRowIn .48s cubic-bezier(.2,.85,.2,1) both var(--row-delay,0ms)}.report-enterprise .rs-order-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,transparent,var(--rs-accent),transparent);opacity:.45}.report-enterprise .rs-order-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.report-enterprise .rs-order-service{display:inline-block;color:var(--rs-accent);font-weight:950;font-size:12px;margin-bottom:5px}.report-enterprise .rs-order-top strong{display:block;color:var(--rs-text);font-size:16px}.report-enterprise .rs-order-top small{display:block;color:var(--rs-muted);margin-top:2px}.report-enterprise .rs-order-status{white-space:nowrap;padding:7px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--rs-accent) 34%,var(--rs-border));color:var(--rs-accent);font-weight:950;font-size:11px;background:rgba(255,255,255,.035)}
+.report-enterprise .rs-order-detail{margin:13px 0;padding:12px;border-radius:18px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.055);color:var(--rs-text);line-height:1.55;word-break:break-word}.report-enterprise .rs-secret-rows{display:grid;gap:8px}.report-enterprise .rs-secret-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:start;padding:8px 10px;border-radius:14px;background:color-mix(in srgb,var(--rs-accent) 5%,transparent);border:1px solid color-mix(in srgb,var(--rs-accent) 20%,rgba(255,255,255,.06))}.report-enterprise .rs-secret-row b{color:var(--rs-accent);font-size:12px;font-weight:950}.report-enterprise .rs-secret-row span{color:var(--rs-text);font-weight:350;word-break:break-word}.report-enterprise .rs-secret-row.is-plain{display:block}.report-enterprise .rs-secret-row.is-plain span{display:block}.report-enterprise .rs-order-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.report-enterprise .rs-order-meta span,.report-enterprise .rs-order-money span{padding:9px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055);color:var(--rs-text);font-weight:850}.report-enterprise .rs-order-meta b,.report-enterprise .rs-order-money b{display:block;color:var(--rs-muted);font-size:11px;margin-bottom:3px}.report-enterprise .rs-order-extra{margin-top:9px;color:var(--rs-muted);font-size:12px;line-height:1.55}.report-enterprise .rs-order-money{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:11px}.report-enterprise .rs-order-money .is-good{color:#57dfa5}.report-enterprise .rs-order-money .is-bad{color:#ff7a7a}.report-enterprise .rs-detail-empty{padding:28px;border-radius:24px;border:1px dashed var(--rs-border);text-align:center;color:var(--rs-muted);background:rgba(255,255,255,.025)}.report-enterprise .rs-detail-empty strong{display:block;color:var(--rs-text);font-size:18px;margin-bottom:4px}
+@keyframes rsRowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:860px){.report-enterprise .rs-order-grid{grid-template-columns:1fr}.report-enterprise .rs-order-meta,.report-enterprise .rs-order-money{grid-template-columns:1fr}.report-enterprise .rs-detail-head{flex-direction:column}.report-enterprise .rs-detail-total{align-self:flex-start}.report-enterprise .rs-chart-tip{left:auto;right:-8px;transform:translateY(8px)}.report-enterprise .rs-hover-dot:hover .rs-chart-tip,.report-enterprise .rs-hover-dot:focus-visible .rs-chart-tip{transform:translateY(0)}}
+
+</style>
+
+<script>
+(function(){
+  const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  const IS_YEAR_MODE = <%- safeJson(isYearMode) %>;
+  const input   = document.getElementById('monthInput');
+  const btnOpen = document.getElementById('btnOpenPicker');
+  const popup   = document.getElementById('monthPicker');
+  const yearEl  = document.getElementById('mpYear');
+  const grid    = document.getElementById('mpGrid');
+  const btnPrevY= document.getElementById('mpPrevYear');
+  const btnNextY= document.getElementById('mpNextYear');
+  const btnOK   = document.getElementById('mpOK');
+  const btnClear= document.getElementById('mpClear');
+  const btnThis = document.getElementById('mpThisMonth');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnThisMonth = document.getElementById('btnThisMonth');
+  const btnModeMonth = document.getElementById('btnModeMonth');
+  const btnModeYear = document.getElementById('btnModeYear');
+  const toolbarEl = document.querySelector('.month-toolbar');
+  const card = popup?.querySelector('.mp-card');
+
+  if (!input || !popup || !card) return;
+
+  const now = new Date();
+  let selYear  = now.getFullYear();
+  let selMonth = now.getMonth();
+  let tempYear, tempMonth;
+
+  const rawValue = (input.value || '').trim();
+  if (IS_YEAR_MODE) {
+    const yy = Number(rawValue.slice(0,4));
+    if (yy) selYear = yy;
+  } else {
+    const monthStrInit = rawValue.slice(0,7);
+    if (monthStrInit){
+      const [yy,mm] = monthStrInit.split('-').map(n=>+n);
+      if (yy && mm){ selYear = yy; selMonth = mm-1; }
+    }
+  }
+  tempYear = selYear; tempMonth = selMonth;
+
+  function toYYYYMM(y,m){ return `${y}-${String(m+1).padStart(2,'0')}`; }
+  function goMonth(monthStr){
+    const u = new URL(location.href);
+    u.searchParams.set('mode', 'month');
+    u.searchParams.set('month', monthStr);
+    u.searchParams.delete('year');
+    location.href = u.toString();
+  }
+  function goYear(year){
+    const u = new URL(location.href);
+    u.searchParams.set('mode', 'year');
+    u.searchParams.set('year', String(year));
+    u.searchParams.delete('month');
+    location.href = u.toString();
+  }
+  function goSelected(){
+    if (IS_YEAR_MODE) goYear(tempYear);
+    else goMonth(toYYYYMM(tempYear, tempMonth));
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+  btnModeMonth?.addEventListener('click', ()=> goMonth(toYYYYMM(selYear, selMonth)));
+  btnModeYear?.addEventListener('click', ()=> goYear(selYear));
+
+  btnPrev?.addEventListener('click', ()=>{
+    if (IS_YEAR_MODE) return goYear(selYear - 1);
+    const d = new Date(selYear, selMonth-1, 1);
+    goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
+  });
+  btnNext?.addEventListener('click', ()=>{
+    if (IS_YEAR_MODE) return goYear(selYear + 1);
+    const d = new Date(selYear, selMonth+1, 1);
+    goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
+  });
+  btnThisMonth?.addEventListener('click', ()=> IS_YEAR_MODE ? goYear(now.getFullYear()) : goMonth(toYYYYMM(now.getFullYear(), now.getMonth())));
+
+  function renderGrid(){
+    if (!yearEl || !grid) return;
+    yearEl.textContent = IS_YEAR_MODE ? `เลือกปี` : String(tempYear);
+    grid.innerHTML = '';
+
+    if (IS_YEAR_MODE) {
+      const startYear = tempYear - 5;
+      for (let i=0;i<12;i++){
+        const y = startYear + i;
+        const b = document.createElement('button');
+        b.type='button';
+        b.className = 'mp-m'
+          + (y === selYear ? ' active' : '')
+          + (y === now.getFullYear() ? ' current' : '');
+        b.textContent = String(y + 543);
+        b.setAttribute('role','gridcell');
+        b.addEventListener('click', ()=>{
+          tempYear = y;
+          [...grid.children].forEach(c=>c.classList.remove('active'));
+          b.classList.add('active');
+        });
+        grid.appendChild(b);
+      }
+      return;
+    }
+
+    for (let m=0;m<12;m++){
+      const b = document.createElement('button');
+      b.type='button';
+      b.className = 'mp-m'
+        + (m===tempMonth && tempYear===selYear ? ' active' : '')
+        + (m===now.getMonth() && tempYear===now.getFullYear() ? ' current' : '');
+      b.textContent = MONTH_NAMES_TH[m];
+      b.setAttribute('role','gridcell');
+      b.addEventListener('click', ()=>{
+        tempMonth = m;
+        [...grid.children].forEach(c=>c.classList.remove('active'));
+        b.classList.add('active');
+      });
+      grid.appendChild(b);
+    }
+  }
+
+  function positionAnchored(){
+    const rect = toolbarEl?.getBoundingClientRect();
+    const cardW = Math.min(342, Math.round(window.innerWidth * 0.92));
+    const cardH = card.offsetHeight || 330;
+    let left = rect ? rect.left + (rect.width/2) - (cardW/2) : (window.innerWidth-cardW)/2;
+    let top = rect ? rect.bottom + 10 : (window.innerHeight-cardH)/2;
+    left = clamp(left, 12, window.innerWidth - cardW - 12);
+    top = clamp(top, 12, window.innerHeight - cardH - 12);
+    card.style.setProperty('--mp-left', `${Math.round(left)}px`);
+    card.style.setProperty('--mp-top', `${Math.round(top)}px`);
+  }
+  function onRelayout(){
+    if (popup.hasAttribute('hidden')) return;
+    positionAnchored();
+  }
+  function openPicker(){
+    if (!popup.hasAttribute('hidden')) return;
+    tempYear = selYear; tempMonth = selMonth;
+    renderGrid();
+    popup.removeAttribute('hidden');
+    popup.setAttribute('aria-hidden','false');
+    requestAnimationFrame(positionAnchored);
+    setTimeout(()=> popup.querySelector('.mp-m.active, .mp-m.current, .mp-m')?.focus(), 0);
+    window.addEventListener('resize', onRelayout, {passive:true});
+    window.addEventListener('scroll', onRelayout, {passive:true});
+  }
+  function closePicker(){
+    popup.setAttribute('hidden','');
+    popup.setAttribute('aria-hidden','true');
+    window.removeEventListener('resize', onRelayout);
+    window.removeEventListener('scroll', onRelayout);
+  }
+
+  btnOpen?.addEventListener('click', openPicker);
+  input?.addEventListener('click', openPicker);
+  popup?.querySelector('[data-close-month-picker]')?.addEventListener('click', closePicker);
+  btnPrevY?.addEventListener('click', ()=>{
+    tempYear += IS_YEAR_MODE ? -12 : -1;
+    renderGrid();
+  });
+  btnNextY?.addEventListener('click', ()=>{
+    tempYear += IS_YEAR_MODE ? 12 : 1;
+    renderGrid();
+  });
+  btnOK?.addEventListener('click', ()=>{
+    closePicker();
+    goSelected();
+  });
+  btnClear?.addEventListener('click', ()=>{
+    closePicker();
+    IS_YEAR_MODE ? goYear(now.getFullYear()) : goMonth(toYYYYMM(now.getFullYear(), now.getMonth()));
+  });
+  btnThis?.addEventListener('click', ()=>{
+    tempYear = now.getFullYear(); tempMonth = now.getMonth();
+    renderGrid();
+  });
+  window.addEventListener('keydown', (e)=>{
+    if (e.key==='Escape' && !popup.hasAttribute('hidden')) closePicker();
+  });
+
+  document.querySelectorAll('[data-rs-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-rs-tab');
+      document.querySelectorAll('[data-rs-tab]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      document.querySelectorAll('[data-rs-pane]').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      document.querySelector(`[data-rs-pane="${key}"]`)?.classList.add('active');
+    });
+  });
+
+  window.__reportPeriodPicker__ = { openPicker, closePicker, positionAnchored };
+})();
+</script>
+
+<style>
+@media(max-width:560px){.report-enterprise .rs-secret-row{grid-template-columns:1fr}.report-enterprise .rs-secret-row b{font-size:11px}}
+</style>

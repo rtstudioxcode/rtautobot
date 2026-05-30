@@ -1,0 +1,666 @@
+<%
+  const pageTitle = `${article.title} | ปั้นช่อง YouTube 2026 | RTSMM-TH`;
+  const pageDesc  = article.excerpt
+    || 'เทคนิคเริ่มต้นปั้นช่อง YouTube จาก 0 ในปี 2026 สรุปวิธีเพิ่มซับ เพิ่มวิว สร้างรายได้จากโฆษณา สปอนเซอร์ และการสร้างแบรนด์แบบทำจริงได้จริง';
+  const canonicalPath = `/blog/${article.slug || article._id || ''}`;
+
+  // ใช้กับ layout.ejs → <title>, meta description, OG, Twitter
+  title       = pageTitle;
+  description = pageDesc;
+  ogTitle     = pageTitle;
+  ogDesc      = pageDesc;
+  ogImage     = article.image;
+%>
+
+<script type="application/ld+json">
+<%- safeJson({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": article.title,
+  "description": pageDesc,
+  "image": article.image,
+  "author": {
+    "@type": "Person",
+    "name": article.author
+  },
+  "datePublished": article.dateISO || article.date,
+  "dateModified": article.updatedAt || article.dateISO || article.date,
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rtsmm-th.com" + canonicalPath
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RTSSM-TH.COM",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rtsmm-th.com/static/logo/icon-logo.png"
+    }
+  }
+}, null, 2) %>
+</script>
+
+<style>
+  .yt-article-page{
+    --yt-page: var(--page, #080a10);
+    --yt-card: var(--card, #11131b);
+    --yt-text: var(--text, #f7f3e8);
+    --yt-muted: var(--muted, #a9adba);
+    --yt-border: var(--border, rgba(255,255,255,.11));
+    --yt-accent: var(--accent, #e8bc53);
+    --yt-accent-2: #ffe28a;
+    --yt-soft: color-mix(in srgb, var(--yt-card) 72%, transparent);
+    --yt-shadow: rgba(0,0,0,.28);
+    --yt-danger: #ff3b5c;
+    --yt-radius: 28px;
+    width:100%;
+    color:var(--yt-text);
+    padding:26px 16px 34px;
+    position:relative;
+    isolation:isolate;
+  }
+
+  html[data-theme="light"] .yt-article-page,
+  html.light .yt-article-page,
+  body.light .yt-article-page,
+  [data-bs-theme="light"] .yt-article-page{
+    --yt-page: var(--page, #f6f7fb);
+    --yt-card: var(--card, #ffffff);
+    --yt-text: var(--text, #141720);
+    --yt-muted: var(--muted, #667085);
+    --yt-border: var(--border, rgba(20,23,32,.12));
+    --yt-soft: rgba(255,255,255,.72);
+    --yt-shadow: rgba(15,23,42,.10);
+  }
+
+  .yt-article-page *,
+  .yt-article-page *::before,
+  .yt-article-page *::after{ box-sizing:border-box; }
+
+  .yt-bg-orb{
+    position:absolute;
+    inset:auto auto 8% -120px;
+    width:320px;
+    height:320px;
+    border-radius:999px;
+    background:radial-gradient(circle, color-mix(in srgb,var(--yt-accent) 24%, transparent), transparent 65%);
+    filter:blur(8px);
+    opacity:.7;
+    pointer-events:none;
+    z-index:-1;
+    animation:ytFloat 8s ease-in-out infinite;
+  }
+  .yt-bg-orb.two{
+    inset:80px -130px auto auto;
+    width:360px;
+    height:360px;
+    background:radial-gradient(circle, color-mix(in srgb,var(--yt-danger) 18%, transparent), transparent 66%);
+    animation-delay:-3s;
+  }
+
+  .yt-shell{
+    width:min(1180px, 100%);
+    margin:0 auto;
+  }
+
+  .yt-hero{
+    position:relative;
+    overflow:hidden;
+    border:1px solid var(--yt-border);
+    border-radius:34px;
+    background:
+      radial-gradient(circle at 14% 8%, color-mix(in srgb,var(--yt-danger) 20%, transparent), transparent 28%),
+      radial-gradient(circle at 92% 22%, color-mix(in srgb,var(--yt-accent) 26%, transparent), transparent 32%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+      color-mix(in srgb, var(--yt-card) 92%, transparent);
+    box-shadow:0 26px 60px var(--yt-shadow), inset 0 1px 0 rgba(255,255,255,.08);
+    padding:30px;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    animation:ytFadeUp .65s ease both;
+  }
+
+  .yt-hero::after{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background:linear-gradient(110deg, transparent 0 34%, rgba(255,255,255,.13) 44%, transparent 55% 100%);
+    transform:translateX(-120%);
+    animation:ytShine 5.8s ease-in-out infinite;
+    pointer-events:none;
+  }
+
+  .yt-hero-grid{
+    display:grid;
+    grid-template-columns:minmax(0, 1.05fr) minmax(360px, .95fr);
+    gap:28px;
+    align-items:center;
+    position:relative;
+    z-index:1;
+  }
+
+  .yt-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    color:#17130a;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    border-radius:999px;
+    padding:9px 13px;
+    background:linear-gradient(135deg, #ffe28a, #e8bc53 55%, #bd8626);
+    box-shadow:0 14px 28px color-mix(in srgb,var(--yt-accent) 22%, transparent);
+  }
+
+  .yt-hero h1{
+    margin:18px 0 14px;
+    color:var(--yt-text);
+    font-size:clamp(30px, 4.4vw, 56px);
+    line-height:1.04;
+    letter-spacing:-.04em;
+    font-weight:950;
+    max-width:850px;
+  }
+
+  .yt-lead{
+    margin:0;
+    color:var(--yt-muted);
+    font-size:clamp(15px, 1.6vw, 18px);
+    line-height:1.8;
+    max-width:760px;
+  }
+
+  .yt-meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+  }
+
+  .yt-meta-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--yt-border);
+    border-radius:999px;
+    padding:10px 13px;
+    background:color-mix(in srgb, var(--yt-soft) 72%, transparent);
+    color:var(--yt-text);
+    font-weight:800;
+    font-size:13px;
+  }
+
+  .yt-cover-card{
+    position:relative;
+    border-radius:28px;
+    overflow:hidden;
+    border:1px solid color-mix(in srgb,var(--yt-border) 88%, transparent);
+    box-shadow:0 22px 48px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.06);
+    min-height:290px;
+    background:#0b0d12;
+  }
+
+  .yt-cover-card img{
+    width:100%;
+    height:100%;
+    min-height:320px;
+    display:block;
+    object-fit:cover;
+    transform:scale(1.015);
+    transition:transform .65s ease, filter .65s ease;
+  }
+
+  .yt-cover-card:hover img{ transform:scale(1.055); filter:saturate(1.05) contrast(1.03); }
+
+  .yt-play-badge{
+    position:absolute;
+    left:18px;
+    bottom:18px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 14px;
+    border-radius:18px;
+    background:rgba(0,0,0,.58);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.16);
+    backdrop-filter:blur(12px);
+    font-weight:900;
+  }
+
+  .yt-play-badge .play{
+    width:36px;
+    height:36px;
+    display:grid;
+    place-items:center;
+    border-radius:14px;
+    background:linear-gradient(135deg, #ff3b5c, #b9152f);
+    box-shadow:0 12px 24px rgba(255,59,92,.24);
+  }
+
+  .yt-content-grid{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 310px;
+    gap:22px;
+    align-items:start;
+    margin-top:22px;
+  }
+
+  .yt-article-card,
+  .yt-side-card,
+  .site-footer{
+    border:1px solid var(--yt-border);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)),
+      color-mix(in srgb, var(--yt-card) 92%, transparent);
+    box-shadow:0 20px 44px var(--yt-shadow), inset 0 1px 0 rgba(255,255,255,.055);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+
+  .yt-article-card{
+    border-radius:32px;
+    padding:clamp(22px, 3vw, 38px);
+    animation:ytFadeUp .7s ease .08s both;
+  }
+
+  .article{
+    color:var(--yt-text);
+    font-size:16px;
+    line-height:1.9;
+  }
+
+  .article p{ margin:0 0 20px; color:color-mix(in srgb,var(--yt-text) 86%, var(--yt-muted)); }
+
+  .article h2{
+    position:relative;
+    margin:36px 0 14px;
+    color:var(--yt-text);
+    font-size:clamp(22px, 2.4vw, 30px);
+    line-height:1.25;
+    letter-spacing:-.02em;
+    font-weight:950;
+  }
+
+  .article h2::before{
+    content:"";
+    display:inline-block;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    margin-right:10px;
+    background:linear-gradient(135deg, var(--yt-accent-2), var(--yt-accent));
+    box-shadow:0 0 18px color-mix(in srgb,var(--yt-accent) 50%, transparent);
+    vertical-align:middle;
+  }
+
+  .article h3{
+    margin:24px 0 10px;
+    color:var(--yt-text);
+    font-size:19px;
+    line-height:1.35;
+    font-weight:930;
+  }
+
+  .article ul{
+    margin:14px 0 24px;
+    padding:0;
+    display:grid;
+    gap:10px;
+  }
+
+  .article li{
+    list-style:none;
+    position:relative;
+    padding:14px 16px 14px 46px;
+    border-radius:18px;
+    border:1px solid color-mix(in srgb,var(--yt-border) 82%, transparent);
+    background:color-mix(in srgb, var(--yt-soft) 68%, transparent);
+    color:color-mix(in srgb,var(--yt-text) 88%, var(--yt-muted));
+  }
+
+  .article li::before{
+    content:"✓";
+    position:absolute;
+    left:14px;
+    top:13px;
+    width:22px;
+    height:22px;
+    display:grid;
+    place-items:center;
+    border-radius:9px;
+    background:linear-gradient(135deg, var(--yt-accent-2), var(--yt-accent));
+    color:#17130a;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .article strong{ color:var(--yt-text); font-weight:950; }
+
+  .yt-side{
+    position:sticky;
+    top:88px;
+    display:grid;
+    gap:14px;
+    animation:ytFadeUp .7s ease .14s both;
+  }
+
+  .yt-side-card{
+    border-radius:26px;
+    padding:18px;
+  }
+
+  .yt-side-card h3{
+    margin:0 0 12px;
+    font-size:16px;
+    color:var(--yt-text);
+    font-weight:950;
+  }
+
+  .yt-toc{
+    display:grid;
+    gap:8px;
+  }
+
+  .yt-toc a{
+    text-decoration:none;
+    color:var(--yt-muted);
+    border:1px solid transparent;
+    border-radius:14px;
+    padding:10px 12px;
+    background:transparent;
+    font-size:13px;
+    font-weight:800;
+    transition:transform .18s ease, color .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .yt-toc a:hover{
+    color:var(--yt-text);
+    background:color-mix(in srgb,var(--yt-soft) 74%, transparent);
+    border-color:var(--yt-border);
+    transform:translateX(3px);
+  }
+
+  .yt-cta-card{
+    overflow:hidden;
+    position:relative;
+    background:
+      radial-gradient(circle at 18% 10%, color-mix(in srgb,var(--yt-accent) 30%, transparent), transparent 38%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+      color-mix(in srgb, var(--yt-card) 92%, transparent);
+  }
+
+  .yt-cta-card p{ margin:0 0 14px; color:var(--yt-muted); line-height:1.65; font-size:13px; }
+
+  .yt-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    width:100%;
+    text-decoration:none;
+    border-radius:16px;
+    padding:13px 16px;
+    color:#17130a;
+    background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);
+    font-weight:950;
+    box-shadow:0 14px 28px color-mix(in srgb,var(--yt-accent) 22%, transparent);
+    transition:transform .18s ease, filter .18s ease;
+  }
+  .yt-btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+
+  .yt-final-cta{
+    margin-top:28px;
+    border-radius:28px;
+    padding:24px;
+    border:1px solid color-mix(in srgb,var(--yt-accent) 28%, var(--yt-border));
+    background:
+      radial-gradient(circle at 90% 0%, color-mix(in srgb,var(--yt-accent) 28%, transparent), transparent 34%),
+      color-mix(in srgb,var(--yt-soft) 80%, transparent);
+  }
+
+  .yt-final-cta h3{ margin:0 0 8px; font-size:24px; }
+  .yt-final-cta p{ margin:0 0 16px; color:var(--yt-muted); }
+
+  .site-footer{
+    margin-top:24px;
+    border-radius:30px;
+    overflow:hidden;
+    animation:ytFadeUp .75s ease .18s both;
+  }
+
+  .site-footer__topline{
+    height:3px;
+    background:linear-gradient(90deg, transparent, var(--yt-accent), #ff3b5c, var(--yt-accent), transparent);
+  }
+
+  .site-footer__container{
+    display:grid;
+    grid-template-columns:1.4fr repeat(3, minmax(0, .8fr));
+    gap:22px;
+    padding:28px;
+  }
+
+  .footer-col{ min-width:0; }
+  .brand-logo{ max-width:190px; height:auto; display:block; margin-bottom:12px; }
+  .brand-text{ color:var(--yt-muted); line-height:1.75; margin:0; font-size:14px; }
+  .footer-title{ color:var(--yt-text); margin:0 0 12px; font-size:14px; font-weight:950; letter-spacing:.03em; }
+  .footer-list{ list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+  .footer-list a{ color:var(--yt-muted); text-decoration:none; font-size:14px; transition:color .18s ease, transform .18s ease; display:inline-block; }
+  .footer-list a:hover{ color:var(--yt-accent); transform:translateX(3px); }
+
+  @keyframes ytFadeUp{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes ytFloat{
+    0%,100%{ transform:translate3d(0,0,0) scale(1); }
+    50%{ transform:translate3d(18px,-18px,0) scale(1.04); }
+  }
+  @keyframes ytShine{
+    0%,58%{ transform:translateX(-130%); opacity:0; }
+    68%{ opacity:1; }
+    100%{ transform:translateX(130%); opacity:0; }
+  }
+
+  @media (max-width: 980px){
+    .yt-hero-grid,
+    .yt-content-grid{ grid-template-columns:1fr; }
+    .yt-side{ position:relative; top:auto; grid-template-columns:1fr 1fr; }
+  }
+
+  @media (max-width: 720px){
+    .yt-article-page{ padding:18px 12px 26px; }
+    .yt-hero{ padding:20px; border-radius:26px; }
+    .yt-cover-card{ border-radius:22px; min-height:220px; }
+    .yt-cover-card img{ min-height:230px; }
+    .yt-article-card{ border-radius:26px; padding:20px; }
+    .yt-side{ grid-template-columns:1fr; }
+    .site-footer__container{ grid-template-columns:1fr; padding:22px; }
+    .article li{ padding-left:42px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .yt-article-page *,
+    .yt-article-page *::before,
+    .yt-article-page *::after{
+      animation:none!important;
+      transition:none!important;
+      scroll-behavior:auto!important;
+    }
+  }
+</style>
+
+<section class="page blog-detail yt-article-page">
+  <span class="yt-bg-orb" aria-hidden="true"></span>
+  <span class="yt-bg-orb two" aria-hidden="true"></span>
+
+  <div class="yt-shell">
+    <header class="yt-hero">
+      <div class="yt-hero-grid">
+        <div>
+          <div class="yt-kicker"><span>▶</span> YouTube Growth Guide 2026</div>
+          <h1><%= article.title %></h1>
+          <p class="yt-lead"><%= pageDesc %></p>
+          <div class="yt-meta-row">
+            <span class="yt-meta-chip">🕒 <%= article.date %></span>
+            <span class="yt-meta-chip">👤 <%= article.author %></span>
+            <span class="yt-meta-chip">📈 ปั้นช่องจาก 0</span>
+          </div>
+        </div>
+
+        <figure class="yt-cover-card">
+          <img
+            src="/static/assets/thumbnails/blog3.gif"
+            alt="บทความ YouTube 2026: <%= article.title %>"
+            loading="lazy"
+          >
+          <figcaption class="yt-play-badge">
+            <span class="play">▶</span>
+            <span>เริ่มปั้นช่องให้โตอย่างเป็นระบบ</span>
+          </figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <div class="yt-content-grid">
+      <article class="article yt-article-card">
+        <p>
+          เชื่อว่าความฝันของคนรุ่นใหม่จำนวนมากคือการมี “ช่อง YouTube” ของตัวเอง
+          เพราะเราเห็นยูทูบเบอร์ทั้งไทยและต่างประเทศสร้างรายได้เป็นเรื่องเป็นราว
+          คำถามคือจะเริ่มยังไงให้สำเร็จ ปั้นซับ/วิวยังไงให้โต บทความนี้สรุปให้แบบเน้นทำได้จริง
+        </p>
+
+        <h2 id="start">ปั้นช่อง YouTube ไม่ง่าย…แต่ไม่ได้ “เป็นไปไม่ได้”</h2>
+        <p>
+          คู่แข่งเยอะจริง และช่องใหญ่มีฐานแฟนเดิมอยู่แล้ว แต่ถ้าคุณศึกษาถูกทางและ “ลงมือทำสม่ำเสมอ”
+          ช่องใหม่ก็เติบโตได้ การชนะไม่จำเป็นต้องดังที่สุด แค่ “ชัดที่สุดในหมวดของคุณ”
+        </p>
+
+        <h2 id="revenue">รายได้หลัก ๆ ถ้าช่องไปได้สวย</h2>
+        <ul>
+          <li><strong>รายได้จากยอดวิว (โฆษณา)</strong> — วิวมาก รายได้มาก เป็นเสาหลักของคนทำ YouTube</li>
+          <li><strong>สมาชิกช่อง (Channel Membership)</strong> — แฟนคลับจ่ายรายเดือนเพื่อรับสิทธิพิเศษ</li>
+          <li><strong>Super Chat / Super Thanks</strong> — ไลฟ์หรือคอมเมนต์ที่แฟนสนับสนุนเป็นทิป</li>
+          <li><strong>ขายสินค้า/บริการของตัวเอง</strong> — ใส่สินค้าในคอนเทนต์อย่างแนบเนียน</li>
+          <li><strong>สปอนเซอร์</strong> — ยิ่งฐานผู้ติดตามคุณภาพสูง ยิ่งต่อรองเรทได้ดี</li>
+        </ul>
+
+        <h2 id="techniques">3 เทคนิคสำหรับมือใหม่ เริ่มจาก 0 ให้ไปต่อได้</h2>
+        <h3>1) กำหนดตัวตน/ทิศทางช่องให้ชัด</h3>
+        <p>
+          “ธรรมดาโลกไม่จำ” ไม่ได้แปลว่าต้องเวอร์ แต่ต้องมีเอกลักษณ์
+          เลือกธีมที่ถนัดและชอบจริง จะทำให้ออกคอนเทนต์ได้นานโดยไม่หมดไฟ
+        </p>
+
+        <h3>2) รู้กติกา YouTube ให้ถ่องแท้</h3>
+        <p>
+          คอนเทนต์ต้องไม่ผิดกฎลิขสิทธิ์/ความรุนแรง/เนื้อหาเสี่ยง เพื่อไม่ให้ “ติดเหลือง”
+          และกระทบรายได้ รวมถึงเสี่ยงโดนปิดช่องในกรณีร้ายแรง
+        </p>
+
+        <h3>3) เนื้อหาสดใหม่ + มีวินัยในการอัปโหลด</h3>
+        <p>
+          Content is King — ทำคลิปให้สนุก มีประโยชน์ และอัปโหลดสม่ำเสมอ
+          ผู้ชมต้องการสิ่งใหม่ อย่าหายไปนานจนคนลืม
+        </p>
+
+        <h2 id="checklist">เช็กลิสต์ก่อนปล่อยคลิป</h2>
+        <ul>
+          <li>ฮุก 3 วินาทีแรก “ดึงตา” แล้วหรือยัง?</li>
+          <li>ไตเติล/แท็ก/คำอธิบาย มีคีย์เวิร์ดหลักครบ</li>
+          <li>ปกคลิปอ่านง่าย โดดเด่นบนมือถือ</li>
+          <li>มี Call-to-Action (ชวนคอมเมนต์/แชร์/กดติดตาม)</li>
+        </ul>
+
+        <h2 id="timing">โพสต์เมื่อไหร่ดี?</h2>
+        <ul>
+          <li>ช่วง 11:00–13:00 และ 18:00–21:00</li>
+          <li>ศุกร์–อาทิตย์ มักทราฟฟิกดีกว่าวันธรรมดา</li>
+        </ul>
+
+        <h2 id="avoid">ข้อควรหลีกเลี่ยง</h2>
+        <ul>
+          <li>ยอดปลอม/บอท — ทำให้ Reach แย่และเสี่ยงโดนระบบเพ่งเล็ง</li>
+          <li>คอนเทนต์ก๊อป — ไร้เครดิต/ไร้ความคิดสร้างสรรค์</li>
+          <li>เพลงลิขสิทธิ์ที่ไม่ได้รับอนุญาต</li>
+        </ul>
+
+        <h2 id="final">บทส่งท้าย</h2>
+        <p>
+          ปี 2026 ยังเป็นเวลาที่ดีมากสำหรับการปั้น YouTube ใครทำแบรนด์/ขายของ/ทำคอนเทนต์จริงจัง
+          โอกาสยังเปิดกว้าง หากอยากเริ่ม “ให้ถูกทางและโตไวขึ้น”
+          ทีม RTSMM-TH ช่วยวางแผนคอนเทนต์ ดันยอดซับ วางตารางอัปโหลด และดูอินไซต์ให้ได้
+          เริ่มดี มีโอกาสชนะตั้งแต่คลิปแรก ✨
+        </p>
+
+        <section class="yt-final-cta">
+          <h3>พร้อมเริ่มดันช่องให้โตหรือยัง?</h3>
+          <p>เลือกบริการ YouTube ที่เหมาะกับช่องของคุณ เพิ่มซับ เพิ่มวิว และวางรากฐานการเติบโตให้ดูเป็นมืออาชีพตั้งแต่วันนี้</p>
+          <a class="yt-btn" href="/order">เริ่มสั่งซื้อบริการ YouTube</a>
+        </section>
+      </article>
+
+      <aside class="yt-side" aria-label="เมนูบทความ">
+        <section class="yt-side-card">
+          <h3>สารบัญบทความ</h3>
+          <nav class="yt-toc">
+            <a href="#start">ปั้นช่องจาก 0</a>
+            <a href="#revenue">รายได้จาก YouTube</a>
+            <a href="#techniques">3 เทคนิคมือใหม่</a>
+            <a href="#checklist">เช็กลิสต์ก่อนปล่อยคลิป</a>
+            <a href="#timing">เวลาโพสต์แนะนำ</a>
+            <a href="#avoid">ข้อควรหลีกเลี่ยง</a>
+          </nav>
+        </section>
+
+        <section class="yt-side-card yt-cta-card">
+          <h3>บริการช่วยดันช่อง</h3>
+          <p>เพิ่มการมองเห็นให้คอนเทนต์ YouTube ด้วยบริการที่เลือกได้ตามเป้าหมาย ติดตามสถานะได้ชัดเจน และใช้งานง่ายในระบบเดียว</p>
+          <a class="yt-btn" href="/services">ดูบริการทั้งหมด</a>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__topline"></div>
+
+      <div class="site-footer__container">
+        <section class="footer-col footer-brand">
+          <img class="brand-logo" src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH" height="56">
+          <p class="brand-text">
+            RTSSM-TH.COM ผู้ให้บริการOTP24ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก
+          </p>
+        </section>
+
+        <section class="footer-col">
+          <h6 class="footer-title">ผลิตภัณฑ์</h6>
+          <ul class="footer-list">
+            <li><a href="/">หน้าแรก</a></li>
+            <li><a href="/services">บริการทั้งหมด</a></li>
+            <li><a href="/order">คำสั่งซื้อใหม่</a></li>
+          </ul>
+        </section>
+
+        <section class="footer-col">
+          <h6 class="footer-title">FAQ</h6>
+          <ul class="footer-list">
+            <li><a href="/faq">คำถามที่พบบ่อย</a></li>
+            <li><a href="/blog">บทความ</a></li>
+          </ul>
+        </section>
+
+        <section class="footer-col">
+          <h6 class="footer-title">เกี่ยวกับเรา</h6>
+          <ul class="footer-list">
+            <li><a href="mailto:rtssm.th@gmail.com">Email: rtssm.th@gmail.com</a></li>
+            <li><a href="https://line.me/R/ti/p/@507vkplq">Line: @rtssm-th</a></li>
+            <li><a href="https://line.me/R/ti/p/@507vkplq">แจ้งปัญหาคำสั่งซื้อ</a></li>
+            <li><a href="/page/terms-of-use">เงื่อนไขและข้อตกลง</a></li>
+          </ul>
+        </section>
+      </div>
+    </footer>
+  </div>
+</section>
