@@ -533,7 +533,7 @@ export async function sendVerifyEmail({
   headers,
   // ถ้าระบุ path จะใช้เป็น CID; ถ้าไม่ระบุจะ fallback ใช้ URL (config.brand.logoUrl) หรือไม่แนบ
   brandLogoPath = config.brand?.logoPath,   // แนะนำไฟล์โลโก้ PNG/JPG ในเครื่อง
-  brandUrl = config.brand?.url || 'https://rtautobot.com',
+  brandUrl = config.brand?.rtautobotSite || 'https://rtautobot.com',
   productName = config.brand?.name || 'RTAUTOBOT',
 } = {}) {
   const norm = v => (Array.isArray(v) ? v : [v]).map(s => String(s || '').trim()).filter(Boolean);

@@ -2229,6 +2229,7 @@ router.post("/settings/secure", requireAdmin, async (req, res) => {
       },
       brand: {
         url: pick("brand_url"),
+        rtautobotSite: pick("brand_rtautobotSite"),
       },
       session: {
         name: pick("session_name", "connect.sid") || "connect.sid",

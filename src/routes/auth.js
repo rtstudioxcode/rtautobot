@@ -31,7 +31,7 @@ const glog = {
 };
 
 function getPublicBaseUrl(req) {
-  const configured = String(config?.brand?.url || config?.brand?.baseUrl || config?.publicBaseUrl || '').trim().replace(/\/+$/, '');
+  const configured = String(config?.brand?.rtautobotSite || config?.brand?.baseUrl || config?.publicBaseUrl || '').trim().replace(/\/+$/, '');
   if (configured) return configured;
   const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
   const host = String(req.headers['x-forwarded-host'] || req.get('host') || '').split(',')[0].trim();
@@ -84,7 +84,7 @@ async function genUniqueAffiliateKey() {
 function getBrandUrl() {
   return String(
     config?.brandUrl ||
-    config?.brand?.url ||
+    config?.brand?.rtautobotSite ||
     "https://rtautobot.com"
   ).replace(/\/+$/, "");
 }
