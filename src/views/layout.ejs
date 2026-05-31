@@ -10,25 +10,25 @@
   const pageTitle = (
     typeof title !== 'undefined' && title
       ? title
-      : 'RTSSM-TH.COM | บริการ OTP24ชั่วโมง และการตลาดออนไลน์ระดับสากล'
+      : 'RTAUTOBOT | ระบบ Bonustime อัตโนมัติ'
   );
 
   const pageDescription = (
     typeof metaDescription !== 'undefined' && metaDescription
       ? metaDescription
-      : 'RTSSM-TH.COM ศูนย์รวม บริการOTP บริการปั้มวิว ปั้มไลค์ ปั้มผู้ติดตาม ระบบ OTP24ชั่วโมง และการตลาดออนไลน์ครบวงจร ใช้งานง่าย มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก'
+      : 'RTAUTOBOT ศูนย์สั่งซื้อและจัดการ Bonustime สำหรับสล็อต บาคาร่า และหวย พร้อมเครดิตในบัญชีเดียว'
   );
 
   const pageKeywords = (
     typeof metaKeywords !== 'undefined' && metaKeywords
       ? metaKeywords
-      : 'ปั้มวิว, ปั้มไลค์, ปั้มผู้ติดตาม, ปั้มวิว tiktok, ปั้มซับ youtube, เพิ่มผู้ติดตาม, โฆษณาออนไลน์, OTP24 ชั่วโมง, ระบบ OTP'
+      : 'RTAUTOBOT, Bonustime, ระบบโบนัสไทม์, บอทโบนัสไทม์, สล็อต, บาคาร่า, หวย'
   );
 
   const ogImage = (
     typeof metaOgImage !== 'undefined' && metaOgImage
       ? metaOgImage
-      : 'https://rtsmm-th.com/static/og/og-default.png'
+      : 'https://rtautobot.com/static/og/og-default.png'
   );
 
   const ogType = (
@@ -49,11 +49,11 @@
 
   // Canonical ไม่ควรติด query/hash เช่น ?tab=history เพื่อกัน duplicate URL ใน Google
   const canonicalPath = String(currentPath || '/').split('?')[0].split('#')[0] || '/';
-  const fullUrl = 'https://rtsmm-th.com' + canonicalPath;
+  const fullUrl = 'https://rtautobot.com' + canonicalPath;
 
   const p = String(currentPath || '');
   const socialActive =
-    p.startsWith('/orders/new') || !!showMyOrdersNav;
+    p.startsWith('/bonustime') || !!showMyOrdersNav;
 %>
 <head>
   <meta charset="utf-8">
@@ -75,13 +75,13 @@
 
   <!-- Open Graph (Facebook / LINE / etc.) -->
   <meta property="og:locale" content="th_TH">
-  <meta property="og:site_name" content="RTSSM-TH.COM">
+  <meta property="og:site_name" content="RTAUTOBOT">
   <meta property="og:type" content="<%= ogType %>">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= pageDescription %>">
   <meta property="og:url" content="<%= fullUrl %>">
   <meta property="og:image" content="<%= ogImage %>">
-  <meta property="og:image:alt" content="RTSSM-TH.COM การตลาดออนไลน์และโซเชียล">
+  <meta property="og:image:alt" content="RTAUTOBOT Bonustime Automation">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -100,7 +100,7 @@
 
   <!-- Apple / iOS Home Screen -->
   <link rel="apple-touch-icon" sizes="180x180" href="/static/logo/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-title" content="RTSMM-TH">
+  <meta name="apple-mobile-web-app-title" content="RTAUTOBOT">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -123,21 +123,21 @@
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "RTSSM-TH.COM",
-    "url": "https://rtsmm-th.com",
+    "name": "RTAUTOBOT",
+    "url": "https://rtautobot.com",
     "inLanguage": "th-TH",
     "description": "<%- pageDescription.replace(/"/g, '\\"') %>",
     "publisher": {
       "@type": "Organization",
-      "name": "RTSSM-TH",
+      "name": "RTAUTOBOT",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://rtsmm-th.com/static/logo/logo-rtssm-th.png"
+        "url": "https://rtautobot.com/static/logo/logo-rtautobot.png"
       }
     },
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://rtsmm-th.com/search?q={search_term}",
+      "target": "https://rtautobot.com/search?q={search_term}",
       "query-input": "required name=search_term"
     }
   }
@@ -1685,181 +1685,6 @@
   }
 </style>
 
-
-
-<!-- ===== FINAL PATCH: Sidebar brand wordmark full size (Root Adjustable) ===== -->
-<style id="rt-brand-wordmark-fullsize-final">
-  /*
-    ปรับขนาดโลโก้ได้จากตรงนี้จุดเดียว
-    - PC เปิดเมนู/hover/pinned: --rt-sb-logo-pc-*
-    - PC เมนูยุบ: --rt-sb-logo-collapsed-*
-    - Responsive: --rt-sb-logo-mobile-*
-  */
-  :root{
-    --rt-sb-logo-pc-width: 270px;
-    --rt-sb-logo-pc-min-width: 270px;
-    --rt-sb-logo-pc-height: 78px;
-    --rt-sb-logo-pc-scale: 1.16;
-    --rt-sb-logo-pc-brand-height: 72px;
-    --rt-sb-logo-pc-brand-padding-y: 4px;
-    --rt-sb-logo-pc-brand-padding-x: 10px;
-
-    --rt-sb-logo-collapsed-width: 82px;
-    --rt-sb-logo-collapsed-min-width: 82px;
-    --rt-sb-logo-collapsed-height: 52px;
-    --rt-sb-logo-collapsed-scale: 1.22;
-    --rt-sb-logo-collapsed-brand-height: 54px;
-
-    --rt-sb-logo-mobile-width: 264px;
-    --rt-sb-logo-mobile-min-width: 264px;
-    --rt-sb-logo-mobile-height: 78px;
-    --rt-sb-logo-mobile-scale: 1.16;
-    --rt-sb-logo-mobile-brand-height: 72px;
-    --rt-sb-logo-mobile-head-height: 84px;
-    --rt-sb-logo-mobile-head-padding-top: 0px;
-    --rt-sb-logo-mobile-head-padding-x: 12px;
-    --rt-sb-logo-mobile-head-padding-bottom: 12px;
-    --rt-sb-logo-mobile-brand-offset-y: 0px;
-
-    --rt-sb-logo-mobile-sm-width: 246px;
-    --rt-sb-logo-mobile-sm-min-width: 246px;
-    --rt-sb-logo-mobile-sm-height: 72px;
-    --rt-sb-logo-mobile-sm-scale: 1.14;
-    --rt-sb-logo-mobile-sm-brand-height: 68px;
-  }
-
-  #sb.sidebar .sb-brand{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    overflow:hidden !important;
-  }
-
-  #sb.sidebar .sb-brand .brand-icon{
-    display:none !important;
-    width:0 !important;
-    height:0 !important;
-    min-width:0 !important;
-    flex:0 0 0 !important;
-    opacity:0 !important;
-    pointer-events:none !important;
-  }
-
-  #sb.sidebar .sb-brand .brand-wordmark{
-    display:block !important;
-    object-fit:contain !important;
-    object-position:center center !important;
-    opacity:1 !important;
-    visibility:visible !important;
-    max-width:none !important;
-    max-height:none !important;
-    transform-origin:center center !important;
-    filter:drop-shadow(0 12px 24px rgba(0,0,0,.34)) !important;
-  }
-
-  @media (min-width:901px){
-    #sb.sidebar.open .sb-brand,
-    #sb.sidebar.pinned .sb-brand,
-    #sb.sidebar:hover .sb-brand{
-      min-height:var(--rt-sb-logo-pc-brand-height) !important;
-      height:var(--rt-sb-logo-pc-brand-height) !important;
-      padding:var(--rt-sb-logo-pc-brand-padding-y) var(--rt-sb-logo-pc-brand-padding-x) !important;
-      border-radius:22px !important;
-    }
-
-    #sb.sidebar.open .sb-brand .brand-wordmark,
-    #sb.sidebar.pinned .sb-brand .brand-wordmark,
-    #sb.sidebar:hover .sb-brand .brand-wordmark{
-      width:var(--rt-sb-logo-pc-width) !important;
-      min-width:var(--rt-sb-logo-pc-min-width) !important;
-      height:var(--rt-sb-logo-pc-height) !important;
-      transform:scale(var(--rt-sb-logo-pc-scale)) !important;
-    }
-
-    /* ตอน sidebar ยุบใน PC ให้โชว์โลโก้แบบย่อ ไม่ล้นกรอบ */
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-brand{
-      justify-content:center !important;
-      min-height:var(--rt-sb-logo-collapsed-brand-height) !important;
-      height:var(--rt-sb-logo-collapsed-brand-height) !important;
-      padding:6px !important;
-    }
-
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-brand .brand-wordmark{
-      width:var(--rt-sb-logo-collapsed-width) !important;
-      min-width:var(--rt-sb-logo-collapsed-min-width) !important;
-      height:var(--rt-sb-logo-collapsed-height) !important;
-      transform:scale(var(--rt-sb-logo-collapsed-scale)) !important;
-    }
-
-    /* === COLLAPSED SIDEBAR: จัด icon ให้อยู่กึ่งกลาง === */
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item{
-      justify-content:center !important;
-      padding-left:0 !important;
-      padding-right:0 !important;
-    }
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item .ico{
-      margin:0 auto !important;
-    }
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item .txt{
-      display:none !important;
-      width:0 !important;
-      opacity:0 !important;
-      overflow:hidden !important;
-    }
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-list,
-    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-nav{
-      padding-left:6px !important;
-      padding-right:6px !important;
-    }
-  }
-
-  @media (max-width:900px){
-    #sb.sidebar .sb-head{
-      min-height:var(--rt-sb-logo-mobile-head-height) !important;
-      padding:
-        var(--rt-sb-logo-mobile-head-padding-top)
-        var(--rt-sb-logo-mobile-head-padding-x)
-        var(--rt-sb-logo-mobile-head-padding-bottom) !important;
-      align-items:flex-start !important;
-      background: transparent !important;
-      backdrop-filter: blur(12px) saturate(120%) !important;
-      -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
-      border-bottom: 1px solid color-mix(in srgb, var(--sbx-accent,#f4c95d) 10%, transparent) !important;
-    }
-
-    #sb.sidebar .sb-brand{
-      min-height:var(--rt-sb-logo-mobile-brand-height) !important;
-      height:var(--rt-sb-logo-mobile-brand-height) !important;
-      padding:4px 10px !important;
-      border-radius:22px !important;
-      transform:translateY(var(--rt-sb-logo-mobile-brand-offset-y)) !important;
-    }
-
-    #sb.sidebar .sb-brand .brand-wordmark{
-      width:var(--rt-sb-logo-mobile-width) !important;
-      min-width:var(--rt-sb-logo-mobile-min-width) !important;
-      height:var(--rt-sb-logo-mobile-height) !important;
-      transform:scale(var(--rt-sb-logo-mobile-scale)) !important;
-    }
-  }
-
-  @media (max-width:390px){
-    #sb.sidebar .sb-brand{
-      min-height:var(--rt-sb-logo-mobile-sm-brand-height) !important;
-      height:var(--rt-sb-logo-mobile-sm-brand-height) !important;
-      padding:4px 9px !important;
-    }
-
-    #sb.sidebar .sb-brand .brand-wordmark{
-      width:var(--rt-sb-logo-mobile-sm-width) !important;
-      min-width:var(--rt-sb-logo-mobile-sm-min-width) !important;
-      height:var(--rt-sb-logo-mobile-sm-height) !important;
-      transform:scale(var(--rt-sb-logo-mobile-sm-scale)) !important;
-    }
-  }
-</style>
-
-
 <!-- ===== FINAL PATCH: Mobile sb-head flush top / root adjustable ===== -->
 <style id="rt-mobile-sb-head-flush-top-final">
   :root{
@@ -2039,6 +1864,237 @@
   }
 </style>
 
+<!-- ===== FINAL PATCH: Sidebar brand wordmark full size (Root Adjustable) ===== -->
+<style id="rt-brand-wordmark-fullsize-final">
+  /*
+    RTAUTOBOT Sidebar Logo Final
+    จุดนี้คุมโลโก้ sidebar ทั้ง PC / Mobile จุดเดียว
+
+    เป้าหมาย:
+    - ไม่ให้ logo ล้น
+    - เห็นรายละเอียด wordmark ครบ
+    - เอากรอบ/พื้นหลัง/เงากล่องครอบ logo ออก
+    - ให้แสดงเป็นรูป logo ล้วน ๆ
+  */
+
+  :root{
+    /* PC ตอน sidebar เปิด / pinned / hover */
+    --rt-sb-logo-pc-width: 290px;
+    --rt-sb-logo-pc-min-width: 290px;
+    --rt-sb-logo-pc-height: 86px;
+    --rt-sb-logo-pc-scale: 1;
+    --rt-sb-logo-pc-brand-height: 86px;
+    --rt-sb-logo-pc-brand-padding-y: 0px;
+    --rt-sb-logo-pc-brand-padding-x: 0px;
+
+    /* PC ตอน sidebar ยุบ */
+    --rt-sb-logo-collapsed-width: 54px;
+    --rt-sb-logo-collapsed-min-width: 54px;
+    --rt-sb-logo-collapsed-height: 34px;
+    --rt-sb-logo-collapsed-scale: 1;
+    --rt-sb-logo-collapsed-brand-height: 48px;
+
+    /* Mobile */
+    --rt-sb-logo-mobile-width: 290px;
+    --rt-sb-logo-mobile-min-width: 290px;
+    --rt-sb-logo-mobile-height: 86px;
+    --rt-sb-logo-mobile-scale: 1;
+    --rt-sb-logo-mobile-brand-height: 86px;
+    --rt-sb-logo-mobile-head-height: 68px;
+    --rt-sb-logo-mobile-head-padding-top: 8px;
+    --rt-sb-logo-mobile-head-padding-x: 10px;
+    --rt-sb-logo-mobile-head-padding-bottom: 8px;
+    --rt-sb-logo-mobile-brand-offset-y: 0px;
+
+    /* Mobile จอเล็กมาก */
+    --rt-sb-logo-mobile-sm-width: 260px;
+    --rt-sb-logo-mobile-sm-min-width: 260px;
+    --rt-sb-logo-mobile-sm-height: 86px;
+    --rt-sb-logo-mobile-sm-scale: 1;
+    --rt-sb-logo-mobile-sm-brand-height: 86px;
+  }
+
+  /* กล่อง logo หลัก */
+  #sb.sidebar .sb-brand{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+
+    /* เอากรอบ/พื้นหลัง/กล่องครอบ logo ออก */
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #sb.sidebar .sb-brand:hover{
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    transform: none !important;
+  }
+
+  /* ซ่อนไอคอนเล็ก ถ้าใช้ wordmark เป็น logo หลัก */
+  #sb.sidebar .sb-brand .brand-icon{
+    display:none !important;
+    width:0 !important;
+    height:0 !important;
+    min-width:0 !important;
+    flex:0 0 0 !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+  }
+
+  /* รูป logo */
+  #sb.sidebar .sb-brand .brand-wordmark{
+    display:block !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    max-width:none !important;
+    max-height:none !important;
+    transform-origin:center center !important;
+
+    /* เหลือแค่เงาของตัวรูป ไม่ใช่เงากล่อง */
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.34)) !important;
+  }
+
+  /* =========================
+     PC
+  ========================= */
+  @media (min-width:901px){
+    #sb.sidebar.open .sb-brand,
+    #sb.sidebar.pinned .sb-brand,
+    #sb.sidebar:hover .sb-brand{
+      min-height:var(--rt-sb-logo-pc-brand-height) !important;
+      height:var(--rt-sb-logo-pc-brand-height) !important;
+      padding:
+        var(--rt-sb-logo-pc-brand-padding-y)
+        var(--rt-sb-logo-pc-brand-padding-x) !important;
+      border-radius:0 !important;
+    }
+
+    #sb.sidebar.open .sb-brand .brand-wordmark,
+    #sb.sidebar.pinned .sb-brand .brand-wordmark,
+    #sb.sidebar:hover .sb-brand .brand-wordmark{
+      width:var(--rt-sb-logo-pc-width) !important;
+      min-width:var(--rt-sb-logo-pc-min-width) !important;
+      height:var(--rt-sb-logo-pc-height) !important;
+      transform:scale(var(--rt-sb-logo-pc-scale)) !important;
+    }
+
+    /* ตอน sidebar ยุบใน PC */
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-brand{
+      justify-content:center !important;
+      min-height:var(--rt-sb-logo-collapsed-brand-height) !important;
+      height:var(--rt-sb-logo-collapsed-brand-height) !important;
+      padding:0 !important;
+      border-radius:0 !important;
+    }
+
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-brand .brand-wordmark{
+      width:var(--rt-sb-logo-collapsed-width) !important;
+      min-width:var(--rt-sb-logo-collapsed-min-width) !important;
+      height:var(--rt-sb-logo-collapsed-height) !important;
+      transform:scale(var(--rt-sb-logo-collapsed-scale)) !important;
+    }
+
+    /* จัดเมนูตอนยุบให้ไอคอนอยู่กลาง */
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item,
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-link{
+      justify-content:center !important;
+      padding-left:0 !important;
+      padding-right:0 !important;
+    }
+
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item .ico,
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-link .ico{
+      margin:0 auto !important;
+    }
+
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-item .txt,
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-link .txt,
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-name{
+      display:none !important;
+      width:0 !important;
+      max-width:0 !important;
+      opacity:0 !important;
+      overflow:hidden !important;
+      pointer-events:none !important;
+    }
+
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-list,
+    #sb.sidebar:not(.open):not(.pinned):not(:hover) .sb-nav{
+      padding-left:6px !important;
+      padding-right:6px !important;
+    }
+  }
+
+  /* =========================
+     Mobile / Tablet
+  ========================= */
+  @media (max-width:900px){
+    #sb.sidebar .sb-head{
+      min-height:var(--rt-sb-logo-mobile-head-height) !important;
+      padding:
+        var(--rt-sb-logo-mobile-head-padding-top)
+        var(--rt-sb-logo-mobile-head-padding-x)
+        var(--rt-sb-logo-mobile-head-padding-bottom) !important;
+      align-items:flex-start !important;
+
+      /* ไม่ให้หัว sidebar มีกล่องหนักเกิน */
+      background: transparent !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--sbx-accent,#f4c95d) 10%, transparent) !important;
+      backdrop-filter: blur(12px) saturate(120%) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+    }
+
+    #sb.sidebar .sb-brand{
+      width:auto !important;
+      min-height:var(--rt-sb-logo-mobile-brand-height) !important;
+      height:var(--rt-sb-logo-mobile-brand-height) !important;
+      padding:0 !important;
+      border-radius:0 !important;
+      transform:translateY(var(--rt-sb-logo-mobile-brand-offset-y)) !important;
+    }
+
+    #sb.sidebar .sb-brand .brand-wordmark{
+      width:var(--rt-sb-logo-mobile-width) !important;
+      min-width:var(--rt-sb-logo-mobile-min-width) !important;
+      height:var(--rt-sb-logo-mobile-height) !important;
+      transform:scale(var(--rt-sb-logo-mobile-scale)) !important;
+    }
+  }
+
+  /* =========================
+     Mobile จอเล็กมาก
+  ========================= */
+  @media (max-width:390px){
+    #sb.sidebar .sb-brand{
+      min-height:var(--rt-sb-logo-mobile-sm-brand-height) !important;
+      height:var(--rt-sb-logo-mobile-sm-brand-height) !important;
+      padding:0 !important;
+      border-radius:0 !important;
+    }
+
+    #sb.sidebar .sb-brand .brand-wordmark{
+      width:var(--rt-sb-logo-mobile-sm-width) !important;
+      min-width:var(--rt-sb-logo-mobile-sm-min-width) !important;
+      height:var(--rt-sb-logo-mobile-sm-height) !important;
+      transform:scale(var(--rt-sb-logo-mobile-sm-scale)) !important;
+    }
+  }
+</style>
 
   <%
     const _clientSourceProtectionEnabled = (
@@ -2866,9 +2922,9 @@
   <!-- Sidebar -->
   <aside id="sb" class="sidebar" aria-label="Side navigation">
     <div class="sb-head">
-      <a href="/orders/new" class="sb-brand" aria-label="หน้าแรก">
+      <a href="/" class="sb-brand" aria-label="หน้าแรก">
         <img class="brand-icon" src="/static/logo/icon-logo.png" alt="" />
-        <img class="brand-wordmark" src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH" />
+        <img class="brand-wordmark" src="/static/logo/logo-rtautobot.png" alt="RTAUTOBOT" />
       </a>
       <button id="sbPin" class="sb-pin" title="ปักหมุด/เลิกปักหมุด" aria-pressed="false" aria-label="ปักหมุด/เลิกปักหมุด">
         <img
@@ -2919,65 +2975,16 @@
 
         <div class="sb-group">บริการ</div>
 
-        <a class="sb-item" href="/otp24" style="text-decoration: none;">
-          <span class="ico ei blue">
-            <svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M10 7h4"/><path d="M10 16h4"/><circle cx="12" cy="18.5" r=".7" class="fill"/></svg>
-          </span>
-          <span class="txt">บริการ OTP</span>
-        </a>
-
-        <a class="sb-item<%= socialActive ? ' active' : '' %>" href="/orders/new" style="text-decoration: none;">
+        <a class="sb-item<%= socialActive ? ' active' : '' %>" href="/bonustime" style="text-decoration: none;">
           <span class="ico ei">
-            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/><path d="M9 12h6"/><path d="M10.5 15h3"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 8.5h14v10H5z"/><path d="M7.5 8.5V6.8A3.3 3.3 0 0 1 10.8 3.5h2.4a3.3 3.3 0 0 1 3.3 3.3v1.7"/><path d="M9 13h6"/><path d="M12 10v6"/></svg>
           </span>
-          <span class="txt">บริการ Social</span>
+          <span class="txt">Bonustime</span>
         </a>
 
-        <a class="sb-item" href="/apps" style="text-decoration: none;">
-          <span class="ico ei blue">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4" y="4" width="7" height="7" rx="2"/>
-              <rect x="13" y="4" width="7" height="7" rx="2"/>
-              <rect x="4" y="13" width="7" height="7" rx="2"/>
-              <rect x="13" y="13" width="7" height="7" rx="2"/>
-              <path d="M7.5 7.5h0M16.5 7.5h0M7.5 16.5h0M16.5 16.5h0"/>
-            </svg>
-          </span>
-          <span class="txt">บัญชีแอปพรีเมี่ยม</span>
-        </a>
+        <!-- <div class="sb-group">บัญชีและเครดิต</div> -->
 
-        <div class="sb-group">บริการพิเศษ</div>
 
-        <a class="sb-item" href="/telegram" style="text-decoration: none;">
-          <span class="ico ei blue">
-            <svg viewBox="0 0 24 24"><path d="M21 4 3.8 10.7c-.9.35-.85 1.65.08 1.92l4.36 1.3 1.7 5.15c.28.85 1.4 1.03 1.94.32l2.43-3.18 4.47 3.3c.72.53 1.75.13 1.92-.75L23 5.2c.15-.85-.8-1.45-1.52-.95Z"/><path d="m8.4 13.8 8.8-5.4-6.9 7.4"/></svg>
-          </span>
-          <span class="txt">บริการบอท Telegram</span>
-        </a>
-
-        <div class="sb-group">เครื่องมือต่างๆ</div>
-
-        <a class="sb-item" href="/mails" style="text-decoration: none;">
-          <span class="ico ei blue">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3.5" y="6" width="17" height="12" rx="2.5"/>
-              <path d="m4.5 8 7.5 5.2L19.5 8"/>
-              <path d="M7 16h4"/>
-            </svg>
-          </span>
-          <span class="txt">เมลยืนยัน</span>
-        </a>
-
-        <a class="sb-item" href="/2fa" style="text-decoration: none;">
-          <span class="ico ei blue">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 3 5.5 5.7v5.2c0 4.2 2.7 8 6.5 10 3.8-2 6.5-5.8 6.5-10V5.7L12 3z"/>
-              <path d="M9 12.2 11 14l4-4"/>
-              <path d="M12 7.6v1.2"/>
-            </svg>
-          </span>
-          <span class="txt">2FA</span>
-        </a>
 
         <div class="sb-group">ติดต่อ</div>
 
@@ -2990,19 +2997,6 @@
 
         <div class="sb-group">ข้อมูล/ระบบ</div>
 
-        <a class="sb-item" href="/services" style="text-decoration: none;">
-          <span class="ico ei">
-            <svg viewBox="0 0 24 24"><path d="M4 5h7v7H4z"/><path d="M13 5h7v7h-7z"/><path d="M4 14h7v5H4z"/><path d="M13 14h7v5h-7z"/></svg>
-          </span>
-          <span class="txt">บริการทั้งหมด</span>
-        </a>
-
-        <a class="sb-item" href="/update" style="text-decoration: none;">
-          <span class="ico ei purple">
-            <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v6h-6"/><path d="M12 8v4l3 2"/></svg>
-          </span>
-          <span class="txt">อัปเดต</span>
-        </a>
 
         <a class="sb-item" href="/faq" style="text-decoration: none;">
           <span class="ico ei slate">
@@ -3011,12 +3005,6 @@
           <span class="txt">คำถามที่พบบ่อย FAQ</span>
         </a>
 
-        <a class="sb-item" href="/blog" style="text-decoration: none;">
-          <span class="ico ei">
-            <svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H7a2 2 0 0 1-2-2V4z"/><path d="M8 8h7"/><path d="M8 12h7"/><path d="M8 16h5"/></svg>
-          </span>
-          <span class="txt">บทความ</span>
-        </a>
 
         <a class="sb-item" href="/page/terms-of-use" style="text-decoration: none;">
           <span class="ico ei slate">
@@ -3068,14 +3056,14 @@
       <div class="rt-topbar-glow" aria-hidden="true"></div>
 
       <div class="left rt-brand-wrap">
-        <a class="rt-brand" href="/orders/new" aria-label="RTSMM-TH Home">
+        <a class="rt-brand" href="/" aria-label="RTAUTOBOT Home">
           <span class="rt-brand-mark">R</span>
           <span class="rt-brand-copy">
-            <strong>RTSMM-TH.COM</strong>
-            <small>Social · OTP · Automation Center</small>
+            <strong>RTAUTOBOT</strong>
+            <small>Bonustime Automation Center</small>
           </span>
         </a>
-        <span class="rt-brand-line">ผู้ให้บริการ OTP24ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล</span>
+        <span class="rt-brand-line">ระบบ Bonustime อัตโนมัติ พร้อมเครดิตกระเป๋าเดียวกับ RTAUTOBOT</span>
       </div>
 
       <nav class="nav rt-nav" aria-label="Top navigation">
@@ -3136,9 +3124,9 @@
         <span></span>
         <span></span>
       </button>
-      <a href="/orders/new" class="m-brand rt-mobile-brand" aria-label="RTSMM-TH">
+      <a href="/" class="m-brand rt-mobile-brand" aria-label="RTAUTOBOT">
         <span class="rt-brand-mark">R</span>
-        <span>RTSMM-TH</span>
+        <span>RTAUTOBOT</span>
       </a>
       <div class="m-right rt-mobile-actions">
         <% if (me) { %>
@@ -3176,10 +3164,10 @@
               alt="" width="18" height="18" loading="lazy" aria-hidden="true">
           <span>Dashboard</span>
         </a>
-        <a class="chip chip--with-ico" href="/orders/new">
+        <a class="chip chip--with-ico" href="/bonustime">
           <img class="chip-ico" src="/static/assets/emoji/ordernew.png"
               alt="" width="18" height="18" loading="lazy" aria-hidden="true">
-          <span>สั่งซื้อใหม่</span>
+          <span>Bonustime</span>
         </a>
         <% if (me.role === 'admin') { %>
           <a class="chip chip--with-ico" href="/admin">
@@ -3212,7 +3200,7 @@
     </main>
 
     <footer class="rt-footer">
-      <span>Copyright &copy; 2025 RTSMM-TH - All rights reserved.</span>
+      <span>Copyright &copy; 2025 RTAUTOBOT - All rights reserved.</span>
       <span>Design by CC.Dev </span>
     </footer>
 
@@ -3863,9 +3851,6 @@
   });
   </script>
 
-  <script>
-    window.__CACHE_VERSION__ = "<%= cacheVersion %>";
-  </script>
 
   <script>
   if ('serviceWorker' in navigator) {

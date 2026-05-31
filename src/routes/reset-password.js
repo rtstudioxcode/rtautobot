@@ -37,8 +37,8 @@ function getPublicBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
-const BRAND_URL  = 'https://rtsmm-th.com';
-const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtssm-th.png`;
+const BRAND_URL  = 'https://rtautobot.com';
+const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtautobot.png`;
 
 function emailTemplateResetLink(resetUrl) {
   const LOGO_H_DESKTOP = 128;  // สูงโลโก้เดสก์ท็อป (ปรับได้ 64–84)
@@ -69,12 +69,12 @@ function emailTemplateResetLink(resetUrl) {
           <tr>
             <td class="head">
               <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTSMM-TH" class="logo">
+                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="logo">
               </a>
             </td>
           </tr>
           <tr><td class="px">
-            <h2 style="margin:0 0 6px">รีเซ็ตรหัสผ่าน RTSMM-TH</h2>
+            <h2 style="margin:0 0 6px">รีเซ็ตรหัสผ่าน RTAUTOBOT</h2>
             <p style="margin:0;color:#6b7280">กดปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่</p>
           </td></tr>
           <tr><td class="cta" align="center">
@@ -84,7 +84,7 @@ function emailTemplateResetLink(resetUrl) {
             หากปุ่มกดไม่ได้ คัดลอกลิงก์นี้: <a href="${resetUrl}" style="color:#2563eb;word-break:break-all">${resetUrl}</a>
           </td></tr>
           <tr><td style="background:#f9fafb;color:#9ca3af;padding:12px 20px;text-align:center;font-size:12px">
-            © RTSMM-TH
+            © RTAUTOBOT
           </td></tr>
         </table>
       </td></tr>
@@ -120,7 +120,7 @@ function emailTemplateVerifyLink(verifyUrl) {
           <tr>
             <td class="head">
               <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTSMM-TH" class="logo">
+                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="logo">
               </a>
             </td>
           </tr>
@@ -135,7 +135,7 @@ function emailTemplateVerifyLink(verifyUrl) {
             หากปุ่มกดไม่ได้ คัดลอกลิงก์นี้: <a href="${verifyUrl}" style="color:#2563eb;word-break:break-all">${verifyUrl}</a>
           </td></tr>
           <tr><td style="background:#f9fafb;color:#9ca3af;padding:12px 20px;text-align:center;font-size:12px">
-            © RTSMM-TH
+            © RTAUTOBOT
           </td></tr>
         </table>
       </td></tr>
@@ -175,7 +175,7 @@ router.post('/password/forgot', async (req, res) => {
 
       // fire-and-forget เพื่อความไว
       Promise.resolve(
-        sendEmail({ to: email, subject: 'ยืนยันอีเมล RTSMM-TH', html: emailTemplateVerifyLink(verifyUrl) })
+        sendEmail({ to: email, subject: 'ยืนยันอีเมล RTAUTOBOT', html: emailTemplateVerifyLink(verifyUrl) })
       ).catch(err => glog.error('send verify email failed:', err?.message || err));
 
       return res.status(409).json({
@@ -203,7 +203,7 @@ router.post('/password/forgot', async (req, res) => {
 
     // fire-and-forget ส่งให้ไว
     Promise.resolve(
-      sendEmail({ to: email, subject: 'รีเซ็ตรหัสผ่าน RTSMM-TH', html: emailTemplateResetLink(resetUrl) })
+      sendEmail({ to: email, subject: 'รีเซ็ตรหัสผ่าน RTAUTOBOT', html: emailTemplateResetLink(resetUrl) })
     ).catch(err => glog.error('send reset email failed:', err?.message || err));
 
     // ตอบไว ไม่รอ SMTP

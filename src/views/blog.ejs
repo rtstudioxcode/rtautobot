@@ -6,13 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <%
-    const defaultPageTitle = 'บทความการตลาดออนไลน์ 2026 | ปั้มวิว ปั้มไลค์ เพิ่มผู้ติดตาม | RTSMM-TH';
+    const defaultPageTitle = 'บทความการตลาดออนไลน์ 2026 | ปั้มวิว ปั้มไลค์ เพิ่มผู้ติดตาม | RTAUTOBOT';
     const headTitle = pageTitle || defaultPageTitle;
     const headDesc  = (typeof metaDescription !== 'undefined' && metaDescription)
       ? metaDescription
       : 'รวมบทความสายการตลาดออนไลน์ ปั้มวิว ปั้มไลค์ เพิ่มผู้ติดตาม เทคนิคไวรัล TikTok, YouTube, Instagram, Facebook และการทำคอนเทนต์ให้โตแบบยั่งยืน อัปเดตปี 2026';
-    const canonicalUrl = 'https://rtsmm-th.com/blog';
-    const ogImage = 'https://rtsmm-th.com/static/assets/img/main-pic-3.png';
+    const canonicalUrl = 'https://rtautobot.com/blog';
+    const ogImage = 'https://rtautobot.com/static/assets/img/main-pic-3.png';
     const postList = posts || [];
     const featuredPost = postList[0] || null;
   %>
@@ -43,19 +43,19 @@
     const blogSchema = {
       "@context": "https://schema.org",
       "@type": "Blog",
-      "name": "บทความการตลาดออนไลน์ | RTSMM-TH",
+      "name": "บทความการตลาดออนไลน์ | RTAUTOBOT",
       "description": headDesc,
       "url": canonicalUrl,
       "publisher": {
         "@type": "Organization",
         "name": "RTSSM-TH.COM",
-        "logo": { "@type": "ImageObject", "url": "https://rtsmm-th.com/static/logo/icon-logo.png" }
+        "logo": { "@type": "ImageObject", "url": "https://rtautobot.com/static/logo/icon-logo.png" }
       },
       "blogPost": postList.slice(0, 8).map(p => ({
         "@type": "BlogPosting",
         "headline": p.title,
         "description": p.excerpt || headDesc,
-        "url": "https://rtsmm-th.com/blog/" + p.slug,
+        "url": "https://rtautobot.com/blog/" + p.slug,
         "image": p.thumbnail || ogImage,
         "datePublished": p.dateISO || p.dateText || undefined,
         "author": { "@type": "Person", "name": p.author || "RTSSM-TH" }
@@ -195,7 +195,7 @@
     <div class="blog-shell">
       <section class="blog-hero">
         <div class="hero-copy">
-          <div class="blog-kicker"><i class="fa-solid fa-sparkles"></i> RTSMM-TH Growth Journal</div>
+          <div class="blog-kicker"><i class="fa-solid fa-sparkles"></i> RTAUTOBOT Growth Journal</div>
           <h1 class="blog-title">บทความ <span class="shine">การตลาดออนไลน์</span></h1>
           <p class="blog-subtitle">รวมเทคนิคเพิ่มยอดมองเห็น ปั้มไลค์ ปั้มผู้ติดตาม วางแผนคอนเทนต์ และเลือกบริการให้เหมาะกับแพลตฟอร์ม อ่านจบแล้วเอาไปใช้ต่อได้ทันที ไม่ต้องเปิดตำราเหมือนสอบปลายภาค</p>
           <div class="blog-actions">
@@ -235,7 +235,7 @@
             <% if (featuredPost.excerpt) { %><p class="featured-excerpt"><%= featuredPost.excerpt %></p><% } %>
             <div class="featured-meta">
               <span><i class="fa-regular fa-calendar me-1"></i><%= featuredPost.dateText || 'อัปเดตล่าสุด' %></span>
-              <span><i class="fa-regular fa-user me-1"></i><%= featuredPost.author || 'RTSMM-TH' %></span>
+              <span><i class="fa-regular fa-user me-1"></i><%= featuredPost.author || 'RTAUTOBOT' %></span>
             </div>
             <a class="blog-btn primary" href="/blog/<%= featuredPost.slug %>">อ่านบทความแนะนำ <i class="fa-solid fa-arrow-right"></i></a>
           </div>
@@ -274,7 +274,7 @@
               <div class="post-body">
                 <div class="post-meta">
                   <span><i class="fa-regular fa-calendar me-1"></i><%= p.dateText || 'อัปเดตล่าสุด' %></span>
-                  <span><i class="fa-regular fa-user me-1"></i><%= p.author || 'RTSMM-TH' %></span>
+                  <span><i class="fa-regular fa-user me-1"></i><%= p.author || 'RTAUTOBOT' %></span>
                 </div>
                 <h3 class="post-title"><a href="/blog/<%= p.slug %>"><%= p.title %></a></h3>
                 <% if (p.excerpt) { %><p class="post-excerpt"><%= p.excerpt %></p><% } %>
@@ -308,7 +308,7 @@
     <div class="blog-shell px-3 px-lg-0">
       <div class="row g-4 align-items-start">
         <div class="col-lg-4">
-          <img src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH logo" class="mb-3">
+          <img src="/static/logo/logo-rtautobot.png" alt="RTAUTOBOT logo" class="mb-3">
           <p class="mb-0">RTSSM-TH.COM ผู้ให้บริการ OTP24 ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก</p>
         </div>
         <div class="col-6 col-lg-2">

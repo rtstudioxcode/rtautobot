@@ -11,37 +11,19 @@ import { User } from "./models/User.js";
 import { config, refreshConfigFromDB, startSecureConfigAutoReload } from "./config.js";
 import expressLayouts from "express-ejs-layouts";
 import authRoutes from "./routes/auth.js";
-import catalogRoutes from "./routes/catalog.js";
-import orderRoutes from "./routes/orders.js";
-import adminRoutes from "./routes/admin.js";
-import adminPricingRoutes from "./routes/admin-pricing.js";
+import adminBonustimeRoutes from "./routes/admin-bonustime.js";
 import walletRoutes from "./routes/wallet.js";
-import newOrderRoutes from "./routes/newOrder.js";
-import { syncServicesFromProvider } from "./lib/syncServices.js";
-import { Category } from "./models/Category.js";
-import { servicesRouter } from "./routes/services.js";
-import changesRoute from "./routes/changes.js";
 import accountRouter from "./routes/account.js";
 import resetPasswordRoutes from "./routes/reset-password.js";
 import dashboardRouter from "./routes/dashboard.js";
-import otpRouter from "./routes/otp.js";
 import {
   attachUser,
   requireAuth,
   requireAdmin,
   requireGuest,
 } from "./middleware/auth.js";
-import { Order } from "./models/Order.js";
-import apiPricingRouter from "./routes/api-pricing.js";
 import compression from "compression";
-import { startSpendAutoRecalc } from "./services/spendWatcher.js";
-import { recalcAllUsersTotals } from "./services/spend.js";
 import { topupRouter, topupPublicRouter } from "./routes/topup.js";
-import adminReport from './routes/admin-report.js';
-import affiliateRouter from './routes/affiliate.js';
-import blogRoutes from "./routes/blog.js";
-import otp24Routes from './routes/otp24.js';
-import appsRoutes from './routes/apps.js';
 import cookieParser from 'cookie-parser';
 import bonustimeRouter from "./routes/bonustime.js";
 
@@ -50,10 +32,8 @@ import { startJobScheduler } from './queue/jobQueue.js';
 
 import sitemapRouter from "./routes/sitemap.js";
 import robotsRoute from "./routes/robots.js";
-import telegramRouter from "./routes/telegram.js";
 import supportRouter from "./routes/support.js";
 
-import { botBlocker } from "./middleware/botBlocker.js";
 import { securityHardening } from "./middleware/securityHardening.js";
 import { Settings } from './models/Settings.js';
 import { sourceProtectionHeaders, blockSourceMapRequests, htmlSourceHardener, protectStaticJs, protectStaticCss, makeEvalLoader } from "./middleware/sourceProtection.js";
@@ -126,14 +106,6 @@ function getSessionCookieName() {
   return String(config?.session?.name || config?.session?.cookieName || config?.sessionCookieName || "rtsmm.sid").trim() || "rtsmm.sid";
 }
 
-function shouldSyncIndexes() {
-  return config?.system?.syncIndexes !== false;
-}
-
-function getBotBlockAction() {
-  return String(config?.botBlock?.action ?? 404);
-}
-
 function isDefaultAvatarUrl(url = "") {
   const s = String(url || "").trim();
   return !s || /(?:^|\/)static\/logo\/icon-logo\.png(?:[?#].*)?$/i.test(s);
@@ -152,36 +124,6 @@ function buildAvatarSrc(url, ver) {
 
   const v = Number(ver || 0);
   return v > 0 ? `${clean}?v=${v}` : clean;
-}
-
-
-/* ------------------------------------------------------------------ */
-/* 3) ตัวช่วย re-calc แต้ม/เลเวล background                           */
-/* ------------------------------------------------------------------ */
-let stopSpendWatcher = null;
-mongoose.connection.once("open", () => {
-  if (!stopSpendWatcher) {
-    stopSpendWatcher = startSpendAutoRecalc(mongoose.connection);
-    glog.log("[spendWatcher] started");
-  }
-});
-
-for (const sig of ["SIGINT", "SIGTERM"]) {
-  process.on(sig, () => {
-    try {
-      stopSpendWatcher?.();
-    } catch { }
-    process.exit(0);
-  });
-}
-
-try {
-  if (shouldSyncIndexes()) {
-    await Order.syncIndexes();
-    glog.log("✅ Order indexes synced");
-  }
-} catch (e) {
-  glog.warn("⚠️ syncIndexes failed:", e?.message || e);
 }
 
 /* ------------------------------------------------------------------ */
@@ -310,7 +252,7 @@ if (NET_DEBUG_ENABLED) {
 const PUBLIC_ASSET_CACHE_SECONDS = 30 * 24 * 60 * 60; // 30 days
 const PUBLIC_ASSET_STALE_SECONDS = 7 * 24 * 60 * 60; // 7 days
 const PUBLIC_ASSET_EXT_RE = /\.(?:css|m?js|cjs|json|webmanifest|txt|xml|png|jpe?g|webp|gif|svg|ico|avif|bmp|tiff?|woff2?|ttf|otf|eot|pdf|mp4|webm|mov|mp3|wav)(?:$|[?#])/i;
-const PUBLIC_ASSET_PATH_RE = /^(?:\/static\/|\/assets\/|\/logo\/|\/og\/|\/fonts\/|\/cache\/|\/uploads\/|\/apps\/img\/|\/apps\/icon\/)/i;
+const PUBLIC_ASSET_PATH_RE = /^(?:\/static\/|\/assets\/|\/logo\/|\/og\/|\/fonts\/|\/cache\/|\/uploads\/)/i;
 
 function isPublicAssetRequestPath(rawPath = "") {
   const pathname = String(rawPath || "").split("?")[0];
@@ -389,15 +331,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🚫 Block Bot Scanner + Save to MongoDB
-// ต้องอยู่ก่อน static, parser, session และ routes ทั้งหมด
-app.use(
-  botBlocker({
-    action: getBotBlockAction(),
-    logTimeoutMs: 700,
-  })
-);
-
 // Production security headers/path hardening. Keep same-origin guard off here
 // because bank/TrueWallet webhooks must stay public and unauthenticated.
 app.use(securityHardening({
@@ -429,8 +362,6 @@ app.locals.safeJson = (value) => JSON.stringify(value ?? null)
   .replace(/\u2029/g, "\\u2029");
 
 app.set("trust proxy", 1);
-
-
 
 app.use(cookieParser(getCookieSecret()));
 // Compress text responses before static/protected JS/CSS handlers to reduce public egress.
@@ -465,14 +396,6 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  next();
-});
-
-// 🔥 ตั้ง cache ให้ static/public assets จริง ๆ
-app.use((req, res, next) => {
-  if (/^(GET|HEAD)$/i.test(req.method) && isPublicAssetRequestPath(req.path || req.originalUrl || req.url)) {
-    setPublicAssetCacheHeaders(res);
-  }
   next();
 });
 
@@ -634,78 +557,22 @@ app.use(async (req, res, next) => {
   next();
 });
 
-let cachedVersion = "v1";
-let lastFetch = 0;
-
-async function getCacheVersion() {
-  // ลด MongoDB read ทุก request: อ่าน cache_version จาก DB อย่างมาก ~1 ครั้ง/นาทีต่อ process
-  if (Date.now() - lastFetch < 60_000) return cachedVersion;
-  try {
-    const row = await Settings.findOne({ key: 'cache_version' }).select({ value: 1 }).lean();
-    cachedVersion = String(row?.value || 'v1');
-    lastFetch = Date.now();
-  } catch {
-    cachedVersion = cachedVersion || 'v1';
-    lastFetch = Date.now();
-  }
-  return cachedVersion;
-}
-
-app.use(async (req, res, next) => {
-  res.locals.cacheVersion = await getCacheVersion();
-  next();
-})
-
-app.get('/sw.js', async (req, res) => {
-  try {
-    const version = await getCacheVersion();
-
-    // 🔥 รองรับทั้ง dev และ production
-    let filePath = path.join(process.cwd(), 'public', 'sw.template.js');
-
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(process.cwd(), 'src', 'public', 'sw.template.js');
-    }
-
-    if (!fs.existsSync(filePath)) {
-      console.error('❌ SW template not found');
-      return res.status(500).send('// sw template missing');
-    }
-
-    let content = fs.readFileSync(filePath, 'utf-8');
-
-    content = content.replaceAll('__CACHE_VERSION__', version);
-
-    // Obfuscate the generated service worker too.
-    // This keeps /sw.js from exposing cached API endpoints in DevTools Sources after F5.
-    if (isServiceWorkerObfuscationEnabled()) {
-      content = makeEvalLoader(content, 'sw');
-    } else {
-      content = content
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .join('\n');
-    }
-
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-
-    res.send(content);
-
-  } catch (e) {
-    console.error('❌ SW ERROR:', e);
-    res.status(500).send('// sw error');
-  }
+// Routes
+app.get("/", (req, res) => {
+  res.render("home/index", {
+    pageTitle: "RTAUTOBOT | ระบบ Bonustime อัตโนมัติ",
+    title: "RTAUTOBOT | ระบบ Bonustime อัตโนมัติ",
+    pageDescription: "RTAUTOBOT ศูนย์สั่งซื้อและจัดการ Bonustime สำหรับสล็อต บาคาร่า และหวย พร้อมเครดิตกระเป๋าเดียวกับ RTAUTOBOT",
+    pageKeywords: "RTAUTOBOT, Bonustime, ระบบโบนัสไทม์, บอทโบนัสไทม์, สล็อต, บาคาร่า, หวย",
+  });
 });
 
-// Routes
 app.use("/support", supportRouter);
-app.use(affiliateRouter);
 app.use(authRoutes);
 app.use(resetPasswordRoutes);
-app.use(catalogRoutes);
+
+// RTAUTOBOT admin: Bonustime only
+app.use("/admin", requireAuth, requireAdmin, adminBonustimeRoutes);
 
 // ✅ Public topup webhooks must be registered BEFORE any broad requireAuth middleware.
 // Otherwise MacroDroid/Postman requests to /topup/kbank will be intercepted by
@@ -714,41 +581,22 @@ app.use(catalogRoutes);
 app.use("/topup", topupPublicRouter);
 app.use("/api/topup", topupPublicRouter);
 
-// Auth-protected feature routers must be mounted precisely.
-// Do NOT use app.use(requireAuth, requireAdmin, someRouter) without a path here:
-// Express will run that middleware for every later URL and normal users will be
-// blocked from /otp24, /apps, /telegram, /mails, /2fa, /faq, /blog, /page/terms-of-use.
-// Public SEO/order landing must be registered before authenticated order routes.
-// Otherwise /orders/new is intercepted by routes/orders.js router.use(requireAuth)
-// and Google sees it as a redirect instead of an indexable page.
-app.use(newOrderRoutes);
-app.use(orderRoutes); // routes/orders.js already has router.use(requireAuth)
-app.use("/admin", requireAuth, requireAdmin, adminRoutes);
-app.use("/admin", requireAuth, requireAdmin, adminPricingRoutes);
+// RTAUTOBOT keeps only account/credit/support and Bonustime-facing routes.
+// SMM, OTP24, APPS, Telegram service and related endpoints are intentionally unmounted.
 
 // walletRoutes does not have its own router.use(requireAuth), so guard only its real paths.
 app.use(["/wallet", "/wallet/add"], requireAuth);
 app.use(walletRoutes);
 
 app.use("/topup", requireAuth, topupRouter);
-app.use("/services", servicesRouter);
-app.use(changesRoute); // route-level requireAuth inside
 app.use(accountRouter); // router.use(requireAuth) inside
 app.use(dashboardRouter); // router.use(requireAuth) inside
-app.use("/otp", otpRouter);
-app.use("/api", apiPricingRouter);
 
-// Admin report route is /admin/report/summary inside admin-report.js.
+// Admin routes are limited to Bonustime in this split.
 // Guard only /admin/report/*, then mount the router. This prevents requireAdmin
 // from leaking into all user/public routes registered after it.
-app.use("/admin/report", requireAuth, requireAdmin);
-app.use(adminReport);
 
-app.use("/blog", blogRoutes);
-app.use(appsRoutes);
-app.use('/otp24', otp24Routes);
 app.use(bonustimeRouter);
-app.use("/telegram", telegramRouter);
 
 
 // Healthcheck (optional)
@@ -763,107 +611,10 @@ app.get("/faq", (req, res) => {
   });
 });
 
-const BLOG_POSTS = [
-  {
-    slug: "tiktok-fyp",
-    title: "การเพิ่มยอดวิว TikTok: เทคนิคปั้นวิดีโอให้ไวรัลแบบมือโปร",
-    dateText: "November 1, 2026",
-    date: "November 1, 2026",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog1.png",
-    image: "/static/assets/thumbnails/blog1.png",
-    excerpt:
-      "การเพิ่มยอดวิว TikTok: เทคนิคปั้นวิดีโอให้ไวรัลแบบมือโปร ในยุคที่ TikTok...",
-  },
-  {
-    slug: "follower-ig",
-    title: "รวมเหตุผลที่การ ปั้นไอจี ในปี 2026 ยังคงเป็นตัวเลือกที่ดีที่สุด",
-    dateText: "November 1, 2026",
-    date: "November 1, 2026",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog2.gif",
-    image: "/static/assets/thumbnails/blog2.gif",
-    excerpt: "รวมเหตุผลที่การ ปั้นไอจี ในปี 2026...",
-  },
-  {
-    slug: "view-youtube",
-    title:
-      "เผยอาชีพใหม่ที่ได้ค่าตอบแทนสุดคุ้มค่า เพียงปั้นช่อง Youtube ให้สำเร็จเท่านั้น",
-    dateText: "November 2, 2019",
-    date: "November 2, 2019",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog3.gif",
-    image: "/static/assets/thumbnails/blog3.gif",
-    excerpt: "เผยอาชีพใหม่ที่ได้ค่าตอบแทนสุดคุ้มค่า...",
-  },
-  {
-    slug: "likefanpage-facebook",
-    title: "แชร์เทคนิคการปั้นเฟสบุ๊ก ทำอย่างไรให้หาเงินได้จากแพลตฟอร์มนี้",
-    dateText: "November 3, 2026",
-    date: "November 3, 2026",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog4.gif",
-    image: "/static/assets/thumbnails/blog4.gif",
-    excerpt: "แชร์เทคนิคการปั้นเฟสบุ๊ก ทำอย่างไรให้หาเงินได้...",
-  },
-  {
-    slug: "pumview",
-    title: "วิธีปั๊มวิวง่าย ๆ แต่เป็นอะไรที่ใช้ได้จริง",
-    dateText: "November 3, 2026",
-    date: "November 3, 2026",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog5.gif",
-    image: "/static/assets/thumbnails/blog5.gif",
-    excerpt: "วิธีปั๊มวิวง่าย ๆ แต่เป็นอะไรที่ใช้ได้จริง...",
-  },
-  {
-    slug: "pro-pumlike",
-    title: "ปั๊มไลค์แบบนี้มืออาชีพเขาทำกัน",
-    dateText: "November 4, 2026",
-    date: "November 4, 2026",
-    author: "RTSMM - Thailand",
-    thumbnail: "/static/assets/thumbnails/blog6.gif",
-    image: "/static/assets/thumbnails/blog6.gif",
-    excerpt: "ปั๊มไลค์แบบนี้ มืออาชีพเขาทำกัน...",
-  },
-];
-
-app.get("/blog", (req, res) => {
-  res.render("blog", {
-    layout: true,
-    pageTitle: "บทความ | RTSMM-TH",
-    posts: BLOG_POSTS,
-  });
-});
-
-app.get("/blog/:slug", (req, res) => {
-  const article = BLOG_POSTS.find((p) => p.slug === req.params.slug);
-
-  if (!article) {
-    return res.status(404).render("404", {
-      layout: true,
-      pageTitle: "ไม่พบบทความ | RTSMM-TH",
-    });
-  }
-
-  const viewName = article.slug;
-
-  res.render(viewName, {
-    layout: true,
-    pageTitle: article.title,
-    article: {
-      ...article,
-      image: article.image || article.thumbnail || "/static/assets/img/main-pic-3.png",
-      thumbnail: article.thumbnail || article.image || "/static/assets/img/main-pic-3.png",
-      date: article.date || article.dateText,
-    },
-  });
-});
-
 app.get("/page/terms-of-use", (req, res) => {
   res.render("terms-of-use", {
     layout: true, // ✅ ใช้ layout.ejs
-    title: "เงื่อนไขและข้อตกลง | RTSMM-TH.COM",
+    title: "เงื่อนไขและข้อตกลง | RTAUTOBOT",
     pageTitle: "Terms of Use",
     bodyClass: "page-terms", // (ออปชัน) เอาไว้เผื่อสไตล์เฉพาะหน้านี้
   });
@@ -893,28 +644,6 @@ app.use((err, req, res, next) => {
 
 // 404 (optional)
 app.use((req, res) => res.status(404).send("Not found"));
-
-// 🔁 Auto-sync services เมื่อ DB ยังว่าง (ทำครั้งเดียวตอนบูต)
-(async () => {
-  try {
-    const count = await Category.countDocuments();
-    if (!count) {
-      const r = await syncServicesFromProvider();
-      glog.log(`✅ Boot sync done: ${r.count} services`);
-    } else {
-      glog.log(`ℹ️ Categories already present: ${count}`);
-    }
-  } catch (e) {
-    glog.error(
-      "❌ Boot sync failed (will try again on first visit):",
-      e?.response?.data || e.message || e
-    );
-    glog.error(
-      "❌ Boot sync failed (will try again on first visit):",
-      e?.response?.data || e.message || e
-    );
-  }
-})();
 
 (async () => {
   try {
@@ -970,22 +699,7 @@ const PORT = getRuntimePort();
 const HOST = "0.0.0.0";
 
 app.listen(PORT, HOST, () => {
-  console.log(`🚀 RTSMM-TH Server Online`);
+  console.log(`🚀 RTAUTOBOT Server Online`);
 
-  // One-time full spend rescan is expensive. Keep it opt-in only.
-  if (config?.jobs?.startupRecalcAllUsersEnabled === true) {
-    setTimeout(() => {
-      recalcAllUsersTotals({
-        force: true,
-        fullRescan: true,
-        reason: 'startup_recalc_all_users_smm_otp_apps_only',
-      }).then((r) => {
-        glog.info('[spend/recalc-all/startup] done:', r);
-      }).catch((e) => {
-        console.error('[spend/recalc-all/startup] failed:', e?.message || e);
-      });
-    }, 15_000);
-  } else {
-    glog.info('[spend/recalc-all/startup] skipped (set config.jobs.startupRecalcAllUsersEnabled=true to run)');
-  }
+  glog.info("[RTAUTOBOT] Bonustime runtime online");
 });

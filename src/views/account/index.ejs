@@ -327,7 +327,7 @@
                   (paid/completed/success/done/processing)</li>
                 <li>ลิงก์แนะนำจะถูกสร้างเมื่อคุณกดปุ่ม “สร้างลิงก์แนะนำ” เท่านั้น และเป็นคีย์เฉพาะตัว
                   ไม่ผูกกับชื่อผู้ใช้</li>
-                <li>ตัวอย่างรูปแบบลิงก์: <code>https://rtsmm-th.com/aff?=รหัสแนะนำเพื่อนของคุณ</code></li>
+                <li>ตัวอย่างรูปแบบลิงก์: <code>https://rtautobot.com/aff?=รหัสแนะนำเพื่อนของคุณ</code></li>
               </ul>
             </div>
           </div>
@@ -2132,7 +2132,7 @@
       const label = (active?.textContent || 'ตั้งค่าข้อมูลส่วนตัว').trim();
       if (titleEl) titleEl.textContent = label;
       // (ออปชัน) อัปเดต title ของแท็บเบราว์เซอร์ให้เข้ากัน
-      document.title = `${label} — RTSMM-TH`;
+      document.title = `${label} — RTAUTOBOT`;
     }
 
     // ผูก event กับทุกแท็บ (ถ้าโค้ดเปลี่ยนแท็บของคุณมีอยู่แล้ว แทรกแค่ updateTitle() หลังจากสลับคลาส)
@@ -2159,7 +2159,7 @@
   (() => {
     const key = <%- JSON.stringify(userDoc.affiliateKey || null).replace(/</g, '\\u003c') %>;
     if (key) {
-      const link = `https://rtsmm-th.com/aff?=${key}`;
+      const link = `https://rtautobot.com/aff?=${key}`;
       const create = document.getElementById('aff-create-area');
       const area = document.getElementById('aff-link-area');
       const out = document.getElementById('aff-link');

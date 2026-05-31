@@ -51,6 +51,12 @@ const TransactionSchema = new mongoose.Schema({
     default: "THB",
   },
 
+  production: {
+    type: String,
+    default: "rtautobot",
+    index: true,
+  },
+
   // =========================
   // 📊 STATUS
   // =========================
@@ -109,6 +115,7 @@ const TransactionSchema = new mongoose.Schema({
 // 🔥 INDEX (QUERY หลัก)
 // =========================
 TransactionSchema.index({
+  production: 1,
   method: 1,
   status: 1,
   amountCents: 1,
@@ -120,6 +127,7 @@ TransactionSchema.index({
 // 🔥 INDEX เพิ่ม (match เร็ว)
 // =========================
 TransactionSchema.index({
+  production: 1,
   method: 1,
   amountCents: 1,
   createdAt: -1,
@@ -130,7 +138,7 @@ TransactionSchema.index({
 // 🔥 กัน double transaction
 // =========================
 TransactionSchema.index(
-  { method: 1, amountCents: 1 },
+  { production: 1, method: 1, amountCents: 1 },
   {
     unique: true,
     partialFilterExpression: {
@@ -144,7 +152,7 @@ TransactionSchema.index(
 // ✅ ห้ามใช้ TTL ลบรายการเติมเงิน pending
 // =========================
 // รายการที่มี userId คือผู้ใช้สร้างจากหน้าเว็บ ต้องค้างไว้ให้ตรวจสอบ/จับคู่ภายหลัง
-// ถ้าต้องล้างรายการ orphan/no-user ให้ใช้ src/jobs/topupAutoRejectJob.js เท่านั้น
+// RTAUTOBOT: ไม่ใช้ topup reject job แยก รายการเติมเงินจัดการผ่าน flow/admin ของเว็บนี้เท่านั้น
 
 
 // =========================

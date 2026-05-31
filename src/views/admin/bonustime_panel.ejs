@@ -501,7 +501,7 @@
       <h3>Top 5 วันขายดีที่สุดในเดือนนี้</h3>
 
       <div id="topDaysList" class="topdays-list">
-          <% const topDays = JSON.parse(top5); %>
+          <% const topDays = Array.isArray(top5) ? top5 : (() => { try { return JSON.parse(top5 || "[]"); } catch { return []; } })(); %>
 
           <% if (!topDays.length) { %>
               <div class="muted" style="padding: 18px; text-align:center;">

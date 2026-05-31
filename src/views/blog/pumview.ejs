@@ -1,5 +1,5 @@
 <%
-  const pageTitle = `${article.title} | คู่มือปั๊มวิว YouTube/TikTok แบบยั่งยืน | RTSMM-TH`;
+  const pageTitle = `${article.title} | คู่มือปั๊มวิว YouTube/TikTok แบบยั่งยืน | RTAUTOBOT`;
   const pageDesc  = article.excerpt
     || 'สอนปั๊มวิวให้โตอย่างยั่งยืนบน YouTube และ TikTok ด้วยการเข้าใจอัลกอริทึม Retention, CTR, Thumbnail, Title และตารางโพสต์ที่ช่วยให้คอนเทนต์ขึ้นจริงในหน้าแนะนำ.';
   const canonicalPath = `/blog/${article.slug || article._id || ''}`;
@@ -26,14 +26,14 @@
   "dateModified": article.updatedAt || article.dateISO || article.date,
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://rtsmm-th.com" + canonicalPath
+    "@id": "https://rtautobot.com" + canonicalPath
   },
   "publisher": {
     "@type": "Organization",
     "name": "RTSSM-TH.COM",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://rtsmm-th.com/static/logo/logo-rtssm-th.png"
+      "url": "https://rtautobot.com/static/logo/logo-rtautobot.png"
     }
   }
 }, null, 2) %>
@@ -225,7 +225,7 @@
         <p class="pv-desc"><%= pageDesc %></p>
         <div class="pv-meta" aria-label="ข้อมูลบทความ">
           <span>🕒 <%= article.date || '7 พฤศจิกายน 2026' %></span>
-          <span>👤 <%= article.author || 'RTSMM-TH' %></span>
+          <span>👤 <%= article.author || 'RTAUTOBOT' %></span>
           <span>⚡ อ่านประมาณ 6 นาที</span>
         </div>
         <div class="pv-actions">
@@ -400,7 +400,7 @@
       <div class="site-footer__topline"></div>
       <div class="site-footer__container">
         <section class="footer-col footer-brand">
-          <img class="brand-logo" src="/static/logo/logo-rtssm-th.png" alt="RTSMM-TH" height="56">
+          <img class="brand-logo" src="/static/logo/logo-rtautobot.png" alt="RTAUTOBOT" height="56">
           <p class="brand-text">RTSSM-TH.COM ผู้ให้บริการ OTP24 ชั่วโมง บริการการตลาดออนไลน์และโซเชียลระดับสากล มาตรฐานมืออาชีพ ดูแลลูกค้าทั่วโลก</p>
         </section>
         <section class="footer-col">

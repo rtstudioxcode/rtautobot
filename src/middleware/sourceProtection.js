@@ -113,7 +113,7 @@ export function minifyCssLoose(css) {
   const keep = [];
   out = out.replace(/url\(\s*(["'])([\s\S]*?)\1\s*\)/gi, (m) => {
     const id = keep.push(m) - 1;
-    return `%%RTSMM_CSS_KEEP_${id}%%`;
+    return `%%RTAUTOBOT_CSS_KEEP_${id}%%`;
   });
   out = out
     .replace(/\/\*\s*#\s*sourceMappingURL=[\s\S]*?\*\//gi, "")
@@ -125,7 +125,7 @@ export function minifyCssLoose(css) {
     .replace(/;}/g, "}")
     .replace(/\s*!important/g, "!important")
     .trim();
-  out = out.replace(/%%RTSMM_CSS_KEEP_(\d+)%%/g, (_, i) => keep[Number(i)] || "");
+  out = out.replace(/%%RTAUTOBOT_CSS_KEEP_(\d+)%%/g, (_, i) => keep[Number(i)] || "");
   return out;
 }
 
@@ -179,7 +179,7 @@ export function minifyHtmlOutput(html, options = {}) {
   const keep = [];
   const stash = (m) => {
     const id = keep.push(m) - 1;
-    return `%%RTSMM_KEEP_${id}%%`;
+    return `%%RTAUTOBOT_KEEP_${id}%%`;
   };
 
   let out = html
@@ -190,7 +190,7 @@ export function minifyHtmlOutput(html, options = {}) {
     .replace(/\s{2,}/g, " ")
     .trim();
 
-  out = out.replace(/%%RTSMM_KEEP_(\d+)%%/g, (_, i) => keep[Number(i)] || "");
+  out = out.replace(/%%RTAUTOBOT_KEEP_(\d+)%%/g, (_, i) => keep[Number(i)] || "");
   return out;
 }
 

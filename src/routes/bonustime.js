@@ -493,7 +493,7 @@ router.post("/bonustime/:id/upgrade-lotto", async (req, res) => {
       });
     }
 
-    // หักเงินใน RTSMM-TH
+    // หักเงินใน RTAUTOBOT
     user.balance = balance - price;
 
     // อัปเดต LOTTO_ENABLED ใน rtautobot.users (BonustimeUser)
@@ -601,7 +601,7 @@ router.post("/bonustime/:id/extend", async (req, res) => {
         .json({ ok: false, message: "ยอดเงินคงเหลือไม่เพียงพอ" });
     }
 
-    // ---- 1) หัก balance ของ user (RTSMM-TH) ----
+    // ---- 1) หัก balance ของ user (RTAUTOBOT) ----
     user.balance = currentBalance - price;
     await user.save();
 

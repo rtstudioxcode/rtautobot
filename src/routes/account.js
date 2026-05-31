@@ -26,8 +26,8 @@ import { computeAffiliateTotals } from "../lib/affiliate.js";
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-const BRAND_URL = "https://rtsmm-th.com";
-const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtssm-th.png`;
+const BRAND_URL = "https://rtautobot.com";
+const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtautobot.png`;
 
 const DEFAULT_AVATAR = "/static/logo/icon-logo.png";
 
@@ -161,7 +161,7 @@ export const emailTemplate = (code) => `
           <tr>
             <td class="head">
               <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTSMM-TH" class="brand-logo">
+                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="brand-logo">
               </a>
             </td>
           </tr>
@@ -189,7 +189,7 @@ export const emailTemplate = (code) => `
 
           <tr>
             <td style="background:#f9fafb;color:#9ca3af;padding:12px 20px;text-align:center;font-size:12px;">
-              © RTSMM-TH
+              © RTAUTOBOT
             </td>
           </tr>
         </table>
@@ -766,7 +766,7 @@ router.post('/account/affiliate/create-link', async (req, res) => {
       await u.save();
     }
 
-    const link = `https://rtsmm-th.com/aff?=${u.affiliateKey}`;
+    const link = `https://rtautobot.com/aff?=${u.affiliateKey}`;
     return res.json({
       ok: true,
       key: u.affiliateKey,
@@ -784,30 +784,10 @@ router.get('/account/affiliate/stats', async (req, res) => {
     const uid = getAuthUserId(req);
     if (!uid) return res.status(401).json({ ok: false });
 
-    // รวมยอดจากออเดอร์ (SMM + OTP) ตาม logic เดิม
+    // RTAUTOBOT: affiliate totals are Bonustime.
     const totals = await computeAffiliateTotals(uid);
-
-    // ✅ ดึงข้อมูลเพื่อนที่เราชวนมา จาก users
-    const friends = await User.find({ referredBy: uid })
-      .select('btSpent totalOrders')
-      .lean();
-
-    // ✅ ยอดใช้จ่าย Bonustime ของเพื่อนทั้งหมด (btSpent)
-    const btSpentFriends = friends.reduce(
-      (sum, u) => sum + (Number(u.btSpent) || 0),
-      0
-    );
-
-    // ✅ จำนวนออเดอร์ทั้งหมดของเพื่อน (ใช้ totalOrders จาก user โดยตรง)
-    const ordersFriends = friends.reduce(
-      (sum, u) => sum + (Number(u.totalOrders) || 0),
-      0
-    );
-
-    // ✅ ใช้ totals.spentTHB (SMM+OTP) + btSpent ของเพื่อน เฉพาะตอนแสดงผล
-    const displaySpentTHB = Number(
-      ((totals.spentTHB || 0) + btSpentFriends).toFixed(2)
-    );
+    const ordersFriends = Number(totals.orders || 0);
+    const displaySpentTHB = Number((totals.spentTHB || 0).toFixed(2));
 
     res.json({
       ok: true,

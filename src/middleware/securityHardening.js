@@ -13,7 +13,7 @@ function sameOrigin(req) {
   try { return origin === new URL(`${proto}://${host}`).origin; } catch { return false; }
 }
 function isSensitivePath(pathname = "") {
-  return pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/dashboard" || pathname.startsWith("/dashboard/") || pathname.startsWith("/account") || pathname.startsWith("/wallet") || pathname.startsWith("/topup") || pathname.startsWith("/orders") || pathname.startsWith("/my/") || pathname.startsWith("/otp") || pathname.startsWith("/telegram") || pathname.startsWith("/bonustime") || pathname.startsWith("/api/");
+  return pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/dashboard" || pathname.startsWith("/dashboard/") || pathname.startsWith("/account") || pathname.startsWith("/wallet") || pathname.startsWith("/topup") || pathname.startsWith("/my/") || pathname.startsWith("/bonustime") || pathname.startsWith("/api/");
 }
 export function securityHardening(options = {}) {
   const opts = {

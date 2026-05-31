@@ -85,13 +85,13 @@ function getBrandUrl() {
   return String(
     config?.brandUrl ||
     config?.brand?.url ||
-    "https://rtsmm-th.com"
+    "https://rtautobot.com"
   ).replace(/\/+$/, "");
 }
 
 function emailTemplateVerifyLink(verifyUrl) {
   const BRAND_URL = getBrandUrl();
-  const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtssm-th.png`;
+  const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtautobot.png`;
 
   // โลโก้สูง (ยึดความสูงแทนความกว้าง เพื่อให้เต็มแถบมากขึ้น)
   const LOGO_H_DESKTOP = 128; // ปรับได้ 88–104
@@ -130,13 +130,13 @@ function emailTemplateVerifyLink(verifyUrl) {
             <tr>
               <td class="head">
                 <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                  <img src="${BRAND_LOGO}" alt="RTSMM-TH" class="brand-logo">
+                  <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="brand-logo">
                 </a>
               </td>
             </tr>
             <tr>
               <td class="px" style="padding:20px 24px 8px;color:#111827;">
-                <h2 style="margin:0 0 6px;font-size:20px">ยืนยันการสมัคร RTSMM-TH</h2>
+                <h2 style="margin:0 0 6px;font-size:20px">ยืนยันการสมัคร RTAUTOBOT</h2>
                 <p style="margin:0;color:#6b7280">คลิกปุ่มด้านล่างเพื่อยืนยันอีเมลและเปิดใช้งานบัญชีของคุณ</p>
               </td>
             </tr>
@@ -153,7 +153,7 @@ function emailTemplateVerifyLink(verifyUrl) {
             </tr>
             <tr>
               <td style="background:#f9fafb;color:#9ca3af;padding:12px 20px;text-align:center;font-size:12px;">
-                © RTSMM-TH
+                © RTAUTOBOT
               </td>
             </tr>
           </table>
@@ -436,7 +436,7 @@ router.post('/register', parseUrlencoded, async (req, res) => {
 
     await sendEmail({
       to: email,
-      subject: 'ยืนยันการสมัครสมาชิก RTSMM-TH',
+      subject: 'ยืนยันการสมัครสมาชิก RTAUTOBOT',
       html: emailTemplateVerifyLink(verifyUrl),
     });
 

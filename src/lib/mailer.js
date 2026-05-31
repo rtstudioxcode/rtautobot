@@ -6,8 +6,8 @@ import nodemailer from 'nodemailer';
 import { config } from '../config.js';
 
 
-const getBrandUrl = () => (typeof config !== 'undefined' && config?.siteUrl) ? config.siteUrl : 'https://rtsmm-th.com';
-const getBrandLogo = () => `${getBrandUrl()}/static/assets/logo/logo-rtssm-th.png`;
+const getBrandUrl = () => (typeof config !== 'undefined' && config?.siteUrl) ? config.siteUrl : 'https://rtautobot.com';
+const getBrandLogo = () => `${getBrandUrl()}/static/assets/logo/logo-rtautobot.png`;
 
 // ───────── GLOBAL LOG ─────────
 const isGlobalLogEnabled = () => {
@@ -53,7 +53,7 @@ function buildMailSignature() {
     poolMaxMessages: m.poolMaxMessages ?? 100,
     rateLimit: m.rateLimit ?? undefined,
     debug: !!m.debug,
-    from: m.from || 'RTSSM-TH <no-reply@rtsmm-th.com>',
+    from: m.from || 'RTAUTOBOT <no-reply@rtautobot.com>',
     dkim: m.dkim?.domainName && m.dkim?.keySelector && m.dkim?.privateKey
       ? { domainName: m.dkim.domainName, keySelector: m.dkim.keySelector, privateKey: m.dkim.privateKey }
       : null,
@@ -168,7 +168,7 @@ export async function sendEmail({ to, subject, html, text, headers, attachments 
   const tx = getTransporter();
 
   const payload = {
-    from: config.mail?.from || 'RTSSM-TH <no-reply@rtsmm-th.com>',
+    from: config.mail?.from || 'RTAUTOBOT <no-reply@rtautobot.com>',
     to, subject,
     text: text ?? (html ? html.replace(/<[^>]+>/g, ' ') : ''),
     html, headers, attachments,
@@ -205,11 +205,11 @@ export async function sendEmail({ to, subject, html, text, headers, attachments 
 // ============================================================
 export function buildVerifyEmailHTML({
   verifyUrl,
-  brandUrl = config.brand?.url || 'https://rtsmm-th.com',
+  brandUrl = config.brand?.url || 'https://rtautobot.com',
   brandLogo = 'cid:brandlogo',               // ใช้ CID หรือ URL ก็ได้
-  productName = config.brand?.name || 'RTSMM-TH',
+  productName = config.brand?.name || 'RTAUTOBOT',
   year = new Date().getFullYear(),
-  supportUrl = 'mailto:support@rtsmm-th.com',
+  supportUrl = 'mailto:support@rtautobot.com',
 
   // ปรับขนาดโลโก้ได้ตามต้องการ
   logoWidthDesktop = 220,    // 180–240 กำลังสวย
@@ -391,7 +391,7 @@ export function emailTemplateBonustimeExpiry({
             <tr>
               <td class="head">
                 <a href="${getBrandUrl()}" target="_blank" style="text-decoration:none">
-                  <img src="${getBrandLogo()}" alt="RTSMM-TH" class="brand-logo">
+                  <img src="${getBrandLogo()}" alt="RTAUTOBOT" class="brand-logo">
                 </a>
               </td>
             </tr>
@@ -461,7 +461,7 @@ export function emailTemplateBonustimeExpiry({
               <td class="px" style="padding:0 24px 18px;background:#020617;">
                 <p class="muted" style="margin:0 0 8px;">
                   เมื่อกดปุ่ม “ต่ออายุเซอร์วิส Bonustime” ระบบจะพาคุณไปยังหน้า
-                  <strong>Bonustime</strong> ภายใน RTSMM-TH โดยอัตโนมัติ
+                  <strong>Bonustime</strong> ภายใน RTAUTOBOT โดยอัตโนมัติ
                   และเปิดหน้าต่างเลือกแพ็กเกจต่ออายุของ Service (${safe(tenantId)}) – ${safe(name)} ให้ทันที
                 </p>
                 <p class="muted" style="margin:0 0 8px;">
@@ -509,8 +509,8 @@ export function emailTemplateBonustimeExpiry({
 
             <tr>
               <td style="background:#020617;color:#4b5563;padding:10px 20px;text-align:center;font-size:11px;border-top:1px solid #111827;">
-                อีเมลฉบับนี้ถูกส่งจากระบบอัตโนมัติของ RTSMM-TH เพื่อแจ้งเตือนการหมดอายุเซอร์วิส Bonustime<br>
-                © RTSMM-TH
+                อีเมลฉบับนี้ถูกส่งจากระบบอัตโนมัติของ RTAUTOBOT เพื่อแจ้งเตือนการหมดอายุเซอร์วิส Bonustime<br>
+                © RTAUTOBOT
               </td>
             </tr>
           </table>
@@ -533,8 +533,8 @@ export async function sendVerifyEmail({
   headers,
   // ถ้าระบุ path จะใช้เป็น CID; ถ้าไม่ระบุจะ fallback ใช้ URL (config.brand.logoUrl) หรือไม่แนบ
   brandLogoPath = config.brand?.logoPath,   // แนะนำไฟล์โลโก้ PNG/JPG ในเครื่อง
-  brandUrl = config.brand?.url || 'https://rtsmm-th.com',
-  productName = config.brand?.name || 'RTSMM-TH',
+  brandUrl = config.brand?.url || 'https://rtautobot.com',
+  productName = config.brand?.name || 'RTAUTOBOT',
 } = {}) {
   const norm = v => (Array.isArray(v) ? v : [v]).map(s => String(s || '').trim()).filter(Boolean);
   const isEmail = s => {

@@ -1733,3 +1733,11 @@ body:has(.topup-report-page){
   window.__topupPeriodPicker__ = { openPicker, closePicker, positionAnchored };
 })();
 </script>
+
+<script>
+  if (new URLSearchParams(location.search).get('manual') === '1') {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof openManualTopupModal === 'function') openManualTopupModal();
+    });
+  }
+</script>

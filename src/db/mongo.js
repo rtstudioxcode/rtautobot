@@ -90,7 +90,7 @@ export async function connectMongo({
   while (true) {
     try {
       await mongoose.connect(uri, opts);
-      glog.log(`✅ Mongo connected - RTSMM-TH${dbName ? ` / DB: ${dbName}` : ''}`);
+      glog.log(`✅ Mongo connected - RTAUTOBOT${dbName ? ` / DB: ${dbName}` : ''}`);
       break;
     } catch (err) {
       attempt += 1;

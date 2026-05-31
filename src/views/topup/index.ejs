@@ -116,7 +116,7 @@
                   <div>
                     <span><%= isTW ? 'TrueMoney Wallet' : 'Bank Transfer' %></span>
                     <h2><%= methodTitle %></h2>
-                    <p><%= w.accountName || 'RTSMM' %></p>
+                    <p><%= w.accountName || 'RTAUTOBOT' %></p>
                   </div>
                 </div>
                 <div class="tp-expire-badge">
@@ -177,7 +177,7 @@
                     </div>
                     <div>
                       <small>บัญชีปลายทาง</small>
-                      <strong><%= w.accountName || 'RTSMM' %></strong>
+                      <strong><%= w.accountName || 'RTAUTOBOT' %></strong>
                       <span><%= isTW ? 'สแกน QRCode ด้วยแอป TrueMoney Wallet เท่านั้น' : 'สแกน QRCode ได้ทุกธนาคาร' %></span>
                     </div>
                   </div>
@@ -724,7 +724,7 @@
       const img = document.getElementById('qrImage');
       if (img) img.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(g.url)}`;
       document.getElementById('qrMethod')?.replaceChildren(document.createTextNode('TrueMoney Wallet'));
-      document.getElementById('qrName')?.replaceChildren(document.createTextNode(g.accountName || 'RTSMM'));
+      document.getElementById('qrName')?.replaceChildren(document.createTextNode(g.accountName || 'RTAUTOBOT'));
       document.getElementById('qrNumber')?.replaceChildren(document.createTextNode(g.accountNumber || '-'));
       document.getElementById('qrAmountTw')?.replaceChildren(document.createTextNode(finalPayAmount.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 })));
       const expireSec = Number(c?.expiresIn || 300);

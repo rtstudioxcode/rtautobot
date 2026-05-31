@@ -14,7 +14,7 @@ const ARTICLES = {
       "ปั้มวิว,ปั้มไลค์,ปั้มผู้ติดตาม,ระบบปั้มวิว,ระบบปั้มไลค์,ระบบปั้มผู้ติดตาม,ปั้มใจtiktok,ปั้มวิวyoutube,ปั้มไลค์ฟรี,เว็บปั้มไลค์,เพิ่มผู้ติดตาม,ปั้มไลค์ facebook,ปั้มไลค์ติ๊กต๊อก,ปั้มวิวtiktok,ปั้มผู้ติดตามtiktokฟรี ล่าสุด",
     image:
       "https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/7Bi1OxNoyyczBk5ZgE9u6Wl9ebtxsmmzJ9jQuTE0.png",
-    author: "RTSMM-TH",
+    author: "RTAUTOBOT",
     date: "June 21, 2025",
   },
 };
@@ -24,7 +24,7 @@ router.get("/tiktok-fyp", (req, res) => {
     title: "การเพิ่มยอดวิว TikTok: เทคนิคปั้นวิดีโอให้ไวรัลแบบมือโปร",
     article: {
       title: "การเพิ่มยอดวิว TikTok: เทคนิคปั้นวิดีโอให้ไวรัลแบบมือโปร",
-      author: "RTSMM-TH",
+      author: "RTAUTOBOT",
       date: "June 21, 2025",
       image: "https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/7Bi1OxNoyyczBk5ZgE9u6Wl9ebtxsmmzJ9jQuTE0.png",
     }
@@ -36,7 +36,7 @@ router.get("/follower-ig", (req, res) => {
     article: {
         title: 'รวมเหตุผลที่การ ปั้นไอจี ในปี 2025 ยังคงเป็นตัวเลือกที่ดีที่สุด',
         date: 'June 07, 2025',
-        author: 'RTSMM-TH',
+        author: 'RTAUTOBOT',
         image: 'https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/hNIdmxBE3t4AbTzGXsGw7iadOb7cpLuNRc0aIkBE.gif'
     }
   });
@@ -47,7 +47,7 @@ router.get("/view-youtube", (req, res) => {
     article: {
         title: 'เผยอาชีพใหม่ที่ได้ค่าตอบแทนสุดคุ้มค่า เพียงปั้นช่อง YouTube ให้สำเร็จเท่านั้น',
         date: 'June 07, 2025',
-        author: 'RTSMM-TH',
+        author: 'RTAUTOBOT',
         image: 'https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/TLduej0sNotiUTWOZzeHWJ1vm1ybxc6YkHJPd38Z.gif'
     }
   });
@@ -58,7 +58,7 @@ router.get("/likefanpage-facebook", (req, res) => {
     article: {
         title: 'แชร์เทคนิคการปั้นเฟสบุ๊ก ทำอย่างไรให้หาเงินได้จากแพลตฟอร์มนี้',
         date: 'June 07, 2025',
-        author: 'RTSMM-TH',
+        author: 'RTAUTOBOT',
         image: 'https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/CIg7H9EbISACM8pU6wInmCsAoN2dsELYcK0KzDCR.gif'
     }
   });
@@ -69,7 +69,7 @@ router.get("/pumview", (req, res) => {
     article: {
         title: 'วิธีปั๊มวิวง่าย ๆ แต่เป็นอะไรที่ใช้ได้จริง',
         date: 'June 07, 2025',
-        author: 'RTSMM-TH',
+        author: 'RTAUTOBOT',
         image: 'https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/fbGcswvTBnAQwTOBu0vHbjY0S7GVTdia9x5aScHM.gif'
     }
   });
@@ -80,7 +80,7 @@ router.get("/pro-pumlike", (req, res) => {
     article: {
         title: 'ปั๊มไลค์แบบนี้ มืออาชีพเขาทำกัน',
         date: 'June 07, 2025',
-        author: 'RTSMM-TH',
+        author: 'RTAUTOBOT',
         image: 'https://iplusview-staging.s3.amazonaws.com/uploads/blog/thumbnails/OabQHfTH8yxvcBmlDpzdWHmoteE6lNgIfz8t4P75.gif'
     }
   });

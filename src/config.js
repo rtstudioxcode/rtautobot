@@ -46,7 +46,7 @@ const envConfig = {
   port: 3000,
   mongoUri: pickEnv("MONGO_URI", "MONGODB_URI", "DATABASE_URL"),
   // รองรับ Railway Private URL ที่ไม่มีชื่อ DB ต่อท้าย URI
-  // ตัวอย่าง: MONGO_URI=${{ MongoDB.MONGO_URL }} + MONGO_DBNAME=rtsmm-th
+  // ตัวอย่าง: MONGO_URI=${{ MongoDB.MONGO_URL }} + MONGO_DBNAME=rtautobot
   mongoDbName: pickEnv(
     "MONGO_DBNAME",
     "MONGO_DB_NAME",
@@ -77,23 +77,6 @@ const envConfig = {
     url: process.env.REDIS_URL || "",
   },
 
-  /**
-   * iPlusView
-   * Doc ใช้ชื่อ ipv แต่ในโค้ด runtime ใช้ config.provider
-   */
-  provider: {
-    baseUrl: "https://api.iplusview.store",
-    apiKey: "",
-  },
-
-  /**
-   * OTP24hr
-   * Doc ใช้ชื่อ otp24 แต่ในโค้ด runtime ใช้ config.otp24hr
-   */
-  otp24hr: {
-    apiBase: "https://otp24hr.com/api/v1",
-    apiKey: "",
-  },
 
   currency: "THB",
   initialBalance: 0,
@@ -104,7 +87,7 @@ const envConfig = {
     port: 587,
     user: "",
     pass: "",
-    from: "RTSSM-TH <no-reply@rtsmm-th.com>",
+    from: "RTAUTOBOT <no-reply@rtautobot.com>",
     debug: false,
     secure: false,
   },
@@ -134,7 +117,7 @@ const envConfig = {
   },
 
   brand: {
-    url: "https://rtsmm-th.com",
+    url: "https://rtautobot.com",
   },
 
   session: {
@@ -142,42 +125,6 @@ const envConfig = {
   },
 
   jobs: {
-    orderStatusTickMs: 60000,
-    orderStatusConcurrency: 20,
-    orderStatusBatchLimit: 300,
-    orderStatusFastScanMs: 2000,
-    orderStatusAutoCancelAfterMs: 43200000,
-    orderStatusRecentCheckMs: 60000,
-    orderStatusWarmCheckMs: 300000,
-    orderStatusColdCheckMs: 900000,
-    orderStatusTerminalCleanupCheckMs: 1800000,
-
-    otp24SweeperIntervalMs: 10000,
-    otp24SweeperBatchLimit: 50,
-    otp24SweeperConcurrency: 2,
-
-    // Refresh รายการ /apps getpack ที่ต้นทางยังขึ้น placeholder รอรายละเอียดสินค้า
-    otp24AppsRefreshIntervalMs: 15 * 60 * 1000,
-    otp24AppsRefreshBatchLimit: 50,
-
-    // Sync รายการสินค้า/stock จาก OTP24 API + refresh ยอดเงิน provider ทุก 12 ชั่วโมง
-    otp24ProductsSyncIntervalMs: 12 * 60 * 60 * 1000,
-    otp24ProductsSyncApiPerc: 0,
-    otp24ProductsSyncAddPerc: 35,
-    otp24ImageFetchPerMinute: 12,
-
-    telegramCheckIntervalMs: 60000,
-    telegramCheckBatchLimit: 50,
-
-    dailyChangeSyncTelegramSummary: true,
-    dailyChangeSyncTelegramTimeoutMs: 10000,
-    dailyChangeSyncCron: "0 7 * * *",
-
-    topupRejectCron: "*/5 * * * *",
-    topupRejectBatchSize: 50,
-    topupRejectAgeMinutes: 1,
-    topupRejectAgeHours: 12,
-
     bonustimeExpiryCron: "*/5 * * * *",
     bonustimeExpiryBatchSize: 100,
   },
@@ -244,21 +191,6 @@ const secureConfigSchema = new mongoose.Schema(
       sharedServiceName: String,
     },
 
-    ipv: {
-      apiBase: String,
-      apiKey: String,
-    },
-
-    // รองรับทั้งชื่อใหม่ otp24hr และชื่อใน Doc ปัจจุบัน otp24
-    otp24hr: {
-      apiBase: String,
-      apiKey: String,
-    },
-
-    otp24: {
-      apiBase: String,
-      apiKey: String,
-    },
 
     mail: {
       host: String,
@@ -294,39 +226,6 @@ const secureConfigSchema = new mongoose.Schema(
     },
 
     jobs: {
-      orderStatusTickMs: Number,
-      orderStatusConcurrency: Number,
-      orderStatusBatchLimit: Number,
-      orderStatusFastScanMs: Number,
-      orderStatusAutoCancelAfterMs: Number,
-      orderStatusRecentCheckMs: Number,
-      orderStatusWarmCheckMs: Number,
-      orderStatusColdCheckMs: Number,
-      orderStatusTerminalCleanupCheckMs: Number,
-
-      otp24SweeperIntervalMs: Number,
-      otp24SweeperBatchLimit: Number,
-      otp24SweeperConcurrency: Number,
-
-      otp24AppsRefreshIntervalMs: Number,
-      otp24AppsRefreshBatchLimit: Number,
-      otp24ProductsSyncIntervalMs: Number,
-      otp24ProductsSyncApiPerc: Number,
-      otp24ProductsSyncAddPerc: Number,
-      otp24ImageFetchPerMinute: Number,
-
-      telegramCheckIntervalMs: Number,
-      telegramCheckBatchLimit: Number,
-
-      dailyChangeSyncTelegramSummary: mongoose.Schema.Types.Mixed,
-      dailyChangeSyncTelegramTimeoutMs: Number,
-      dailyChangeSyncCron: String,
-
-      topupRejectCron: String,
-      topupRejectBatchSize: Number,
-      topupRejectAgeMinutes: Number,
-      topupRejectAgeHours: Number,
-
       bonustimeExpiryCron: String,
       bonustimeExpiryBatchSize: Number,
     },
@@ -448,33 +347,6 @@ function applyDBToConfig(doc) {
   }
 
   /**
-   * iPlusView
-   * DB Doc = ipv
-   * Runtime = config.provider
-   */
-  if (doc.ipv) {
-    const baseIpv = trimBase(doc.ipv.apiBase || "");
-    const keyIpv = String(doc.ipv.apiKey || "").trim();
-
-    if (baseIpv) config.provider.baseUrl = baseIpv;
-    if (keyIpv) config.provider.apiKey = keyIpv;
-  }
-
-  /**
-   * OTP24hr
-   * รองรับทั้ง doc.otp24hr และ doc.otp24
-   */
-  const otp24doc = doc.otp24hr || doc.otp24 || null;
-
-  if (otp24doc) {
-    const baseOtp24 = trimBase(otp24doc.apiBase || "");
-    const keyOtp24 = String(otp24doc.apiKey || "").trim();
-
-    if (baseOtp24) config.otp24hr.apiBase = baseOtp24;
-    if (keyOtp24) config.otp24hr.apiKey = keyOtp24;
-  }
-
-  /**
    * Mail
    */
   if (doc.mail) {
@@ -542,136 +414,11 @@ function applyDBToConfig(doc) {
   }
 
   /**
-   * Jobs
+   * Jobs — RTAUTOBOT keeps Bonustime expiry only.
    */
   if (doc.jobs) {
-    setIfNumber(config.jobs, "orderStatusTickMs", doc.jobs.orderStatusTickMs);
-    setIfNumber(
-      config.jobs,
-      "orderStatusConcurrency",
-      doc.jobs.orderStatusConcurrency
-    );
-    setIfNumber(
-      config.jobs,
-      "orderStatusBatchLimit",
-      doc.jobs.orderStatusBatchLimit
-    );
-    setIfNumber(
-      config.jobs,
-      "orderStatusFastScanMs",
-      doc.jobs.orderStatusFastScanMs
-    );
-    setIfNumber(
-      config.jobs,
-      "orderStatusAutoCancelAfterMs",
-      doc.jobs.orderStatusAutoCancelAfterMs
-    );
-
-    setIfNumber(config.jobs, "orderStatusRecentCheckMs", doc.jobs.orderStatusRecentCheckMs);
-    setIfNumber(config.jobs, "orderStatusWarmCheckMs", doc.jobs.orderStatusWarmCheckMs);
-    setIfNumber(config.jobs, "orderStatusColdCheckMs", doc.jobs.orderStatusColdCheckMs);
-    setIfNumber(config.jobs, "orderStatusTerminalCleanupCheckMs", doc.jobs.orderStatusTerminalCleanupCheckMs);
-
-    setIfNumber(
-      config.jobs,
-      "otp24SweeperIntervalMs",
-      doc.jobs.otp24SweeperIntervalMs
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24SweeperBatchLimit",
-      doc.jobs.otp24SweeperBatchLimit
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24SweeperConcurrency",
-      doc.jobs.otp24SweeperConcurrency
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24AppsRefreshIntervalMs",
-      doc.jobs.otp24AppsRefreshIntervalMs
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24AppsRefreshBatchLimit",
-      doc.jobs.otp24AppsRefreshBatchLimit
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24ProductsSyncIntervalMs",
-      doc.jobs.otp24ProductsSyncIntervalMs
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24ProductsSyncApiPerc",
-      doc.jobs.otp24ProductsSyncApiPerc
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24ProductsSyncAddPerc",
-      doc.jobs.otp24ProductsSyncAddPerc
-    );
-    setIfNumber(
-      config.jobs,
-      "otp24ImageFetchPerMinute",
-      doc.jobs.otp24ImageFetchPerMinute
-    );
-
-    setIfNumber(
-      config.jobs,
-      "telegramCheckIntervalMs",
-      doc.jobs.telegramCheckIntervalMs
-    );
-    setIfNumber(
-      config.jobs,
-      "telegramCheckBatchLimit",
-      doc.jobs.telegramCheckBatchLimit
-    );
-
-    setIfBool(
-      config.jobs,
-      "dailyChangeSyncTelegramSummary",
-      doc.jobs.dailyChangeSyncTelegramSummary
-    );
-    setIfNumber(
-      config.jobs,
-      "dailyChangeSyncTelegramTimeoutMs",
-      doc.jobs.dailyChangeSyncTelegramTimeoutMs
-    );
-    setIfString(
-      config.jobs,
-      "dailyChangeSyncCron",
-      doc.jobs.dailyChangeSyncCron
-    );
-
-    setIfString(config.jobs, "topupRejectCron", doc.jobs.topupRejectCron);
-    setIfNumber(
-      config.jobs,
-      "topupRejectBatchSize",
-      doc.jobs.topupRejectBatchSize
-    );
-    setIfNumber(
-      config.jobs,
-      "topupRejectAgeMinutes",
-      doc.jobs.topupRejectAgeMinutes
-    );
-    setIfNumber(
-      config.jobs,
-      "topupRejectAgeHours",
-      doc.jobs.topupRejectAgeHours
-    );
-
-    setIfString(
-      config.jobs,
-      "bonustimeExpiryCron",
-      doc.jobs.bonustimeExpiryCron
-    );
-    setIfNumber(
-      config.jobs,
-      "bonustimeExpiryBatchSize",
-      doc.jobs.bonustimeExpiryBatchSize
-    );
+    setIfString(config.jobs, "bonustimeExpiryCron", doc.jobs.bonustimeExpiryCron);
+    setIfNumber(config.jobs, "bonustimeExpiryBatchSize", doc.jobs.bonustimeExpiryBatchSize);
   }
 
   /**
@@ -771,8 +518,6 @@ function applyDBToConfig(doc) {
   /**
    * tidy
    */
-  config.provider.baseUrl = trimBase(config.provider.baseUrl);
-  config.otp24hr.apiBase = trimBase(config.otp24hr.apiBase);
   config.brand.url = trimBase(config.brand.url);
 }
 

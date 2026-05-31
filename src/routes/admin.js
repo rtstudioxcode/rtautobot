@@ -2,43 +2,15 @@ import { Router } from "express";
 import mongoose from 'mongoose';
 import { User } from "../models/User.js";
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
-import { getBalance } from "../lib/iplusviewAdapter.js";
-import { syncServicesFromProvider } from "../lib/syncServices.js";
-import { ProviderSettings } from "../models/ProviderSettings.js";
-import { Order } from "../models/Order.js";
 import { Transaction } from "../models/Transaction.js";
 import { Topup } from "../models/Topup.js";
 import { ulid } from "ulid";
-import { Service } from '../models/Service.js';
-import { getOtp24Balance, getOtp24Products } from '../lib/otp24Adapter.js';
-import { Otp24Setting } from '../models/Otp24Setting.js';
-import { Otp24Product } from "../models/Otp24Product.js";
-import { Otp24Order } from '../models/Otp24Order.js';
-import { Otp24AppsOrder } from '../models/Otp24AppsOrder.js';
 import { BonustimeOrder } from "../models/BonustimeOrder.js";
 import { config, connectMongoIfNeeded, refreshConfigFromDB, resolveBonustimeDbName } from "../config.js";
-import { BotBlockLog } from "../models/BotBlockLog.js";
-import { BotBlockedIp } from "../models/BotBlockedIp.js";
-import { clearIpCache } from "../middleware/botBlocker.js";
-import { compactOtp24ProductRaw, syncOtp24ProductsAndBalance } from "../services/otp24ProductsSync.js";
 import { getNextServiceIdentity, buildAdditiveFields, publicTenantKey, makeWebhookUrl } from "../services/bonustimeMultiTenant.js";
 
 const router = Router();
 
-const OTP_ONLY_ORDER_FILTER = {
-  $or: [
-    { productKind: { $exists: false } },
-    { productKind: 'otp' },
-    { productKind: null },
-  ],
-};
-
-const ADMIN_SOLD_EXCLUDE_STATUSES = ['canceled', 'cancelled', 'processing', 'failed', 'refunded', 'rejected'];
-const ADMIN_SERVICE_META = {
-  smm: { key: 'smm', label: 'SMM', title: 'Social Marketing', icon: '📣' },
-  otp24: { key: 'otp24', label: 'OTP24', title: 'OTP Rental', icon: '🔐' },
-  apps: { key: 'apps', label: 'Apps', title: 'Premium Apps', icon: '📱' },
-};
 const nz = (v) => Number.isFinite(+v) ? +v : 0;
 const round2 = (n) => Math.round((nz(n) + Number.EPSILON) * 100) / 100;
 
@@ -1919,8 +1891,8 @@ router.post("/bonustime/tenant", requireAdmin, async (req, res) => {
       CHANNEL_ACCESS_TOKEN: "",
       CHANNEL_SECRET: "",
       LOGO: "https://img5.pic.in.th/file/secure-sv1/LOGO-RT-AUTO-BOT-3.png",
-      LOGIN_URL: "https://rtsmm-th.com/bonustime",
-      SIGNUP_URL: "https://rtsmm-th.com/bonustime",
+      LOGIN_URL: "https://rtautobot.com/bonustime",
+      SIGNUP_URL: "https://rtautobot.com/bonustime",
       LINE_ADMIN: "https://lin.ee/uaOykAk",
       ALLOW_TEXT_PROVIDER: false,
       LOTTO_ENABLED: wantLotto,

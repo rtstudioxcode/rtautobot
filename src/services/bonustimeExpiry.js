@@ -5,7 +5,7 @@ import { sendEmail } from "../lib/mailer.js";
 import { config } from "../config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const SITE_URL = config?.siteUrl || "https://rtsmm-th.com";
+const SITE_URL = config?.siteUrl || "https://rtautobot.com";
 
 // ───────── GLOBAL LOG ─────────
 const isGlobalLogEnabled = () => {
@@ -188,7 +188,7 @@ export async function checkAndSendBonustimeExpiryMails(opts = {}) {
 
     <div style="background:#020617;border-radius:24px;border:1px solid #111827;padding:28px 24px;">
       <div style="text-align: center; margin-bottom: 3px;">
-        <img src="${SITE_URL}/static/assets/logo/logo-rtssm-th.png" alt="RTSMM-TH" style="height:200px; margin-bottom:3px;" />
+        <img src="${SITE_URL}/static/assets/logo/logo-rtautobot.png" alt="RTAUTOBOT" style="height:200px; margin-bottom:3px;" />
       </div>
 
       <h1 style="margin: 4px 0 8px; font-size:20px; color:#fde68a;">
@@ -216,7 +216,7 @@ export async function checkAndSendBonustimeExpiryMails(opts = {}) {
 
       <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;line-height:1.6;">
         เมื่อต้องการต่ออายุ ให้คลิกปุ่ม <strong>“ต่ออายุ Service (${serviceName})”</strong> ระบบจะพาคุณไปยังหน้า
-        <strong>Bonustime &gt; ประวัติการสั่งซื้อ</strong> ในเว็บ RTSMM-TH แล้วเปิดหน้าต่าง
+        <strong>Bonustime &gt; ประวัติการสั่งซื้อ</strong> ในเว็บ RTAUTOBOT แล้วเปิดหน้าต่าง
         <strong>“ต่ออายุการใช้งาน”</strong> ของ Service นี้ให้อัตโนมัติ
       </p>
       <p style="margin:0 0 16px;font-size:13px;color:#9ca3af;line-height:1.6;">
@@ -243,7 +243,7 @@ export async function checkAndSendBonustimeExpiryMails(opts = {}) {
             : ""
         }
         <p style="margin-top:14px;font-size:11px;color:#4b5563;line-height:1.6;">
-          อีเมลนี้เป็นการแจ้งเตือนอัตโนมัติจากระบบ RTSMM-TH หากคุณได้รับโดยไม่ได้เกี่ยวข้องกับบริการนี้
+          อีเมลนี้เป็นการแจ้งเตือนอัตโนมัติจากระบบ RTAUTOBOT หากคุณได้รับโดยไม่ได้เกี่ยวข้องกับบริการนี้
           สามารถมองข้ามอีเมลฉบับนี้ได้ครับ
         </p>
       </div>

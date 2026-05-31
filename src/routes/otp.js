@@ -32,8 +32,8 @@ const glog = {
 const limiter = rateLimit({ windowMs: 60_000, max: 20 });
 router.use(limiter);
 
-const BRAND_URL  = 'https://rtsmm-th.com';
-const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtssm-th.png`;
+const BRAND_URL  = 'https://rtautobot.com';
+const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtautobot.png`;
 
 // สร้างรหัส 6 หลัก
 function genCode() {
@@ -70,7 +70,7 @@ function emailTemplate(code) {
           <tr>
             <td class="head">
               <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTSMM-TH" class="logo">
+                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="logo">
               </a>
             </td>
           </tr>
@@ -94,7 +94,7 @@ function emailTemplate(code) {
           </tr>
           <tr>
             <td style="background:#f9fafb;color:#9ca3af;padding:12px 20px;text-align:center;font-size:12px;">
-              © RTSMM-TH
+              © RTAUTOBOT
             </td>
           </tr>
         </table>

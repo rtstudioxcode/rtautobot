@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /wallet
+Disallow: /topup
+Disallow: /my/
 
-Sitemap: https://rtsmm-th.com/sitemap.xml
+Sitemap: https://rtautobot.com/sitemap.xml

@@ -10,6 +10,7 @@ const TopupSchema = new mongoose.Schema(
     isAuto: { type: Boolean, default: false },
     secret: { type: String },
     type: { type: String },
+    production: { type: String, default: "rtautobot", index: true },
   },
   { timestamps: true }
 );

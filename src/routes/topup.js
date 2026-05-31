@@ -63,6 +63,8 @@ function makeBangkokDateFromParts(year, month, day, hour, minute, second = 0) {
 // เศษไม่เกิน .20 ทุก method
 // =========================
 const TOPUP_ALLOWED_METHODS = ["tw", "qr", "kbank", "scb"];
+const PRODUCTION_KEY = "rtautobot";
+const productionScope = () => ({ production: PRODUCTION_KEY });
 
 function normalizeTopupMethod(value) {
   const method = String(value || "").toLowerCase().trim();
@@ -108,6 +110,7 @@ async function resolveRequestedTopupMethod(body = {}) {
 
   if (method) {
     const active = await Topup.exists({
+      ...productionScope(),
       accountCode: method,
       isActive: true,
       ...(method === "tw" ? { isSMS: false } : {}),
@@ -125,6 +128,7 @@ async function resolveRequestedTopupMethod(body = {}) {
   // ✅ กันเคส frontend ไม่ส่ง method มาเลย:
   // ถ้าเปิด active แค่ช่องทางเดียว ให้ใช้ช่องทางนั้นแทนการ fallback เป็น qr
   const activeWallets = await Topup.find({
+    ...productionScope(),
     isActive: true,
     accountCode: { $in: TOPUP_ALLOWED_METHODS },
   })
@@ -149,6 +153,7 @@ async function cleanupExpiredProcessingTransactions() {
   // ห้าม fail/cancel รายการที่ผู้ใช้สร้างเอง แม้ expiresAt จะหมดแล้ว
   await Transaction.updateMany(
     {
+      ...productionScope(),
       status: "processing",
       expiresAt: { $lte: new Date() },
       $or: [
@@ -169,6 +174,7 @@ function buildPendingTopupMatchFilter(method, amountCents) {
   // ✅ รายการที่มี userId: จับคู่ได้แม้หมดเวลา เพื่อไม่ให้เงินผู้ใช้หลุดหลัง countdown จบ
   // ✅ รายการที่ไม่มี userId: จับคู่เฉพาะที่ยังไม่หมดเวลา/ไม่มี expiresAt เท่านั้น
   return {
+    ...productionScope(),
     method,
     amountCents,
     status: "pending",
@@ -316,6 +322,7 @@ async function isValidMacrodroidTestSecret(secret = "") {
   if (envToken && value === envToken) return true;
 
   const topup = await Topup.findOne({
+    ...productionScope(),
     isActive: true,
     secret: value,
     accountCode: { $in: ["kbank", "scb", "tw", "qr"] },
@@ -417,6 +424,7 @@ async function parseTrueWalletWebhookBody(rawBody = {}, topup, req = null) {
 async function handleTrueWalletWebhook(req, res) {
   try {
     const topup = await Topup.findOne({
+      ...productionScope(),
       accountCode: "tw",
       isActive: true,
       isSMS: false,
@@ -457,6 +465,7 @@ async function handleTrueWalletWebhook(req, res) {
 
     // 🔥 DEDUPE ±2 นาที
     const dup = await Transaction.findOne({
+      ...productionScope(),
       method: "tw",
       amountCents: addedCents,
       status: "completed",
@@ -511,6 +520,7 @@ async function handleTrueWalletWebhook(req, res) {
 
     // 🔥 ไม่มี pending → สร้าง unmatched ไว้ตรวจสอบหลังบ้าน
     await Transaction.create({
+      ...productionScope(),
       method: "tw",
       amount: Math.floor(rawAmount),
       amountCents: addedCents,
@@ -556,11 +566,12 @@ topupRouter.get("/", async (req, res) => {
     if (!user) return res.redirect("/login");
 
     const webWallets = await Topup.find({
+      ...productionScope(),
       isActive: true,
       accountCode: { $in: ["tw", "kbank", "scb", "qr"] },
     }).lean();
 
-    const transactions = await Transaction.find({ userId })
+    const transactions = await Transaction.find({ userId, ...productionScope() })
       .sort({ _id: -1 })
       .limit(20)
       .lean();
@@ -596,6 +607,7 @@ topupRouter.post("/truewallet/gen/link", async (req, res) => {
     }
 
     const webWallet = await Topup.findOne({
+      ...productionScope(),
       accountCode: "tw",
       isActive: true,
       isSMS: false,
@@ -714,6 +726,7 @@ topupRouter.post("/create", async (req, res) => {
     // ✅ ถ้ามีรายการ pending เดิมของ method นี้ ให้ใช้รายการเดิม แม้ countdown จะหมดแล้ว
     // กันการสร้าง pending ซ้ำ และไม่ทำให้รายการเก่าของผู้ใช้หาย/ถูกยกเลิก
     const existing = await Transaction.findOne({
+      ...productionScope(),
       userId: uid,
       method,
       status: "pending",
@@ -750,6 +763,7 @@ topupRouter.post("/create", async (req, res) => {
         const { expectedAmount, amountCents, extraCents } = makeExpectedTopupAmount(base);
 
         tx = await Transaction.create({
+          ...productionScope(),
           userId: uid,
           method,
           amount: base,
@@ -819,6 +833,7 @@ topupRouter.post("/cancel/:id", async (req, res) => {
     if (!uid) return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบ" });
 
     const tx = await Transaction.findOne({
+      ...productionScope(),
       _id: req.params.id,
       userId: uid,
       status: "pending",
@@ -855,6 +870,7 @@ topupRouter.get("/tx/:id", async (req, res) => {
     if (!uid) return res.status(401).json({ ok: false });
 
     const tx = await Transaction.findOne({
+      ...productionScope(),
       _id: req.params.id,
       userId: uid,
     }).lean();
@@ -908,6 +924,7 @@ async function handleKbankWebhook(req, res) {
     if (!message) return res.status(400).json({ success: false, message: "message required" });
 
     const topup = await Topup.findOne({
+      ...productionScope(),
       accountCode: "kbank",
       isActive: true,
     }).lean();
@@ -959,6 +976,7 @@ async function handleKbankWebhook(req, res) {
 
     // 🔥 DEDUPE ±2 นาที
     const dup = await Transaction.findOne({
+      ...productionScope(),
       method: "kbank",
       amountCents: amtCents,
       status: "completed",
@@ -982,6 +1000,7 @@ async function handleKbankWebhook(req, res) {
 
     if (!pendingTx) {
       await Transaction.create({
+        ...productionScope(),
         method: "kbank",
         amount: amt,
         amountCents: amtCents,
@@ -1044,6 +1063,7 @@ async function handleScbWebhook(req, res) {
     if (!message) return res.status(400).json({ success: false, message: "message required" });
 
     const topup = await Topup.findOne({
+      ...productionScope(),
       accountCode: "scb",
       isActive: true,
     }).lean();
@@ -1100,6 +1120,7 @@ async function handleScbWebhook(req, res) {
 
     // 🔥 DEDUPE
     const dup = await Transaction.findOne({
+      ...productionScope(),
       method: "scb",
       amountCents: amtCents,
       status: "completed",
@@ -1123,6 +1144,7 @@ async function handleScbWebhook(req, res) {
 
     if (!pendingTx) {
       await Transaction.create({
+        ...productionScope(),
         method: "scb",
         amount: amt,
         amountCents: amtCents,
