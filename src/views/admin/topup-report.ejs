@@ -4,13 +4,17 @@
   cimb:'ธนาคารซีไอเอ็มบีไทย', uob:'ธนาคารยูโอบี', gsb:'ธนาคารออมสิน',
   baac:'ธ.เพื่อการเกษตรและสหกรณ์การเกษตร', kkb:'ธนาคารเกียรตินาคินภัทร',
   lhfg:'ธนาคารแลนด์ แอนด์ เฮ้าส์', icbc:'ธนาคารไอซีบีซี (ไทย)', tisco:'ธนาคารทิสโก้',
-  tw:'TrueMoney Wallet', qr:'PromptPay QR'
+  tw:'TrueMoney Wallet', truewallet:'TrueMoney Wallet', qr:'PromptPay QR', admin:'Admin', manual:'เติมมือ'
 };
 const REPORT_MODE = (typeof reportMode !== 'undefined' && reportMode === 'year') ? 'year' : 'month';
 const IS_YEAR_MODE = REPORT_MODE === 'year';
 const SELECTED_YEAR = Number(typeof selectedYear !== 'undefined' ? selectedYear : new Date().getFullYear());
 const SELECTED_LABEL = typeof selectedLabel !== 'undefined' && selectedLabel ? selectedLabel : '';
 const YEARLY_ROWS = Array.isArray(typeof yearlyRows !== 'undefined' ? yearlyRows : null) ? yearlyRows : [];
+const MANUAL_METHOD_OPTIONS = Array.isArray(typeof methodOptions !== 'undefined' ? methodOptions : null) ? methodOptions : [
+  { value:'admin', label:'Admin' }, { value:'manual', label:'เติมมือ' }, { value:'tw', label:'TrueMoney Wallet' },
+  { value:'qr', label:'PromptPay QR' }, { value:'kbank', label:'กสิกรไทย' }, { value:'scb', label:'ไทยพาณิชย์' }
+];
 %>
 
 <div class="topup-report-page">
@@ -296,7 +300,7 @@ const headMonthLabel = IS_YEAR_MODE
             <%=
               (m === 'tw' || m === 'truewallet') ? 'True Wallet' :
               (m === 'kbank') ? 'กสิกรไทย' :
-              (m === 'scb') ? 'ไทยพานิชย์' :
+              (m === 'scb') ? 'ไทยพาณิชย์' :
               (m === 'qr') ? 'PromptPay QR' :
               (m === 'admin') ? 'Admin' :
               (m === 'manual') ? 'เติมมือ' :
@@ -319,7 +323,7 @@ const headMonthLabel = IS_YEAR_MODE
           <td>
             <% if ((tx.status||'') === 'pending') { %>
             <button class="btn small success"
-              onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\' ) %>')">
+              onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\' ) %>', '<%= method %>')">
               เติมให้ผู้ใช้
             </button>
             <button class="btn small danger" onclick="rejectTx('<%= (tx._id || tx.transactionId) %>')">
@@ -399,7 +403,7 @@ const headMonthLabel = IS_YEAR_MODE
             <%=
               (m === 'tw' || m === 'truewallet') ? 'True Wallet' :
               (m === 'kbank') ? 'กสิกรไทย' :
-              (m === 'scb') ? 'ไทยพานิชย์' :
+              (m === 'scb') ? 'ไทยพาณิชย์' :
               (m === 'qr') ? 'PromptPay QR' :
               (m === 'admin') ? 'Admin' :
               (m === 'manual') ? 'เติมมือ' :
@@ -423,7 +427,7 @@ const headMonthLabel = IS_YEAR_MODE
         <div class="tx-actions">
           <% if ((tx.status||'') === 'pending') { %>
           <button class="btn small success" style="width: 100%;"
-            onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\') %>')">
+            onclick="openManualTopupModal('<%= tx.transactionId %>', <%= tx.amount %>, '<%= (tx.userId?.username || tx.username || '').replace(/'/g, '\\\\') %>', '<%= method %>')">
             เติมให้ผู้ใช้
           </button>
           <button class="btn small danger" style="width: 100%; margin-top: 8px;"
@@ -469,7 +473,16 @@ const headMonthLabel = IS_YEAR_MODE
           <input type="number" id="manualAmount" required class="block input mt-sm"/>
         </label>
 
-        <div class="card soft mt">💡 ระบบจะเพิ่มยอดเงินเข้าบัญชีของผู้ใช้ทันที และบันทึกในระบบ</div>
+        <label>
+          Method การเติมเงิน
+          <select id="manualMethod" class="block input mt-sm" required>
+            <% MANUAL_METHOD_OPTIONS.forEach(opt => { %>
+              <option value="<%= opt.value %>"><%= opt.label %></option>
+            <% }) %>
+          </select>
+        </label>
+
+        <div class="card soft mt">💡 ระบบจะเพิ่มยอดเงินเข้าบัญชีของผู้ใช้ทันที และบันทึกในระบบตาม Method ที่เลือก</div>
 
         <div class="footer d-flex justify-content-center mt">
           <button class="block btn primary" type="submit">ยืนยันเติมเงิน</button>
@@ -1169,6 +1182,7 @@ body:has(.topup-report-page){
 .topup-report-page .yearly-table{ min-width:980px; }
 .topup-report-page .month-name{ color:var(--tr-text); font-size:16px; }
 .topup-report-page .is-empty-month{ opacity:.58; }
+
 .topup-report-page .method-chip-list{
   display:flex;
   flex-wrap:wrap;
@@ -1416,7 +1430,7 @@ body:has(.topup-report-page){
   })();
 
   // ====== Modal controls ======
-  function openManualTopupModal(txId = null, amount = null, suggestedUsername = ''){
+  function openManualTopupModal(txId = null, amount = null, suggestedUsername = '', suggestedMethod = 'admin'){
     const modal = document.getElementById("manualTopupModal");
     modal.classList.remove("hidden");
 
@@ -1425,6 +1439,12 @@ body:has(.topup-report-page){
     document.getElementById("manualTopupStatus").innerHTML = "";
 
     window.currentTxId = txId;
+
+    const methodInput = document.getElementById("manualMethod");
+    if (methodInput) {
+      const m = String(suggestedMethod || 'admin').toLowerCase() === 'truewallet' ? 'tw' : String(suggestedMethod || 'admin').toLowerCase();
+      methodInput.value = Array.from(methodInput.options).some(o => o.value === m) ? m : 'admin';
+    }
 
     const amtInput = document.getElementById("manualAmount");
     if (amount){
@@ -1463,6 +1483,7 @@ body:has(.topup-report-page){
     ev.preventDefault();
     const username = document.getElementById("manualUsername").value.trim();
     const amount   = parseFloat(document.getElementById("manualAmount").value || 0);
+    const method   = document.getElementById("manualMethod")?.value || "admin";
     const txId     = window.currentTxId || null;
 
     if (!username || !(amount > 0)) {
@@ -1478,7 +1499,7 @@ body:has(.topup-report-page){
       const res = await fetch("/admin/manual-topup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, amount, txId }),
+        body: JSON.stringify({ username, amount, txId, method }),
       });
 
       const data = await res.json();

@@ -6,7 +6,7 @@ import { Topup } from "../models/Topup.js";
 import { Transaction } from "../models/Transaction.js";
 import { BonustimeOrder } from "../models/BonustimeOrder.js";
 import { config, connectMongoIfNeeded, resolveBonustimeDbName } from "../config.js";
-import { getNextServiceIdentity } from "../services/bonustimeMultiTenant.js";
+import { getNextServiceIdentity, parseServiceKey } from "../services/bonustimeMultiTenant.js";
 
 const router = Router();
 const PRODUCTION_KEY = "rtautobot";
@@ -21,12 +21,17 @@ const glog = {
 const METHOD_LABELS = {
   admin: "แอดมิน",
   manual: "เติมมือ",
-  truewallet: "True Wallet",
-  tw: "True Wallet",
-  kbank: "KBank",
-  scb: "SCB",
+  truewallet: "TrueMoney Wallet",
+  tw: "TrueMoney Wallet",
+  kbank: "กสิกรไทย",
+  scb: "ไทยพาณิชย์",
   qr: "PromptPay QR",
 };
+
+const MANUAL_TOPUP_METHODS = ["admin", "manual", "tw", "qr", "kbank", "scb"];
+const REPORT_METHODS = ["all", "tw", "qr", "kbank", "scb", "admin", "manual"];
+const methodOptions = () => MANUAL_TOPUP_METHODS.map((value) => ({ value, label: METHOD_LABELS[value] || value }));
+const reportMethodOptions = () => REPORT_METHODS.map((value) => ({ value, label: value === "all" ? "ทุกช่องทาง" : (METHOD_LABELS[value] || value) }));
 
 function isObjectId(v) {
   return mongoose.Types.ObjectId.isValid(String(v || ""));
@@ -66,6 +71,19 @@ function computeLicenseExpiry(doc = {}) {
     input: expires.toISOString().slice(0, 10),
     disabled: false,
   };
+}
+
+
+function isExpiredOverDays(expiry, days = 30) {
+  const expiresAt = expiry?.expiresAt instanceof Date ? expiry.expiresAt : null;
+  if (!expiresAt || !Number.isFinite(expiresAt.getTime())) return false;
+  return Date.now() - expiresAt.getTime() >= days * 24 * 60 * 60 * 1000;
+}
+
+function resolvePackageNote(doc = {}) {
+  const parsed = parseServiceKey(doc.serviceKey || doc.tenantId || doc.legacyTenantId || "");
+  const isPk2 = parsed?.group === "pk2" || doc.LOTTO_ENABLED === true;
+  return isPk2 ? "แพ็กเกจ 2 (สล็อต+บาคาร่า+หวย)" : "แพ็กเกจ 1 (สล็อต+บาคาร่า)";
 }
 
 function toThaiDate(d = new Date()) {
@@ -126,6 +144,62 @@ function normalizeMonthly(orders = []) {
   };
 }
 
+function normalizeYearly(orders = []) {
+  let totalRevenue = 0;
+  let pkg1Revenue = 0;
+  let pkg2Revenue = 0;
+  let pkg1Count = 0;
+  let pkg2Count = 0;
+  const monthMap = {};
+
+  for (const o of orders) {
+    const amt = Number(o.amountTHB || 0) || 0;
+    const created = new Date(o.createdAt || Date.now());
+    const month = created.getUTCMonth() + 1;
+    if (!monthMap[month]) monthMap[month] = { month, pkg1: 0, pkg2: 0, total: 0, count: 0 };
+    const type = String(o.packageType || "").toLowerCase();
+    const isPkg2 = ["lotto", "pack2", "package2"].includes(type);
+    if (isPkg2) {
+      pkg2Revenue += amt;
+      pkg2Count++;
+      monthMap[month].pkg2 += amt;
+    } else {
+      pkg1Revenue += amt;
+      pkg1Count++;
+      monthMap[month].pkg1 += amt;
+    }
+    totalRevenue += amt;
+    monthMap[month].total += amt;
+    monthMap[month].count += 1;
+  }
+
+  const monthly = Array.from({ length: 12 }, (_, i) => monthMap[i + 1] || { month: i + 1, pkg1: 0, pkg2: 0, total: 0, count: 0 });
+  const bestMonth = [...monthly].sort((a, b) => b.total - a.total)[0] || { month: 1, total: 0, count: 0 };
+
+  return {
+    yearlyTotalRevenue: totalRevenue,
+    yearlyPkg1Revenue: pkg1Revenue,
+    yearlyPkg2Revenue: pkg2Revenue,
+    yearlyPkg1Count: pkg1Count,
+    yearlyPkg2Count: pkg2Count,
+    yearlyOrderCount: orders.length,
+    yearlyMonthly: monthly,
+    yearlyBestMonth: bestMonth,
+  };
+}
+
+function yearRange(year) {
+  const now = new Date();
+  let y = now.getUTCFullYear();
+  const n = Number(year);
+  if (Number.isFinite(n) && n >= 2000 && n <= 3000) y = n;
+  return {
+    year: y,
+    start: new Date(Date.UTC(y, 0, 1, 0, 0, 0)),
+    end: new Date(Date.UTC(y + 1, 0, 1, 0, 0, 0)),
+  };
+}
+
 function monthRange(month) {
   const now = new Date();
   let y = now.getUTCFullYear();
@@ -155,7 +229,7 @@ function getBangkokYearRange(yy) {
 
 router.get("/", async (_req, res) => {
   try {
-    const [serviceCount, walletCount, topupAgg, orderAgg] = await Promise.all([
+    const [serviceCount, walletCount, topupAgg, orderAgg, pendingTransactions] = await Promise.all([
       (await getBonustimeUsersCollection()).countDocuments({}),
       Topup.countDocuments({ ...productionScope(), type: "DEPOSIT" }),
       Transaction.aggregate([
@@ -165,14 +239,26 @@ router.get("/", async (_req, res) => {
       BonustimeOrder.aggregate([
         { $group: { _id: null, sum: { $sum: "$amountTHB" }, count: { $sum: 1 } } },
       ]),
+      Transaction.find({ ...productionScope(), status: "pending" })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .populate({ path: "userId", select: "username email avatarUrl avatarVer" })
+        .lean(),
     ]);
+
+    const pendingTotal = (pendingTransactions || []).reduce((sum, tx) => sum + (Number(tx.amount || 0) || 0), 0);
 
     res.render("admin/dashboard", {
       title: "Admin | RTAUTOBOT",
       pageTitle: "Admin | RTAUTOBOT",
+      pendingTransactions: pendingTransactions || [],
+      methodLabels: METHOD_LABELS,
+      methodOptions: methodOptions(),
       stats: {
         serviceCount,
         walletCount,
+        pendingCount: pendingTransactions?.length || 0,
+        pendingTotal,
         topupSum: topupAgg?.[0]?.sum || 0,
         topupCount: topupAgg?.[0]?.count || 0,
         bonustimeRevenue: orderAgg?.[0]?.sum || 0,
@@ -301,9 +387,9 @@ router.post("/manual-topup", async (req, res) => {
     if (!(amt > 0)) return res.json({ ok: false, error: "จำนวนเงินไม่ถูกต้อง" });
     const amtCents = Math.round(amt * 100);
 
-    const allowed = ["admin", "truewallet", "tw", "kbank", "qr", "scb", "manual"];
     let m = String(method || "admin").toLowerCase();
-    if (!allowed.includes(m)) m = "admin";
+    if (m === "truewallet") m = "tw";
+    if (!MANUAL_TOPUP_METHODS.includes(m)) m = "admin";
 
     const user = await User.findOne({ username });
     if (!user) return res.json({ ok: false, error: "ไม่พบผู้ใช้" });
@@ -397,6 +483,8 @@ router.get("/topup-report", async (req, res) => {
     const monthDateRange = getBangkokMonthRange(yy, mm);
     const yearDateRange = getBangkokYearRange(selectedYear);
     const activeRange = reportMode === "year" ? yearDateRange : monthDateRange;
+    // RTAUTOBOT topup report must show every payment Method in the selected period.
+    // Do not filter by method here; method breakdown is displayed inside the report rows/cards.
     const activeMatch = { ...productionScope(), createdAt: { $gte: activeRange.start, $lt: activeRange.end } };
 
     const transactions = await Transaction.find(activeMatch)
@@ -476,6 +564,7 @@ router.get("/topup-report", async (req, res) => {
       methodTotals,
       sumCompleted: aggCompleted?.[0]?.sum || 0,
       countCompleted: aggCompleted?.[0]?.count || 0,
+      methodOptions: methodOptions(),
     });
   } catch (err) {
     glog.error("GET /admin/topup-report error:", err);
@@ -503,47 +592,75 @@ router.get("/bonustime-panel", async (_req, res) => {
       }
     }
 
-    const records = docs.map((doc) => ({
-      tenantId: doc.tenantId || doc.serviceKey || "",
-      legacyTenantId: doc.legacyTenantId || "",
-      serviceMode: doc.serviceMode || "multiTenant",
-      serviceGroup: doc.serviceGroup || "",
-      serviceNo: doc.serviceNo || null,
-      serviceKey: doc.serviceKey || doc.tenantId || "",
-      webhookUrl: doc.webhookUrl || doc.LINK || "",
-      LINK: doc.LINK || doc.webhookUrl || "",
-      serial_key: doc.serial_key || "",
-      username: ownerBySerial[doc.serial_key] || "",
-      ownerName: doc.ownerName || ownerDisplayBySerial[doc.serial_key] || "",
-      NAME: doc.NAME || "",
-      LOGO: doc.LOGO || "",
-      LOGIN_URL: doc.LOGIN_URL || "",
-      SIGNUP_URL: doc.SIGNUP_URL || "",
-      LINE_ADMIN: doc.LINE_ADMIN || "",
-      LOTTO_ENABLED: !!doc.LOTTO_ENABLED,
-      LICENSE_START_DATE: doc.LICENSE_START_DATE || "",
-      LICENSE_DURATION_DAYS: Number(doc.LICENSE_DURATION_DAYS || 0),
-      LICENSE_DISABLED: !!doc.LICENSE_DISABLED,
-      CHANNEL_ACCESS_TOKEN: doc.CHANNEL_ACCESS_TOKEN || "",
-      CHANNEL_SECRET: doc.CHANNEL_SECRET || "",
-      expiry: computeLicenseExpiry(doc),
-      note: doc.note || "",
-    }));
+    const records = docs.map((doc) => {
+      const expiry = computeLicenseExpiry(doc);
+      const resetEligible = !!doc.serial_key && !expiry.disabled && isExpiredOverDays(expiry, 30);
+      return {
+        tenantId: doc.tenantId || doc.serviceKey || "",
+        legacyTenantId: doc.legacyTenantId || "",
+        serviceMode: doc.serviceMode || "multiTenant",
+        serviceGroup: doc.serviceGroup || "",
+        serviceNo: doc.serviceNo || null,
+        serviceKey: doc.serviceKey || doc.tenantId || "",
+        webhookUrl: doc.webhookUrl || doc.LINK || "",
+        LINK: doc.LINK || doc.webhookUrl || "",
+        serial_key: doc.serial_key || "",
+        username: ownerBySerial[doc.serial_key] || "",
+        ownerName: doc.ownerName || ownerDisplayBySerial[doc.serial_key] || "",
+        NAME: doc.NAME || "",
+        LOGO: doc.LOGO || "",
+        LOGIN_URL: doc.LOGIN_URL || "",
+        SIGNUP_URL: doc.SIGNUP_URL || "",
+        LINE_ADMIN: doc.LINE_ADMIN || "",
+        LOTTO_ENABLED: !!doc.LOTTO_ENABLED,
+        LICENSE_START_DATE: doc.LICENSE_START_DATE || "",
+        LICENSE_DURATION_DAYS: Number(doc.LICENSE_DURATION_DAYS || 0),
+        LICENSE_DISABLED: !!doc.LICENSE_DISABLED,
+        CHANNEL_ACCESS_TOKEN: doc.CHANNEL_ACCESS_TOKEN || "",
+        CHANNEL_SECRET: doc.CHANNEL_SECRET || "",
+        expiry,
+        expiresAt: expiry.expiresAt,
+        expiresAtLabel: expiry.label,
+        expiresAtInput: expiry.input,
+        licenseDisabled: expiry.disabled,
+        resetEligible,
+        note: doc.note || "",
+      };
+    });
 
     const { start, end } = monthRange();
-    const monthOrders = await BonustimeOrder.find({ createdAt: { $gte: start, $lt: end } }).lean();
+    const currentYearRange = yearRange();
+    const [monthOrders, yearOrders] = await Promise.all([
+      BonustimeOrder.find({ createdAt: { $gte: start, $lt: end } }).lean(),
+      BonustimeOrder.find({ createdAt: { $gte: currentYearRange.start, $lt: currentYearRange.end } }).lean(),
+    ]);
     const monthly = normalizeMonthly(monthOrders);
+    const yearly = normalizeYearly(yearOrders);
 
     return res.render("admin/bonustime_panel", {
       title: "Bonustime Panel",
       pageTitle: "Bonustime Panel | RTAUTOBOT",
       records,
       updateEndpoint: "/admin/bonustime/tenant",
+      currentYear: currentYearRange.year,
       ...monthly,
+      ...yearly,
     });
   } catch (err) {
     glog.error("GET /admin/bonustime-panel error:", err);
     return res.status(500).send("เกิดข้อผิดพลาดในการดึงข้อมูล Bonustime");
+  }
+});
+
+router.get("/bonustime/yearly.json", async (req, res) => {
+  try {
+    const range = yearRange(req.query.year);
+    const orders = await BonustimeOrder.find({ createdAt: { $gte: range.start, $lt: range.end } }).lean();
+    const yearly = normalizeYearly(orders);
+    return res.json({ ok: true, year: range.year, ...yearly });
+  } catch (err) {
+    glog.error("GET /admin/bonustime/yearly.json error:", err);
+    return res.status(500).json({ ok: false, error: "server-error" });
   }
 });
 
@@ -629,6 +746,56 @@ router.post("/bonustime/tenant", async (req, res) => {
   } catch (err) {
     glog.error("POST /admin/bonustime/tenant error:", err);
     return res.status(500).json({ ok: false, error: "สร้างรายการไม่สำเร็จ" });
+  }
+});
+
+
+router.post("/bonustime/tenant/:tenantId/reset", async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const col = await getBonustimeUsersCollection();
+    const filter = { $or: [{ tenantId }, { serviceKey: tenantId }, { legacyTenantId: tenantId }] };
+    const doc = await col.findOne(filter);
+
+    if (!doc) return res.status(404).json({ ok: false, error: "ไม่พบ Service นี้" });
+
+    const expiry = computeLicenseExpiry(doc);
+    if (!doc.serial_key || expiry.disabled || !isExpiredOverDays(expiry, 30)) {
+      return res.status(400).json({
+        ok: false,
+        error: "รีเซ็ตได้เฉพาะ Service ที่ขายแล้วและหมดอายุเกิน 30 วันเท่านั้น",
+      });
+    }
+
+    const serviceKey = String(doc.serviceKey || doc.tenantId || tenantId || "").trim();
+    const update = {
+      NAME: serviceKey,
+      serial_key: "",
+      ownerName: "",
+      LOGO: "",
+      LOGIN_URL: "",
+      SIGNUP_URL: "",
+      LINE_ADMIN: "",
+      CHANNEL_ACCESS_TOKEN: "",
+      CHANNEL_SECRET: "",
+      LICENSE_START_DATE: toThaiDate(new Date()),
+      LICENSE_DURATION_DAYS: 30,
+      LICENSE_DISABLED: false,
+      note: resolvePackageNote(doc),
+      resetAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await col.updateOne(filter, {
+      $set: update,
+      $unset: { expiryNotifySent: "", expiryNotifySentAt: "" },
+    });
+
+    if (!result.matchedCount) return res.status(404).json({ ok: false, error: "ไม่พบ Service นี้" });
+    return res.json({ ok: true, reset: true, serviceKey });
+  } catch (err) {
+    glog.error("POST /admin/bonustime/tenant/reset error:", err);
+    return res.status(500).json({ ok: false, error: "รีเซ็ตไม่สำเร็จ" });
   }
 });
 

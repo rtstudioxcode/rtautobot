@@ -43,3 +43,43 @@ RTAUTOBOT is a production Bonustime-focused website. The public-facing copy must
 - Updated SEO title, meta description, keywords, OG/Twitter metadata, and FAQ structured data to focus on Bonustime packages, credit topup, ordering, renewal, upgrade, status tracking, and account help.
 - Removed public-facing FAQ wording related to SMM, OTP24, APPS, social boosting, refill, followers, views, likes, and other non-Bonustime services.
 - Kept production-ready sales/support wording only; no internal migration notes, endpoint notes, job notes, or development wording are shown in the FAQ UI.
+
+### 2026-05-31 — Topup method selection for RTAUTOBOT
+- Updated the RTAUTOBOT topup history UI so users can filter their recent topup history by payment Method while keeping the payment page scoped to active RTAUTOBOT deposit accounts only.
+- Added Method selection to the admin manual topup modal so manual credit adjustments can be recorded as Admin, manual, TrueMoney Wallet, PromptPay QR, KBank, or SCB instead of always defaulting silently.
+- Added Method filtering to `/admin/topup-report` for RTAUTOBOT production records only, so admin topup history can be reviewed by channel while preserving the existing month/year report controls.
+- Kept all changes inside the Bonustime/RTAUTOBOT direction and did not reintroduce APPS, OTP24, SMM, or other service surfaces.
+
+### 2026-05-31 — Admin pending topup section
+- Updated the RTAUTOBOT `/admin` dashboard to include a dedicated pending topup control section showing only `production: "rtautobot"` transactions with `status: "pending"`.
+- Added pending totals/counts to the admin summary cards and kept pending management focused on RTAUTOBOT topup records only.
+- Removed the separate manual topup card from the admin dashboard grid; manual topup remains available from the pending topup section/topup report instead of being promoted as a main dashboard card.
+- Added quick pending actions on the admin dashboard for reviewing/filling via the topup report and rejecting pending transactions without exposing RTSMM-TH data.
+- Preserved the Bonustime-only project scope and did not reintroduce APPS, OTP24, SMM, or non-Bonustime admin surfaces.
+
+### 2026-05-31 — Admin inline manual topup + report Method cleanup
+- Updated the RTAUTOBOT `/admin` dashboard so the “เติมเงินด้วยตนเอง” action opens the manual topup modal directly on `/admin` instead of redirecting to `/admin/topup-report`.
+- Updated each pending topup row on `/admin` so “เติมให้ผู้ใช้” opens the same modal prefilled with that pending transaction’s username, amount, transaction ID, and Method.
+- Kept `/admin/manual-topup` as the JSON endpoint used by the inline modal, still scoped to `production: "rtautobot"` and still using the shared user wallet/credit balance.
+- Removed the Method selector from the Report Period section on `/admin/topup-report`; that report now always shows every Method for the selected month/year and continues to display Method breakdowns in the report content.
+- Preserved the Bonustime-only/RTAUTOBOT direction and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or other RTSMM-TH service surfaces.
+
+### 2026-05-31 — Global dropdown skin + Bonustime expiry/year summary
+- Added a global custom select layer in `src/views/layout.ejs` so standard single-select dropdowns across the RTAUTOBOT site render with the same premium black-gold production UI while the original native `<select>` remains in the DOM for forms and existing JavaScript.
+- Updated `/admin/bonustime-panel` service cards to expose service expiry data correctly and show live remaining time badges in days, hours, and minutes; expired services are highlighted clearly while active services show remaining usage time.
+- Added Bonustime yearly revenue summary data to `src/routes/admin-bonustime.js`, including yearly totals, Package 1/Package 2 totals, order count, best month, and a new `/admin/bonustime/yearly.json` endpoint.
+- Added a yearly summary section and yearly chart to `src/views/admin/bonustime_panel.ejs` so the Bonustime panel now shows both monthly and annual sales performance.
+- Kept the project inside the Bonustime-only/RTAUTOBOT scope and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or unrelated RTSMM-TH service surfaces.
+
+## Track Log - 2026-05-31 - Admin manual topup notify fix
+- แก้จาก baseline `rtautobot(7).zip` ตามคำสั่งล่าสุด
+- แก้หน้า `/admin` modal เติมเงินให้ผู้ใช้: เดิมเรียก `notify(...)` แบบ function ทั้งที่ global notify ใน layout เป็น object (`notify.success/info/warn/error/push`) ทำให้ขึ้น error `notify is not a function`
+- เพิ่ม helper เฉพาะหน้า `rtAdminNotify(variant, title, text)` เพื่อรองรับ `window.notify.success`, `window.notify.push`, `window.showMsg` และ fallback alert อย่างปลอดภัย
+- ยังรักษา scope RTAUTOBOT/Bonustime-only และ production `rtautobot` เหมือนเดิม ไม่เพิ่ม route/job/service ของ APPS, OTP24, SMM กลับมา
+
+### 2026-05-31 — Bonustime expired service reset control
+- Updated `/admin/bonustime-panel` from the latest `rtautobot(8).zip` baseline to add a reset action for Services that have been sold and expired for more than 30 days.
+- The reset action is shown only on eligible expired Service cards and sits after the delete button, keeping normal active/recently expired Services protected from accidental reset.
+- Added `POST /admin/bonustime/tenant/:tenantId/reset` to return an eligible Service to available stock: restore `NAME` to the original service key, clear `serial_key`, owner name, logo, login/signup/contact links, LINE channel token/secret, reset usage duration to 30 days, re-enable expiry, set the start date to today, and restore the internal package note for pk1/pk2.
+- Kept webhook identity fields such as `tenantId`, `serviceKey`, `LINK`, and multi-tenant routing fields intact so the Service remains routed correctly after being reset.
+- Preserved the RTAUTOBOT/Bonustime-only scope and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or unrelated RTSMM-TH surfaces.

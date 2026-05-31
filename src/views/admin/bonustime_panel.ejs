@@ -133,11 +133,11 @@
                     <% if (rec.serial_key) { %>
                       <div class="status-pill sold">
                         ขายไปแล้ว
-                        <% if (rec.licenseDisabled) { %>
+                        <!-- <% if (rec.licenseDisabled) { %>
                           · ไม่มีวันหมดอายุ
                         <% } else if (rec.expiresAtLabel) { %>
                           · หมดอายุ <%= rec.expiresAtLabel %>
-                        <% } %>
+                        <% } %> -->
                       </div>
 
                       <% if (!rec.licenseDisabled && rec.expiresAtInput) { %>
@@ -155,6 +155,12 @@
                     <button type="button" class="bt-delete-btn" title="ลบ Service นี้">
                       ลบ
                     </button>
+
+                    <% if (rec.resetEligible) { %>
+                      <button type="button" class="bt-reset-btn" title="รีเซ็ต Service ที่หมดอายุเกิน 30 วัน">
+                        รีเซ็ต
+                      </button>
+                    <% } %>
 
                     <div class="collapse-icon" aria-hidden="true">⌃</div>
                   </div>
@@ -387,11 +393,11 @@
     <header class="ultra-summary-head">
         <div class="ultra-summary-title">
         <h2>สรุปยอด Bonustime รายเดือน</h2>
-        <p class="muted small">เลือกเดือนด้านขวาเพื่อดูยอดขายจาก RT AUTOBOT</p>
+        <p class="muted small">เลือกเดือนด้านขวาเพื่อดูยอดขาย</p>
         </div>
 
         <div class="ultra-month-select">
-        <label for="monthSelect">เลือกเดือน</label>
+        <!-- <label for="monthSelect">เลือกเดือน</label> -->
         <select id="monthSelect">
             <!-- options เติมจาก JS -->
         </select>
@@ -521,6 +527,53 @@
           <% } %>
       </div>
   </section>
+
+    <!-- YEARLY SUMMARY -->
+    <section class="ultra-yearly glass" aria-label="สรุปยอดขายรายปี Bonustime">
+      <div class="ultra-yearly-head">
+        <div>
+          <h3>สรุปยอดขายรายปี</h3>
+          <p class="muted small">ดูภาพรวมรายได้ Bonustime ทั้งปี แยกยอดรวม แพ็กเกจ และเดือนที่ทำยอดดีที่สุด</p>
+        </div>
+        <label class="ultra-year-select" for="yearSelect">
+          <span>เลือกปี</span>
+          <select id="yearSelect">
+            <% const _yearNow = Number(typeof currentYear !== 'undefined' ? currentYear : new Date().getFullYear()); %>
+            <% for (let y = _yearNow; y >= _yearNow - 4; y--) { %>
+              <option value="<%= y %>" <%= y === _yearNow ? 'selected' : '' %>><%= y + 543 %></option>
+            <% } %>
+          </select>
+        </label>
+      </div>
+
+      <div class="ultra-year-cards">
+        <section class="ultra-card glass" id="yearCardTotal">
+          <h3>ยอดขายรวมทั้งปี</h3>
+          <div class="ultra-value">฿ <span id="yearlyTotalRevenue"><%= Number(yearlyTotalRevenue || 0).toLocaleString() %></span></div>
+          <div class="ultra-trend <%= Number(yearlyTotalRevenue || 0) > 0 ? 'up' : 'flat' %>"><span class="dot"></span><span class="label" id="yearlyTotalLabel"><%= Number(yearlyOrderCount || 0) > 0 ? `ทั้งหมด ${Number(yearlyOrderCount || 0).toLocaleString('th-TH')} ออเดอร์` : 'ยังไม่มีรายการในปีนี้' %></span></div>
+        </section>
+        <section class="ultra-card glass" id="yearCardPkg1">
+          <h3>Package 1 ทั้งปี</h3>
+          <div class="ultra-value">฿ <span id="yearlyPkg1Revenue"><%= Number(yearlyPkg1Revenue || 0).toLocaleString() %></span></div>
+          <div class="ultra-trend <%= Number(yearlyPkg1Revenue || 0) > 0 ? 'up' : 'flat' %>"><span class="dot"></span><span class="label" id="yearlyPkg1Label"><%= Number(yearlyPkg1Count || 0) > 0 ? `${Number(yearlyPkg1Count || 0).toLocaleString('th-TH')} รายการ` : 'ยังไม่มีการขาย' %></span></div>
+        </section>
+        <section class="ultra-card glass" id="yearCardPkg2">
+          <h3>Package 2 ทั้งปี</h3>
+          <div class="ultra-value">฿ <span id="yearlyPkg2Revenue"><%= Number(yearlyPkg2Revenue || 0).toLocaleString() %></span></div>
+          <div class="ultra-trend <%= Number(yearlyPkg2Revenue || 0) > 0 ? 'up' : 'flat' %>"><span class="dot"></span><span class="label" id="yearlyPkg2Label"><%= Number(yearlyPkg2Count || 0) > 0 ? `${Number(yearlyPkg2Count || 0).toLocaleString('th-TH')} รายการ` : 'ยังไม่มีการขาย' %></span></div>
+        </section>
+        <section class="ultra-card glass" id="yearCardBest">
+          <h3>เดือนที่ขายดีที่สุด</h3>
+          <div class="ultra-value"><span id="yearlyBestMonth"><%= (yearlyBestMonth && yearlyBestMonth.total > 0) ? `${yearlyBestMonth.month}/${_yearNow + 543}` : '-' %></span></div>
+          <div class="ultra-trend <%= (yearlyBestMonth && yearlyBestMonth.total > 0) ? 'up' : 'flat' %>"><span class="dot"></span><span class="label" id="yearlyBestLabel"><%= (yearlyBestMonth && yearlyBestMonth.total > 0) ? `฿ ${Number(yearlyBestMonth.total || 0).toLocaleString('th-TH')}` : 'รอข้อมูลยอดขาย' %></span></div>
+        </section>
+      </div>
+
+      <div class="ultra-chart glass yearly-chart-wrap">
+        <div class="ultra-chart-head"><h3>ยอดขายรายเดือนในปีที่เลือก</h3></div>
+        <div class="ultra-chart-body"><canvas id="chartYearly"></canvas></div>
+      </div>
+    </section>
   </section>
 
   <!-- Monitor Modal สำหรับ Admin (หน้าตาเหมือนฝั่ง User เพื่อความคุ้นเคย) -->
@@ -1040,6 +1093,68 @@
   });
 })();
 
+// ================== RESET EXPIRED TENANT ==================
+(function () {
+  const root = document.querySelector(".bonustime-admin");
+  if (!root) return;
+
+  const endpointBase = root.dataset.updateEndpoint || "/admin/bonustime/tenant";
+
+  root.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".bt-reset-btn");
+    if (!btn) return;
+
+    const card = btn.closest(".bonustime-card.admin");
+    if (!card) return;
+
+    const tenantId = card.dataset.tenantId;
+    if (!tenantId) return;
+
+    const name = card.querySelector(".tenant-name")?.textContent?.trim() || tenantId;
+
+    let confirmed = false;
+    if (window.uiConfirm) {
+      confirmed = await uiConfirm({
+        variant: "warn",
+        title: "ยืนยันรีเซ็ต Service",
+        sub: `รีเซ็ต ${name} ให้กลับเป็น Service ว่างพร้อมขายใหม่หรือไม่? ระบบจะลบ Serial Key และข้อมูลเจ้าของเดิมออก`,
+        okText: "รีเซ็ต Service",
+        cancelText: "ยกเลิก",
+        focus: "cancel",
+      });
+    } else {
+      confirmed = window.confirm(`รีเซ็ต ${name} ให้กลับเป็น Service ว่างพร้อมขายใหม่หรือไม่?`);
+    }
+
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    btn.textContent = "กำลังรีเซ็ต…";
+
+    try {
+      const res = await fetch(`${endpointBase}/${encodeURIComponent(tenantId)}/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "รีเซ็ตไม่สำเร็จ");
+
+      if (window.notify && notify.success) {
+        notify.success("รีเซ็ตสำเร็จ", "Service กลับเป็นรายการพร้อมขายใหม่แล้ว");
+      }
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "รีเซ็ต";
+      if (window.notify && notify.error) {
+        notify.error("รีเซ็ตไม่สำเร็จ", err.message || "กรุณาลองใหม่อีกครั้ง");
+      } else {
+        alert("รีเซ็ตไม่สำเร็จ: " + (err.message || ""));
+      }
+    }
+  });
+})();
+
 // ================== COPY LINK BUTTON ==================
 (function () {
   const root = document.querySelector(".bonustime-admin");
@@ -1095,6 +1210,8 @@
       if (diffMs <= 0) {
         el.textContent = "หมดอายุแล้ว";
         el.classList.add("expired");
+        el.classList.remove("active");
+        el.closest(".status-right")?.querySelector(".status-pill")?.classList.add("expired");
         return;
       }
 
@@ -1112,6 +1229,8 @@
 
       el.textContent = label;
       el.classList.remove("expired");
+      el.classList.add("active");
+      el.closest(".status-right")?.querySelector(".status-pill")?.classList.remove("expired");
     });
   }
 
@@ -1768,6 +1887,7 @@ function makeMainCharts() {
 }
 
 // ================== TOP 5 DAYS ==================
+let topDaysData = <%- JSON.stringify(Array.isArray(top5) ? top5 : []) %>;
 function renderTop5() {
   const list = document.getElementById("topDaysList");
   if (!list) return;
@@ -1805,6 +1925,54 @@ function renderTop5() {
     `;
   });
 }
+
+// ================== YEARLY SUMMARY ==================
+const yearlyInitial = {
+  year: Number(<%- JSON.stringify(typeof currentYear !== 'undefined' ? currentYear : new Date().getFullYear()) %>),
+  yearlyTotalRevenue: Number(<%- JSON.stringify(yearlyTotalRevenue || 0) %>),
+  yearlyPkg1Revenue: Number(<%- JSON.stringify(yearlyPkg1Revenue || 0) %>),
+  yearlyPkg2Revenue: Number(<%- JSON.stringify(yearlyPkg2Revenue || 0) %>),
+  yearlyPkg1Count: Number(<%- JSON.stringify(yearlyPkg1Count || 0) %>),
+  yearlyPkg2Count: Number(<%- JSON.stringify(yearlyPkg2Count || 0) %>),
+  yearlyOrderCount: Number(<%- JSON.stringify(yearlyOrderCount || 0) %>),
+  yearlyBestMonth: <%- JSON.stringify(yearlyBestMonth || null) %>,
+  yearlyMonthly: <%- JSON.stringify(Array.isArray(yearlyMonthly) ? yearlyMonthly : []) %>,
+};
+let yearlyChartInstance = null;
+function setYearText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+function updateYearCardTrend(id, active) { const block = document.querySelector(`#${id} .ultra-trend`); if (!block) return; block.classList.remove('up', 'flat'); block.classList.add(active ? 'up' : 'flat'); }
+function monthShortTH(month) { return monthNamesTH[Math.max(0, Math.min(11, Number(month || 1) - 1))] || String(month || '-'); }
+function renderYearlySummary(payload = yearlyInitial) {
+  const total = Number(payload.yearlyTotalRevenue || 0);
+  const pkg1 = Number(payload.yearlyPkg1Revenue || 0);
+  const pkg2 = Number(payload.yearlyPkg2Revenue || 0);
+  const orderCount = Number(payload.yearlyOrderCount || 0);
+  const pkg1Count = Number(payload.yearlyPkg1Count || 0);
+  const pkg2Count = Number(payload.yearlyPkg2Count || 0);
+  const best = payload.yearlyBestMonth || null;
+  const yearBE = Number(payload.year || yearlyInitial.year) + 543;
+  setYearText('yearlyTotalRevenue', total.toLocaleString());
+  setYearText('yearlyPkg1Revenue', pkg1.toLocaleString());
+  setYearText('yearlyPkg2Revenue', pkg2.toLocaleString());
+  setYearText('yearlyTotalLabel', orderCount > 0 ? `ทั้งหมด ${orderCount.toLocaleString('th-TH')} ออเดอร์` : 'ยังไม่มีรายการในปีนี้');
+  setYearText('yearlyPkg1Label', pkg1Count > 0 ? `${pkg1Count.toLocaleString('th-TH')} รายการ` : 'ยังไม่มีการขาย');
+  setYearText('yearlyPkg2Label', pkg2Count > 0 ? `${pkg2Count.toLocaleString('th-TH')} รายการ` : 'ยังไม่มีการขาย');
+  if (best && Number(best.total || 0) > 0) { setYearText('yearlyBestMonth', `${monthShortTH(best.month)} ${yearBE}`); setYearText('yearlyBestLabel', `฿ ${Number(best.total || 0).toLocaleString('th-TH')} · ${Number(best.count || 0).toLocaleString('th-TH')} ออเดอร์`); }
+  else { setYearText('yearlyBestMonth', '-'); setYearText('yearlyBestLabel', 'รอข้อมูลยอดขาย'); }
+  updateYearCardTrend('yearCardTotal', total > 0); updateYearCardTrend('yearCardPkg1', pkg1 > 0); updateYearCardTrend('yearCardPkg2', pkg2 > 0); updateYearCardTrend('yearCardBest', !!best && Number(best.total || 0) > 0);
+  renderYearlyChart(payload.yearlyMonthly || []);
+}
+function renderYearlyChart(rows = []) {
+  const canvas = document.getElementById('chartYearly'); if (!canvas || typeof Chart === 'undefined') return;
+  const labels = Array.from({ length: 12 }, (_, i) => monthNamesTH[i].slice(0, 3));
+  const byMonth = new Map((rows || []).map((r) => [Number(r.month), r]));
+  const totals = Array.from({ length: 12 }, (_, i) => Number((byMonth.get(i + 1) || {}).total || 0));
+  const ctx = canvas.getContext('2d'); if (yearlyChartInstance) yearlyChartInstance.destroy();
+  yearlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'ยอดขายรายเดือน', data: totals, borderRadius: 12, borderSkipped: false, backgroundColor: 'rgba(250,204,21,.72)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,15,23,.96)', borderColor: '#334155', borderWidth: 1, callbacks: { label(ctx) { return `ยอดขาย: ฿ ${Number(ctx.raw || 0).toLocaleString('th-TH')}`; } } } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(245,231,195,.9)' } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.07)' }, ticks: { color: 'rgba(245,231,195,.78)', callback(v){ return Number(v).toLocaleString('th-TH'); } } } } } });
+}
+async function loadYearlySummary(year) { try { const res = await fetch(`/admin/bonustime/yearly.json?year=${encodeURIComponent(year)}`); const raw = await res.json().catch(() => ({})); if (!res.ok || !raw.ok) return renderYearlySummary({ ...yearlyInitial, yearlyTotalRevenue: 0, yearlyPkg1Revenue: 0, yearlyPkg2Revenue: 0, yearlyOrderCount: 0, yearlyPkg1Count: 0, yearlyPkg2Count: 0, yearlyBestMonth: null, yearlyMonthly: [], year }); renderYearlySummary(raw); } catch { renderYearlySummary({ ...yearlyInitial, yearlyTotalRevenue: 0, yearlyPkg1Revenue: 0, yearlyPkg2Revenue: 0, yearlyOrderCount: 0, yearlyPkg1Count: 0, yearlyPkg2Count: 0, yearlyBestMonth: null, yearlyMonthly: [], year }); } }
+document.getElementById('yearSelect')?.addEventListener('change', (e) => loadYearlySummary(e.target.value));
+document.addEventListener('DOMContentLoaded', () => renderYearlySummary(yearlyInitial));
 
 // ================== INITIAL RENDER (หน้าตอนโหลดครั้งแรก) ==================
 if (dailyData.length) {
@@ -2258,6 +2426,28 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.4);
 }
 .bt-delete-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+
+/* ปุ่มรีเซ็ต Service ที่หมดอายุเกิน 30 วัน */
+.bt-reset-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(250, 204, 21, 0.62);
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(245, 158, 11, 0.10));
+  color: #fde68a;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+.bt-reset-btn:hover {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.34), rgba(245, 158, 11, 0.20));
+  border-color: rgba(250, 204, 21, 0.95);
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.22), 0 10px 24px rgba(245, 158, 11, 0.14);
+}
+.bt-reset-btn:active {
   transform: translateY(1px);
   box-shadow: none;
 }
@@ -3242,6 +3432,17 @@ html[data-theme="light"] .bonustime-admin,
   border-radius:14px!important;background:rgba(239,68,68,.1)!important;color:#fecaca!important;border:1px solid rgba(239,68,68,.24)!important;
 }
 .bonustime-admin .bt-delete-btn:hover,.bonustime-admin .bt-action-btn.delete:hover{background:#ef4444!important;color:white!important;}
+.bonustime-admin .bt-reset-btn{
+  border-radius:14px!important;
+  background:linear-gradient(135deg,rgba(250,204,21,.16),rgba(245,158,11,.08))!important;
+  color:#fde68a!important;
+  border:1px solid rgba(250,204,21,.34)!important;
+}
+.bonustime-admin .bt-reset-btn:hover{
+  background:linear-gradient(135deg,rgba(250,204,21,.34),rgba(245,158,11,.18))!important;
+  color:#fff7cc!important;
+  border-color:rgba(250,204,21,.72)!important;
+}
 .bonustime-admin .collapse-icon{width:34px;height:34px;border-radius:13px;display:grid;place-items:center;background:var(--bt-soft);border:1px solid var(--bt-border);color:var(--bt-accent-2);transition:transform .22s ease;}
 .bonustime-admin .bonustime-card.open .collapse-icon{transform:rotate(180deg);}
 
@@ -3499,4 +3700,13 @@ html[data-theme="light"] .bonustime-admin,
   }
 }
 
+
+
+/* ===== Bonustime annual summary + expiry production badges ===== */
+.bonustime-admin .ultra-yearly{margin-top:22px;padding:22px;border-radius:28px;border:1px solid color-mix(in srgb,var(--bt-accent) 20%,transparent);background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.bonustime-admin .ultra-yearly-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.bonustime-admin .ultra-yearly-head h3{margin:0 0 6px;font-size:clamp(20px,2.4vw,30px);color:var(--bt-text)}
+.bonustime-admin .ultra-year-select{display:grid;gap:7px;min-width:180px;color:var(--bt-accent-2);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.bonustime-admin .ultra-year-select select{height:48px;border-radius:16px;border:1px solid color-mix(in srgb,var(--bt-accent) 34%,transparent);background:rgba(8,8,12,.84);color:var(--bt-text);font-weight:900;padding:0 14px}
+.bonustime-admin .ultra-year-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.bonustime-admin .yearly-chart-wrap{margin-top:14px}.bonustime-admin .yearly-chart-wrap .ultra-chart-body{height:280px}
+.bonustime-admin .status-pill.expired,.bonustime-admin .expiry-pill.expired{border-color:rgba(255,91,91,.42)!important;background:rgba(255,91,91,.12)!important;color:#ffb4a8!important}.bonustime-admin .expiry-pill.active{border-color:rgba(64,220,146,.38)!important;background:rgba(64,220,146,.11)!important;color:#9dffd0!important}
+@media(max-width:1100px){.bonustime-admin .ultra-year-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:680px){.bonustime-admin .ultra-yearly-head{flex-direction:column}.bonustime-admin .ultra-year-select{width:100%}.bonustime-admin .ultra-year-cards{grid-template-columns:1fr}}
 </style>

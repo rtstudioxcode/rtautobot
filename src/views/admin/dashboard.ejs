@@ -1,9 +1,28 @@
+<%
+  const pendingList = Array.isArray(pendingTransactions) ? pendingTransactions : [];
+  const fmtMoney = (v) => Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtDate = (v) => new Date(v || Date.now()).toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  const labelMethod = (m) => {
+    const key = String(m || '').toLowerCase();
+    return (methodLabels && methodLabels[key]) ||
+      (key === 'truewallet' ? 'TrueMoney Wallet' : '') ||
+      (key || 'ไม่ระบุ');
+  };
+  const MANUAL_METHOD_OPTIONS = Array.isArray(typeof methodOptions !== 'undefined' ? methodOptions : null) ? methodOptions : [
+    { value:'admin', label:'Admin' }, { value:'manual', label:'เติมมือ' }, { value:'tw', label:'TrueMoney Wallet' },
+    { value:'qr', label:'PromptPay QR' }, { value:'kbank', label:'กสิกรไทย' }, { value:'scb', label:'ไทยพาณิชย์' }
+  ];
+%>
+
 <div class="rt-admin-home">
   <section class="rt-admin-hero">
     <div>
       <span class="rt-kicker">RTAUTOBOT Admin</span>
       <h1>ศูนย์จัดการ Bonustime</h1>
-      <p>จัดการแพ็กเกจ Bonustime, บัญชีรับเงิน, ประวัติการเติมเครดิต และเติมเครดิตให้ลูกค้าได้จากหน้าเดียว</p>
+      <p>จัดการแพ็กเกจ Bonustime, บัญชีรับเงิน, ประวัติการเติมเครดิต และรายการรอตรวจสอบของลูกค้าได้จากหน้าเดียว</p>
     </div>
     <a class="rt-primary" href="/admin/bonustime-panel">เปิด Bonustime Panel</a>
   </section>
@@ -11,23 +30,23 @@
   <section class="rt-stats-grid" aria-label="ภาพรวมระบบ">
     <article>
       <span>รายได้ Bonustime</span>
-      <strong>฿<%= Number(stats?.bonustimeRevenue || 0).toLocaleString(undefined,{minimumFractionDigits:2}) %></strong>
+      <strong>฿<%= fmtMoney(stats?.bonustimeRevenue) %></strong>
       <small><%= Number(stats?.bonustimeOrderCount || 0).toLocaleString() %> รายการ</small>
     </article>
     <article>
       <span>ยอดเติมเครดิต</span>
-      <strong>฿<%= Number(stats?.topupSum || 0).toLocaleString(undefined,{minimumFractionDigits:2}) %></strong>
-      <small><%= Number(stats?.topupCount || 0).toLocaleString() %> รายการของ RTAUTOBOT</small>
+      <strong>฿<%= fmtMoney(stats?.topupSum) %></strong>
+      <small><%= Number(stats?.topupCount || 0).toLocaleString() %> รายการ</small>
+    </article>
+    <article>
+      <span>เติมเงินรอตรวจสอบ</span>
+      <strong>฿<%= fmtMoney(stats?.pendingTotal) %></strong>
+      <small><%= Number(stats?.pendingCount || 0).toLocaleString() %> รายการ</small>
     </article>
     <article>
       <span>บัญชีรับเงิน</span>
       <strong><%= Number(stats?.walletCount || 0).toLocaleString() %></strong>
       <small>ช่องทางที่ตั้งค่าสำหรับเว็บนี้</small>
-    </article>
-    <article>
-      <span>บริการ Bonustime</span>
-      <strong><%= Number(stats?.serviceCount || 0).toLocaleString() %></strong>
-      <small>รายการบริการที่ดูแลอยู่</small>
     </article>
   </section>
 
@@ -35,36 +54,295 @@
     <a class="rt-admin-card" href="/admin/bonustime-panel">
       <i>⚡</i>
       <h2>Bonustime Panel</h2>
-      <p>จัดการบริการ ลูกค้า Webhook License และข้อมูลใช้งาน Bonustime</p>
+      <p>จัดการบริการ Bonustime</p>
     </a>
     <a class="rt-admin-card" href="/admin/settings">
       <i>🏦</i>
       <h2>ตั้งค่าบัญชีรับเงิน</h2>
-      <p>กำหนดบัญชีเติมเครดิตเฉพาะ RTAUTOBOT แยกจาก RTSMM-TH</p>
+      <p>กำหนดบัญชีเติมเครดิต</p>
     </a>
     <a class="rt-admin-card" href="/admin/topup-report">
       <i>💳</i>
       <h2>ประวัติการเติมเงิน</h2>
-      <p>ตรวจสอบรายการเติมเครดิตของ RTAUTOBOT และจัดการรายการรอดำเนินการ</p>
+      <p>ตรวจสอบรายการเติมเครดิต</p>
     </a>
-    <a class="rt-admin-card" href="/admin/topup-report#manualTopupModal" data-open-manual="1">
-      <i>➕</i>
-      <h2>เติมเครดิตแบบแมนนวล</h2>
-      <p>เพิ่มเครดิตให้ลูกค้าด้วยแอดมิน พร้อมบันทึกประวัติใน Production ของเว็บนี้</p>
-    </a>
+  </section>
+
+  <section class="rt-pending-panel" aria-label="รายการเติมเงินรอดำเนินการ">
+    <div class="rt-pending-head">
+      <div>
+        <span class="rt-kicker">Pending Topup Control</span>
+        <h2>รายการเติมเงินที่รอดำเนินการ</h2>
+        <p>ตรวจสอบรายการเติมเงินที่รออนุมัติ เติมเครดิตให้ผู้ใช้ หรือปฏิเสธรายการได้จากจุดเดียว</p>
+      </div>
+      <button class="rt-primary rt-primary-sm" type="button" data-open-manual-topup>เติมเงินด้วยตนเอง</button>
+    </div>
+
+    <% if (pendingList.length) { %>
+      <div class="rt-pending-table-wrap">
+        <table class="rt-pending-table">
+          <thead>
+            <tr>
+              <th>วันที่ / เวลา</th>
+              <th>รหัสรายการ</th>
+              <th>ผู้ใช้</th>
+              <th>วิธีเติม</th>
+              <th class="right">จำนวนเงิน</th>
+              <th class="center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pendingList.forEach(tx => { %>
+              <tr>
+                <td class="muted"><%= fmtDate(tx.createdAt) %></td>
+                <td class="tx-id"><%= tx.transactionId || tx._id || '—' %></td>
+                <td>
+                  <div class="user-cell">
+                    <img src="<%= (tx.userId?.avatarUrl || '/static/assets/avatar-default.svg') %>?v=<%= tx.userId?.avatarVer || 0 %>" alt="" width="32" height="32" loading="lazy">
+                    <div>
+                      <b><%= tx.userId?.username || tx.username || '-' %></b>
+                      <% if (tx.userId?.email) { %><small><%= tx.userId.email %></small><% } %>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="method-pill"><%= labelMethod(tx.method) %></span></td>
+                <td class="amount right">฿<%= fmtMoney(tx.amount) %></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="mini-btn success" type="button"
+                      data-open-manual-topup
+                      data-tx-id="<%= tx.transactionId || tx._id || '' %>"
+                      data-username="<%= tx.userId?.username || tx.username || '' %>"
+                      data-amount="<%= Number(tx.amount || 0) %>"
+                      data-method="<%= String(tx.method || 'admin').toLowerCase() %>">เติมให้ผู้ใช้</button>
+                    <button class="mini-btn danger" type="button" onclick="rejectPendingTx('<%= tx._id || tx.transactionId %>')">ปฏิเสธ</button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="rt-empty-pending">
+        <img src="/static/assets/emoji/empty.png" alt="" aria-hidden="true">
+        <strong>ยังไม่มีรายการเติมเงินที่รอดำเนินการ</strong>
+        <span>เมื่อมีรายการ pending ระบบจะแสดงในส่วนนี้ทันที</span>
+      </div>
+    <% } %>
   </section>
 </div>
 
+<!-- Manual Topup Modal: ทำรายการได้ในหน้า /admin โดยไม่ต้องเด้งไปหน้า report -->
+<div id="manualTopupModal" class="rt-modal hidden" aria-hidden="true">
+  <div class="rt-modal-overlay" data-close-manual="1"></div>
+  <div class="rt-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="manualTopupTitle">
+    <div class="rt-modal-head">
+      <div>
+        <span class="rt-kicker">Manual Topup</span>
+        <h2 id="manualTopupTitle">เติมเงินให้ผู้ใช้</h2>
+      </div>
+      <button class="rt-modal-close" type="button" data-close-manual="1" aria-label="ปิด">×</button>
+    </div>
+
+    <form id="manualTopupForm" class="rt-modal-form">
+      <input type="hidden" id="manualTxId" value="">
+
+      <label>
+        <span>ชื่อผู้ใช้</span>
+        <input class="rt-input" id="manualUsername" type="text" list="manualUserList" autocomplete="off" required placeholder="พิมพ์ Username หรือเลือกจากรายการ">
+        <datalist id="manualUserList"></datalist>
+      </label>
+
+      <label>
+        <span>จำนวนเงิน</span>
+        <input class="rt-input" id="manualAmount" type="number" step="0.01" min="1" required placeholder="เช่น 100">
+      </label>
+
+      <label>
+        <span>Method การเติมเงิน</span>
+        <select class="rt-input" id="manualMethod" required>
+          <% MANUAL_METHOD_OPTIONS.forEach(opt => { %>
+            <option value="<%= opt.value %>"><%= opt.label %></option>
+          <% }) %>
+        </select>
+      </label>
+
+      <div class="rt-modal-note">ระบบจะเพิ่มเครดิตเข้ากระเป๋าผู้ใช้ทันที และบันทึกประวัติเป็นรายการของ RTAUTOBOT</div>
+      <div id="manualTopupStatus" class="rt-modal-status"></div>
+
+      <div class="rt-modal-actions">
+        <button class="mini-btn" type="button" data-close-manual="1">ยกเลิก</button>
+        <button class="mini-btn success" type="submit">ยืนยันเติมเงิน</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <style>
-.rt-admin-home{max-width:1180px;margin:0 auto;padding:28px 18px 60px;color:var(--text,#f8ecd2)}
+.rt-admin-home{max-width:1240px;margin:0 auto;padding:28px 18px 60px;color:var(--text,#f8ecd2)}
 .rt-admin-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;padding:30px;border:1px solid color-mix(in srgb,var(--accent,#f5c84b) 25%,transparent);border-radius:28px;background:linear-gradient(135deg,rgba(255,218,110,.14),rgba(255,255,255,.035));box-shadow:0 24px 70px rgba(0,0,0,.34);overflow:hidden}
-.rt-admin-hero:before{content:"";position:absolute;inset:-60% auto auto -10%;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(247,199,72,.25),transparent 62%);pointer-events:none}.rt-admin-hero>*{position:relative}.rt-kicker{display:inline-flex;padding:7px 12px;border-radius:999px;background:rgba(247,199,72,.14);border:1px solid rgba(247,199,72,.25);color:#ffe083;font-weight:800}.rt-admin-hero h1{font-size:clamp(32px,4vw,56px);line-height:1.02;margin:14px 0 10px}.rt-admin-hero p{max-width:680px;color:var(--muted,#d4c6a4);font-weight:650}.rt-primary{white-space:nowrap;text-decoration:none;color:#17130b;background:linear-gradient(135deg,#fff2a3,#e4a81d);padding:15px 22px;border-radius:18px;font-weight:900;box-shadow:0 16px 36px rgba(228,168,29,.26)}
-.rt-stats-grid,.rt-admin-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:18px}.rt-stats-grid article,.rt-admin-card{border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025));padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.25)}.rt-stats-grid span,.rt-stats-grid small,.rt-admin-card p{color:var(--muted,#d4c6a4)}.rt-stats-grid strong{display:block;font-size:28px;color:#ffe083;margin:8px 0}.rt-admin-card{text-decoration:none;color:inherit;transition:.18s ease;min-height:190px}.rt-admin-card:hover{transform:translateY(-4px);border-color:rgba(247,199,72,.38)}.rt-admin-card i{display:grid;place-items:center;width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#fff2a3,#e4a81d);color:#16120b;font-style:normal;font-size:24px;margin-bottom:18px}.rt-admin-card h2{font-size:22px;margin:0 0 8px}@media(max-width:920px){.rt-admin-hero{align-items:flex-start;flex-direction:column}.rt-stats-grid,.rt-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.rt-admin-home{padding:18px 12px 44px}.rt-stats-grid,.rt-admin-grid{grid-template-columns:1fr}.rt-primary{width:100%;text-align:center}}
+.rt-admin-hero:before{content:"";position:absolute;inset:-60% auto auto -10%;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(247,199,72,.25),transparent 62%);pointer-events:none}.rt-admin-hero>*{position:relative}.rt-kicker{display:inline-flex;padding:7px 12px;border-radius:999px;background:rgba(247,199,72,.14);border:1px solid rgba(247,199,72,.25);color:#ffe083;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.04em}.rt-admin-hero h1{font-size:clamp(32px,4vw,56px);line-height:1.02;margin:14px 0 10px}.rt-admin-hero p{max-width:760px;color:var(--muted,#d4c6a4);font-weight:650}.rt-primary{white-space:nowrap;text-decoration:none;color:#17130b;background:linear-gradient(135deg,#fff2a3,#e4a81d);padding:15px 22px;border-radius:18px;font-weight:900;box-shadow:0 16px 36px rgba(228,168,29,.26);border:0}.rt-primary-sm{padding:12px 18px;border-radius:16px}
+.rt-stats-grid,.rt-admin-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:18px}.rt-admin-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.rt-stats-grid article,.rt-admin-card,.rt-pending-panel{border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025));padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.25)}.rt-stats-grid span,.rt-stats-grid small,.rt-admin-card p,.rt-pending-head p,.muted{color:var(--muted,#d4c6a4)}.rt-stats-grid strong{display:block;font-size:28px;color:#42e88b;margin:8px 0;text-shadow:0 12px 30px rgba(66,232,139,.16)}.rt-admin-card{text-decoration:none;color:inherit;transition:.18s ease;min-height:190px}.rt-admin-card:hover{transform:translateY(-4px);border-color:rgba(247,199,72,.38)}.rt-admin-card i{display:grid;place-items:center;width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#fff2a3,#e4a81d);color:#16120b;font-style:normal;font-size:24px;margin-bottom:18px}.rt-admin-card h2{font-size:22px;margin:0 0 8px}
+.rt-pending-panel{margin-top:20px;padding:24px;background:radial-gradient(700px 260px at 100% 100%,rgba(228,168,29,.13),transparent 60%),linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025))}.rt-pending-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}.rt-pending-head h2{font-size:clamp(28px,3vw,42px);line-height:1.04;margin:12px 0 6px}.rt-pending-table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.16)}.rt-pending-table{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}.rt-pending-table th,.rt-pending-table td{padding:16px 18px;text-align:left;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle}.rt-pending-table th{color:#ffe083;font-size:13px;background:rgba(255,255,255,.035)}.rt-pending-table tr:last-child td{border-bottom:0}.right{text-align:right!important}.center{text-align:center!important}.tx-id{font-weight:800;letter-spacing:.01em;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.user-cell{display:flex;align-items:center;gap:10px}.user-cell img{border-radius:12px;background:rgba(255,255,255,.06)}.user-cell b{display:block}.user-cell small{display:block;color:var(--muted,#d4c6a4)}.method-pill{display:inline-flex;padding:7px 11px;border-radius:999px;border:1px solid rgba(247,199,72,.22);background:rgba(247,199,72,.09);color:#ffe083;font-weight:800}.amount{font-weight:900;color:#ffe083}.row-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.mini-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer;text-decoration:none;color:#16120b;background:linear-gradient(135deg,#fff2a3,#e4a81d)}.mini-btn.danger{color:#fff;background:linear-gradient(135deg,#ff7777,#c92c2c)}.mini-btn.success{background:linear-gradient(135deg,#8dffc0,#23ba6a)}.rt-empty-pending{min-height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed rgba(247,199,72,.28);border-radius:22px;background:rgba(0,0,0,.08);color:var(--muted,#d4c6a4);gap:10px}.rt-empty-pending img{width:86px;height:86px;opacity:.55}.rt-empty-pending strong{color:var(--text,#f8ecd2)}
+.rt-primary{cursor:pointer}.rt-modal.hidden{display:none!important}.rt-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:18px}.rt-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}.rt-modal-dialog{position:relative;width:min(560px,100%);border:1px solid rgba(247,199,72,.24);border-radius:28px;background:radial-gradient(520px 220px at 100% 0,rgba(247,199,72,.13),transparent 58%),linear-gradient(135deg,rgba(28,28,32,.98),rgba(14,14,18,.98));box-shadow:0 32px 90px rgba(0,0,0,.55);padding:24px;color:var(--text,#f8ecd2)}.rt-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}.rt-modal-head h2{margin:8px 0 0;font-size:28px}.rt-modal-close{width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--text,#f8ecd2);font-size:26px;line-height:1;cursor:pointer}.rt-modal-form{display:grid;gap:14px}.rt-modal-form label span{display:block;margin-bottom:8px;color:#ffe083;font-weight:900}.rt-input{width:100%;min-height:50px;border-radius:16px;border:1px solid rgba(247,199,72,.22);background:rgba(0,0,0,.28);color:var(--text,#f8ecd2);padding:0 14px;font-weight:800;outline:none}.rt-input:focus{border-color:rgba(247,199,72,.62);box-shadow:0 0 0 4px rgba(247,199,72,.1)}.rt-input[readonly]{opacity:.72}.rt-modal-note,.rt-modal-status{border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.045);padding:13px 15px;color:var(--muted,#d4c6a4);font-weight:700}.rt-modal-status:empty{display:none}.rt-modal-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:4px}
+@media(max-width:920px){.rt-admin-hero,.rt-pending-head{align-items:flex-start;flex-direction:column}.rt-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rt-admin-grid{grid-template-columns:1fr}.rt-primary{width:100%;text-align:center}}@media(max-width:560px){.rt-admin-home{padding:18px 12px 44px}.rt-stats-grid{grid-template-columns:1fr}.rt-pending-panel{padding:16px}}
 </style>
 
 <script>
-document.querySelector('[data-open-manual]')?.addEventListener('click', function(e){
-  e.preventDefault();
-  location.href = '/admin/topup-report?manual=1';
+
+function rtAdminNotify(variant, title, text){
+  if (window.notify && typeof window.notify[variant] === 'function') {
+    return window.notify[variant](title, text || '');
+  }
+  if (window.notify && typeof window.notify.push === 'function') {
+    return window.notify.push({ variant, title, text: text || '' });
+  }
+  if (typeof window.showMsg === 'function') {
+    return window.showMsg({ variant, title, text: text || '' });
+  }
+  alert(text ? `${title}
+${text}` : title);
+}
+
+function normalizeMethodForManual(method){
+  const m = String(method || 'admin').toLowerCase();
+  return m === 'truewallet' ? 'tw' : m;
+}
+
+function setManualStatus(html){
+  const el = document.getElementById('manualTopupStatus');
+  if (el) el.innerHTML = html || '';
+}
+
+function openManualTopupFromButton(btn){
+  const modal = document.getElementById('manualTopupModal');
+  const txIdInput = document.getElementById('manualTxId');
+  const usernameInput = document.getElementById('manualUsername');
+  const amountInput = document.getElementById('manualAmount');
+  const methodInput = document.getElementById('manualMethod');
+  if (!modal || !usernameInput || !amountInput || !methodInput) return;
+
+  const txId = btn?.dataset?.txId || '';
+  const username = btn?.dataset?.username || '';
+  const amount = Number(btn?.dataset?.amount || 0);
+  const method = normalizeMethodForManual(btn?.dataset?.method || (txId ? 'admin' : 'admin'));
+
+  document.getElementById('manualTopupForm')?.reset();
+  setManualStatus('');
+
+  txIdInput.value = txId;
+  usernameInput.value = username;
+  amountInput.value = amount > 0 ? amount.toFixed(2) : '';
+  amountInput.readOnly = amount > 0;
+  amountInput.style.opacity = amount > 0 ? '.72' : '1';
+
+  if (Array.from(methodInput.options).some(o => o.value === method)) methodInput.value = method;
+  else methodInput.value = 'admin';
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+  if (username) searchUsers(username);
+  else searchUsers('');
+  setTimeout(() => usernameInput.focus(), 50);
+}
+
+function closeManualTopupModal(){
+  const modal = document.getElementById('manualTopupModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden','true');
+  setManualStatus('');
+}
+
+function debounce(fn, wait=240){
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+}
+
+function renderUserDatalist(items){
+  const dl = document.getElementById('manualUserList');
+  if (!dl) return;
+  dl.innerHTML = '';
+  (items || []).forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.username;
+    opt.label = `${u.username}${u.email ? ' · ' + u.email : ''}`;
+    dl.appendChild(opt);
+  });
+}
+
+const searchUsers = debounce(async (q='') => {
+  try{
+    const url = q && q.length
+      ? `/admin/api/users/search?q=${encodeURIComponent(q)}&limit=20`
+      : `/admin/api/users/search?limit=20`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j?.ok) renderUserDatalist(j.items);
+  }catch{}
+}, 220);
+
+document.querySelectorAll('[data-open-manual-topup]').forEach(btn => {
+  btn.addEventListener('click', () => openManualTopupFromButton(btn));
 });
+document.querySelectorAll('[data-close-manual]').forEach(el => {
+  el.addEventListener('click', closeManualTopupModal);
+});
+document.getElementById('manualUsername')?.addEventListener('input', (e) => searchUsers(e.target.value.trim()));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeManualTopupModal(); });
+
+document.getElementById('manualTopupForm')?.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const username = document.getElementById('manualUsername')?.value.trim();
+  const amount = Number(document.getElementById('manualAmount')?.value || 0);
+  const method = document.getElementById('manualMethod')?.value || 'admin';
+  const txId = document.getElementById('manualTxId')?.value || null;
+  if (!username || !(amount > 0)) {
+    setManualStatus('❌ กรุณากรอกชื่อผู้ใช้และจำนวนเงินให้ครบถ้วน');
+    return;
+  }
+  setManualStatus('⏳ กำลังทำรายการ...');
+  try{
+    const r = await fetch('/admin/manual-topup', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, amount, method, txId })
+    });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok || !j.ok) throw new Error(j?.error || 'เติมเงินไม่สำเร็จ');
+    setManualStatus(`✅ เติมเงินสำเร็จให้ ${username} จำนวน ${amount.toLocaleString()} บาท`);
+    rtAdminNotify('success', 'เติมเงินสำเร็จ', 'อัปเดตเครดิตและบันทึกประวัติเรียบร้อยแล้ว');
+    setTimeout(() => location.reload(), 900);
+  }catch(err){
+    setManualStatus('❌ ' + (err?.message || 'ทำรายการไม่สำเร็จ'));
+    rtAdminNotify('error', 'ทำรายการไม่สำเร็จ', err?.message || 'กรุณาลองใหม่อีกครั้ง');
+  }
+});
+
+async function rejectPendingTx(id){
+  if (!id) return;
+  const ok = await (window.uiConfirm?.({
+    variant: 'danger',
+    title: 'ยืนยันปฏิเสธรายการ?',
+    sub: 'รายการนี้จะถูกเปลี่ยนเป็นสถานะปฏิเสธ และจะไม่เพิ่มเครดิตให้ผู้ใช้',
+    okText: 'ปฏิเสธรายการ',
+    cancelText: 'ยกเลิก',
+    focus: 'cancel'
+  }) || Promise.resolve(confirm('ยืนยันปฏิเสธรายการนี้?')));
+  if (!ok) return;
+
+  try{
+    const r = await fetch(`/admin/topup/${encodeURIComponent(id)}/reject`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'}
+    });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok || !j.ok) throw new Error(j?.error || 'ปฏิเสธไม่สำเร็จ');
+    rtAdminNotify('success', 'ปฏิเสธรายการแล้ว', 'อัปเดตสถานะรายการเรียบร้อยแล้ว');
+    setTimeout(()=>location.reload(), 450);
+  }catch(err){
+    rtAdminNotify('error', 'ทำรายการไม่สำเร็จ', err.message || 'กรุณาลองใหม่อีกครั้ง');
+  }
+}
 </script>

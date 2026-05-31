@@ -7,12 +7,13 @@
     cimb:'ธนาคารซีไอเอ็มบีไทย', uob:'ธนาคารยูโอบี', gsb:'ธนาคารออมสิน',
     baac:'ธ.เพื่อการเกษตรและสหกรณ์การเกษตร', kkb:'ธนาคารเกียรตินาคินภัทร',
     lhfg:'ธนาคารแลนด์ แอนด์ เฮ้าส์', icbc:'ธนาคารไอซีบีซี (ไทย)',
-    tisco:'ธนาคารทิสโก้', tw:'TrueMoney Wallet', qr:'PromptPay QR',
-    manual:'แอดมิน', admin:'แอดมิน'
+    tisco:'ธนาคารทิสโก้', tw:'TrueMoney Wallet', truewallet:'TrueMoney Wallet', qr:'PromptPay QR',
+    manual:'เติมมือ', admin:'แอดมิน'
   };
   const hasAny = wallets.length > 0;
   const completedCount = (transactions || []).filter(t => String(t.status || '').toLowerCase() === 'completed').length;
   const pendingCount = (transactions || []).filter(t => String(t.status || '').toLowerCase() === 'pending').length;
+  const historyMethods = Array.from(new Set((transactions || []).map(t => String(t.method || '').toLowerCase()).filter(Boolean)));
 %>
 
 <div class="topup-enterprise">
@@ -216,7 +217,15 @@
           <span>Transaction history</span>
           <h2>ประวัติการเติมเงินล่าสุด</h2>
         </div>
-        <div class="tp-history-count"><%= (transactions || []).length.toLocaleString('th-TH') %> รายการ</div>
+        <div class="tp-history-actions">
+          <select id="topupHistoryMethodFilter" class="tp-history-filter" aria-label="กรอง Method การเติมเงิน">
+            <option value="all">ทุกช่องทาง</option>
+            <% historyMethods.forEach(code => { %>
+              <option value="<%= code %>"><%= BANK_LABELS[code] || code.toUpperCase() %></option>
+            <% }) %>
+          </select>
+          <div class="tp-history-count"><%= (transactions || []).length.toLocaleString('th-TH') %> รายการ</div>
+        </div>
       </div>
 
       <% if (transactions && transactions.length) { %>
@@ -243,7 +252,7 @@
                var ts = tx.createdAt;
                var amountNum = Number(tx.amount) || 0;
           %>
-            <tr data-status="<%= st %>">
+            <tr data-status="<%= st %>" data-method="<%= methodCode %>">
               <td class="mono">
                 <%= new Date(ts).toLocaleString('th-TH',{ timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) %>
               </td>
@@ -279,7 +288,7 @@
              var ts2 = t.createdAt;
              var amt = Number(t.amount) || 0;
         %>
-          <details class="hx-card" data-status="<%= st2 %>">
+          <details class="hx-card" data-status="<%= st2 %>" data-method="<%= mCode %>">
             <summary class="hx-head">
               <span class="hx-date mono"><%= new Date(ts2).toLocaleString('th-TH',{ timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) %></span>
               <button class="hx-toggle" type="button" aria-label="toggle"></button>
@@ -348,6 +357,20 @@
 
   <div id="resp" class="mt"></div>
 </div>
+
+<script>
+(function(){
+  const select = document.getElementById('topupHistoryMethodFilter');
+  if (!select) return;
+  select.addEventListener('change', () => {
+    const value = String(select.value || 'all').toLowerCase();
+    document.querySelectorAll('[data-method]').forEach(row => {
+      const method = String(row.dataset.method || '').toLowerCase();
+      row.style.display = (value === 'all' || method === value) ? '' : 'none';
+    });
+  });
+})();
+</script>
 
 <dialog id="topupNoticeModal" class="toast-modal tp-enterprise-notice" aria-labelledby="topupNoticeTitle" aria-describedby="topupNoticeText">
   <div class="toast-card" role="alertdialog">
@@ -833,6 +856,9 @@ document.addEventListener('DOMContentLoaded', () => {
 .tp-section-head span{ display:block; color:var(--tp-accent); font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
 .tp-section-head h2{ margin:0; font-size:clamp(20px,2vw,26px); letter-spacing:-.03em; }
 .tp-section-head.compact{ margin-bottom:12px; }
+.tp-history-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.tp-history-filter{ min-height:42px; border-radius:14px; border:1px solid var(--tp-border); background:var(--tp-soft); color:var(--tp-text); padding:0 12px; font-weight:800; }
+@media(max-width:700px){ .tp-history-actions{ width:100%; justify-content:stretch; } .tp-history-filter{ flex:1; min-width:170px; } }
 .tp-history-count{ padding:8px 12px; border-radius:999px; background:var(--tp-soft); color:var(--tp-muted); border:1px solid var(--tp-border); }
 
 .tp-wallet-rail{ display:grid; gap:10px; border:0; margin:0; padding:0; overflow:visible; }
