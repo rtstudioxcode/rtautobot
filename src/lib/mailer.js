@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import { config } from '../config.js';
 
 
-const getBrandUrl = () => (typeof config !== 'undefined' && config?.siteUrl) ? config.siteUrl : 'https://rtautobot.com';
+const getBrandUrl = () => (typeof config !== 'undefined' && config?.brand?.rtautobotSite) ? config.brand.rtautobotSite : 'https://rtautobot.com';
 const getBrandLogo = () => `${getBrandUrl()}/static/assets/logo/logo-rtautobot.png`;
 
 // ───────── GLOBAL LOG ─────────
@@ -205,7 +205,7 @@ export async function sendEmail({ to, subject, html, text, headers, attachments 
 // ============================================================
 export function buildVerifyEmailHTML({
   verifyUrl,
-  brandUrl = config.brand?.url || 'https://rtautobot.com',
+  brandUrl = config.brand?.rtautobotSite || 'https://rtautobot.com',
   brandLogo = 'cid:brandlogo',               // ใช้ CID หรือ URL ก็ได้
   productName = config.brand?.name || 'RTAUTOBOT',
   year = new Date().getFullYear(),

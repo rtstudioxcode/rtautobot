@@ -5,7 +5,7 @@ import { sendEmail } from "../lib/mailer.js";
 import { config } from "../config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const SITE_URL = config?.siteUrl || "https://rtautobot.com";
+const SITE_URL = config?.brand?.rtautobotSite || "https://rtautobot.com";
 
 // ───────── GLOBAL LOG ─────────
 const isGlobalLogEnabled = () => {

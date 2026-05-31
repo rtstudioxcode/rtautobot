@@ -117,7 +117,8 @@ const envConfig = {
   },
 
   brand: {
-    url: "https://rtautobot.com",
+    url: "https://rtsmm-th.com",
+    rtautobotSite: "https://rtautobot.com",
   },
 
   session: {
@@ -271,6 +272,7 @@ const secureConfigSchema = new mongoose.Schema(
 
     brand: {
       url: String,
+      rtautobotSite: String,
     },
 
     session: {
@@ -506,6 +508,9 @@ function applyDBToConfig(doc) {
   if (doc.brand) {
     const brandUrl = trimBase(doc.brand.url || "");
     if (brandUrl) config.brand.url = brandUrl;
+
+    const rtautobotSite = trimBase(doc.brand.rtautobotSite || "");
+    if (rtautobotSite) config.brand.rtautobotSite = rtautobotSite;
   }
 
   /**
