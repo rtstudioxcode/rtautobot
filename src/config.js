@@ -524,6 +524,7 @@ function applyDBToConfig(doc) {
    * tidy
    */
   config.brand.url = trimBase(config.brand.url);
+  config.brand.rtautobotSite = trimBase(config.brand.rtautobotSite);
 }
 
 /**

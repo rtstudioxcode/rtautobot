@@ -30,15 +30,24 @@ const glog = {
 };
 
 function getPublicBaseUrl(req) {
-  const configured = String(config?.brand?.rtautobotSite || config?.brand?.baseUrl || config?.publicBaseUrl || '').trim().replace(/\/+$/, '');
+  const configured = String(config?.brand?.rtautobotSite || config?.brand?.siteUrl || config?.publicBaseUrl || '').trim().replace(/\/+$/, '');
   if (configured) return configured;
   const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
   const host = String(req.headers['x-forwarded-host'] || req.get('host') || '').split(',')[0].trim();
   return `${proto}://${host}`;
 }
 
-const BRAND_URL  = 'https://rtautobot.com';
-const BRAND_LOGO = `${BRAND_URL}/static/assets/logo/logo-rtautobot.png`;
+function makeTokenDigest(token) {
+  return crypto.createHash('sha256').update(String(token || '')).digest('hex');
+}
+
+function getBrandBaseUrl() {
+  return String(config?.brand?.rtautobotSite || 'https://rtautobot.com').trim().replace(/\/+$/, '');
+}
+
+function getBrandLogoUrl() {
+  return `${getBrandBaseUrl()}/static/assets/logo/logo-rtautobot.png`;
+}
 
 function emailTemplateResetLink(resetUrl) {
   const LOGO_H_DESKTOP = 128;  // สูงโลโก้เดสก์ท็อป (ปรับได้ 64–84)
@@ -68,8 +77,8 @@ function emailTemplateResetLink(resetUrl) {
         <table role="presentation" class="container" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8eb">
           <tr>
             <td class="head">
-              <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="logo">
+              <a href="${getBrandBaseUrl()}" target="_blank" style="text-decoration:none">
+                <img src="${getBrandLogoUrl()}" alt="RTAUTOBOT" class="logo">
               </a>
             </td>
           </tr>
@@ -119,8 +128,8 @@ function emailTemplateVerifyLink(verifyUrl) {
         <table role="presentation" class="container" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6e8eb">
           <tr>
             <td class="head">
-              <a href="${BRAND_URL}" target="_blank" style="text-decoration:none">
-                <img src="${BRAND_LOGO}" alt="RTAUTOBOT" class="logo">
+              <a href="${getBrandBaseUrl()}" target="_blank" style="text-decoration:none">
+                <img src="${getBrandLogoUrl()}" alt="RTAUTOBOT" class="logo">
               </a>
             </td>
           </tr>
@@ -193,13 +202,14 @@ router.post('/password/forgot', async (req, res) => {
       email,
       purpose: 'password-reset-link',
       codeHash: hash,
+      tokenDigest: makeTokenDigest(token),
       expiresAt: new Date(Date.now() + 1000 * 60 * 30),
       attempts: 0,
       maxAttempts: 10
     });
 
     const base = getPublicBaseUrl(req);
-    const resetUrl = `${base}/password/reset/${encodeURIComponent(token)}?e=${encodeURIComponent(email)}`;
+    const resetUrl = `${base}/password/reset/${encodeURIComponent(token)}`;
 
     // fire-and-forget ส่งให้ไว
     Promise.resolve(
@@ -215,7 +225,8 @@ router.post('/password/forgot', async (req, res) => {
 });
 
 /* ========== 2) ผู้ใช้กดลิงก์: ตรวจ token แล้ว “ออกบัตรผ่าน” ใน session ========== */
-// GET /password/reset/:token?e=...
+// GET /password/reset/:token
+// หมายเหตุ: ไม่ส่ง email ผ่าน query string แล้ว เพื่อลดโอกาสถูก Chrome/Safe Browsing มองเป็น phishing URL
 router.get('/password/reset/:token', async (req, res) => {
   // helper: ตั้ง flash แล้ว redirect ไปหน้า login
   const goLogin = async (title, text = '', variant = 'error') => {
@@ -226,14 +237,37 @@ router.get('/password/reset/:token', async (req, res) => {
 
   try {
     const token = String(req.params.token || '').trim();
-    const email = String(req.query.e || '').trim().toLowerCase();
-    if (!token || !email) {
+    if (!token) {
       return goLogin('ลิงก์ไม่ถูกต้อง', 'โปรดลองกดลืมรหัสผ่านใหม่อีกครั้ง');
     }
 
-    const doc = await OtpToken
-      .findOne({ email, purpose: 'password-reset-link', usedAt: null })
+    const tokenDigest = makeTokenDigest(token);
+    let doc = await OtpToken
+      .findOne({ purpose: 'password-reset-link', tokenDigest, usedAt: null })
       .sort({ createdAt: -1 });
+
+    // รองรับลิงก์เก่าแบบ ?e=email และ token เก่าที่ยังไม่มี tokenDigest ชั่วคราว
+    if (!doc) {
+      const legacyEmail = String(req.query.e || '').trim().toLowerCase();
+      const legacyQuery = {
+        purpose: 'password-reset-link',
+        usedAt: null,
+        expiresAt: { $gt: new Date() },
+        ...(legacyEmail ? { email: legacyEmail } : {})
+      };
+
+      const candidates = await OtpToken
+        .find(legacyQuery)
+        .sort({ createdAt: -1 })
+        .limit(legacyEmail ? 5 : 25);
+
+      for (const item of candidates) {
+        if (await bcrypt.compare(token, item.codeHash)) {
+          doc = item;
+          break;
+        }
+      }
+    }
 
     if (!doc) {
       return goLogin('ลิงก์หมดอายุหรือถูกใช้งานไปแล้ว!', 'หากต้องการรีเซ็ตรหัสผ่านใหม่ให้กดลืมรหัสผ่านใหม่อีกครั้ง');
@@ -242,13 +276,13 @@ router.get('/password/reset/:token', async (req, res) => {
       return goLogin('ลิงก์หมดอายุแล้ว', 'โปรดลองกดลืมรหัสผ่านใหม่อีกครั้ง');
     }
 
-    const ok = await bcrypt.compare(token, doc.codeHash);
+    const ok = doc.tokenDigest === tokenDigest || await bcrypt.compare(token, doc.codeHash);
     if (!ok) {
       return goLogin('ลิงก์ไม่ถูกต้อง', 'โปรดลองกดลืมรหัสผ่านใหม่อีกครั้ง');
     }
 
     // ผ่าน → ออก grant ใน session แล้วพาไป /login ให้ modal ตั้งรหัสผ่านแสดง
-    req.session.resetGrant = { email, tokenId: String(doc._id) };
+    req.session.resetGrant = { email: doc.email, tokenId: String(doc._id) };
     await req.session.save();
     return res.redirect('/login');          // layout จะเปิด modal จาก window.__rp.allowed
   } catch (e) {
