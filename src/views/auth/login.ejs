@@ -175,11 +175,11 @@
     --rtx-card:color-mix(in srgb,var(--card,#17181f) 92%, transparent);
     --rtx-card-solid:color-mix(in srgb,var(--card,#17181f) 96%, var(--page,#07080c));
     --rtx-soft:color-mix(in srgb,var(--card,#1d1f27) 80%, #fff 4%);
-    --rtx-text:var(--text,#fff6e7);
-    --rtx-muted:var(--muted,#d9cfad);
+    --rtx-text:var(--text,#eef6ff);
+    --rtx-muted:var(--muted,#08b84f);
     --rtx-border:var(--border,rgba(255,255,255,.12));
-    --rtx-accent:var(--accent,#f7cb55);
-    --rtx-accent2:#cf9326;
+    --rtx-accent:var(--accent,#08b84f);
+    --rtx-accent2:#05b84f;
     --rtx-danger:#ff5f73;
     --rtx-shadow:rgba(0,0,0,.48);
     position:relative;
@@ -229,7 +229,7 @@
   .rtx-feature-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:44px;}
   .rtx-feature{min-height:134px;border:1px solid var(--rtx-border);border-radius:24px;background:color-mix(in srgb,var(--rtx-soft) 68%,transparent);padding:16px;display:flex;flex-direction:column;justify-content:center;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease;}
   .rtx-feature:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--rtx-accent) 58%,transparent);box-shadow:0 18px 42px color-mix(in srgb,var(--rtx-accent) 15%,transparent);}
-  .rtx-feature-icon{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe792,#d79a28);box-shadow:0 14px 34px color-mix(in srgb,var(--rtx-accent) 22%,transparent);margin-bottom:12px;}
+  .rtx-feature-icon{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#21b95c,#05b84f);box-shadow:0 14px 34px color-mix(in srgb,var(--rtx-accent) 22%,transparent);margin-bottom:12px;}
   .rtx-feature strong{font-size:15px;}
   .rtx-feature small{margin-top:6px;color:var(--rtx-muted);line-height:1.5;font-weight:720;}
   .rtx-meta{margin-top:auto;padding-top:36px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;color:color-mix(in srgb,var(--rtx-accent) 76%,var(--rtx-muted));font-size:12px;font-weight:900;}
@@ -239,7 +239,7 @@
   .rtx-card::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--rtx-accent),transparent);opacity:.5;}
   .rtx-card-glow{position:absolute;right:-28%;bottom:-34%;width:300px;height:300px;background:radial-gradient(circle,color-mix(in srgb,var(--rtx-accent) 25%,transparent),transparent 66%);filter:blur(22px);pointer-events:none;}
   .rtx-card-head{position:relative;display:flex;align-items:center;gap:16px;margin-bottom:24px;}
-  .rtx-lock{width:56px;height:56px;flex:0 0 56px;border-radius:19px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe28a,#d69a29);box-shadow:0 18px 42px color-mix(in srgb,var(--rtx-accent) 25%,transparent);}
+  .rtx-lock{width:56px;height:56px;flex:0 0 56px;border-radius:19px;display:grid;place-items:center;background:linear-gradient(135deg,#08b84f,#05b84f);box-shadow:0 18px 42px color-mix(in srgb,var(--rtx-accent) 25%,transparent);}
   .rtx-card-head h2{margin:0 0 7px;font-size:32px;line-height:1;letter-spacing:-.045em;}
   .rtx-card-head p{margin:0;color:var(--rtx-muted);font-weight:850;}
 
@@ -293,7 +293,7 @@
   .rtx-turnstile iframe{
     max-width:100% !important;
   }
-  .rtx-submit{height:60px;border:0;border-radius:18px;background:linear-gradient(135deg,#ffe58a,#e8bc53 55%,#bd8626);color:#17130a;font-size:16px;font-weight:950;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 20px 48px color-mix(in srgb,var(--rtx-accent) 30%,transparent);transition:transform .2s ease,filter .2s ease,box-shadow .2s ease;}
+  .rtx-submit{height:60px;border:0;border-radius:18px;background:linear-gradient(135deg,#08b84f,#08b84f 55%,#05b84f);color:#17130a;font-size:16px;font-weight:950;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 20px 48px color-mix(in srgb,var(--rtx-accent) 30%,transparent);transition:transform .2s ease,filter .2s ease,box-shadow .2s ease;}
   .rtx-submit:hover{transform:translateY(-2px);filter:saturate(1.05);box-shadow:0 26px 58px color-mix(in srgb,var(--rtx-accent) 36%,transparent);}
   .rtx-submit[disabled]{opacity:.66;pointer-events:none;filter:grayscale(.18);}
   .rtx-submit b{font-size:22px;}
@@ -307,7 +307,7 @@
   .rtx-dialog-icon{width:62px;height:62px;margin:0 auto 14px;border-radius:20px;background:linear-gradient(135deg,#29df82,#0fab68);display:grid;place-items:center;}
   .rtx-dialog-card h3{font-size:24px;margin:0 0 7px;}
   .rtx-dialog-card p{margin:0 0 18px;color:var(--rtx-muted);font-weight:800;}
-  .rtx-mini-primary{border:0;border-radius:15px;padding:12px 20px;background:linear-gradient(135deg,#ffe58a,#d79a28);color:#17130a;font-weight:950;cursor:pointer;}
+  .rtx-mini-primary{border:0;border-radius:15px;padding:12px 20px;background:linear-gradient(135deg,#08b84f,#05b84f);color:#17130a;font-weight:950;cursor:pointer;}
 
   .rtx-forgot[hidden]{display:none!important;}
   .rtx-forgot{
@@ -333,8 +333,8 @@
   }
 
   .rtx-forgot-card{
-    --fg-gold:#f8d66e;
-    --fg-gold2:#c89122;
+    --fg-green:#08b84f;
+    --fg-green2:#05b84f;
     --fg-deep:#090a0f;
     position:relative;
     width:min(94vw,560px);
@@ -361,9 +361,9 @@
     position:absolute;
     inset:0 0 auto;
     height:3px;
-    background:linear-gradient(90deg,transparent,#ffe89b,#c99427,#8b5cf6,transparent);
+    background:linear-gradient(90deg,transparent,#08b84f,#05b84f,#8b5cf6,transparent);
     opacity:.95;
-    filter:drop-shadow(0 0 14px rgba(248,214,110,.45));
+    filter:drop-shadow(0 0 14px rgba(124, 255, 178,.45));
   }
 
   .rtx-forgot-card::before{
@@ -430,7 +430,7 @@
     transform:translateY(-2px) rotate(8deg);
     border-color:color-mix(in srgb,var(--rtx-accent) 62%,transparent);
     background:color-mix(in srgb,var(--rtx-accent) 12%,transparent);
-    color:#ffe89b;
+    color:#08b84f;
   }
 
   .rtx-forgot-head{
@@ -450,8 +450,8 @@
     display:grid;
     place-items:center;
     background:
-      radial-gradient(circle at 28% 22%,#fff7c8,transparent 38%),
-      linear-gradient(135deg,#ffe692,#d69a29 70%,#9f6e18);
+      radial-gradient(circle at 28% 22%,#21b95c,transparent 38%),
+      linear-gradient(135deg,#21b95c,#05b84f 70%,#008c38);
     color:#17130a;
     box-shadow:
       0 22px 46px color-mix(in srgb,var(--rtx-accent) 30%,transparent),
@@ -509,7 +509,7 @@
     display:grid;
     place-items:center;
     background:color-mix(in srgb,var(--rtx-accent) 16%,rgba(255,255,255,.04));
-    color:#ffe692;
+    color:#21b95c;
     font-size:12px;
     border:1px solid color-mix(in srgb,var(--rtx-accent) 32%,transparent);
   }
@@ -568,7 +568,7 @@
     align-items:center;
     justify-content:center;
     gap:10px;
-    background:linear-gradient(135deg,#fff0a6,#f0c65c 48%,#bd8421);
+    background:linear-gradient(135deg,#21b95c,#08b84f 48%,#05b84f);
     color:#17130a;
     box-shadow:0 20px 42px color-mix(in srgb,var(--rtx-accent) 24%,transparent);
   }
@@ -597,23 +597,23 @@
 
 
   /* ======================================================
-     FORGOT PASSWORD MODAL — TOPUP NOTICE GOLD THEME OVERRIDE
+     FORGOT PASSWORD MODAL — TOPUP NOTICE #05b84f THEME OVERRIDE
      ให้โทนสีตรงกับ RTAUTOBOT: LINE Green + Navy SaaS
   ====================================================== */
   .rtx-forgot-enterprise{
     --fg-card:var(--tp-card,var(--rtx-card-solid,#14151b));
     --fg-page:var(--tp-page,var(--rtx-page,#08090d));
-    --fg-text:var(--tp-text,var(--rtx-text,#fff7e8));
-    --fg-muted:var(--tp-muted,var(--rtx-muted,#c8bd9d));
+    --fg-text:var(--tp-text,var(--rtx-text,#eef6ff));
+    --fg-muted:var(--tp-muted,var(--rtx-muted,#08b84f));
     --fg-border:var(--tp-border,var(--rtx-border,rgba(255,255,255,.12)));
-    --fg-gold:var(--tp-accent,var(--rtx-accent,#e8bc53));
-    --fg-gold-2:#ffe493;
-    --fg-amber:#d29326;
+    --fg-green:var(--tp-accent,var(--rtx-accent,#08b84f));
+    --fg-green-2:#21b95c;
+    --fg-green:#05b84f;
   }
 
   .rtx-forgot-enterprise .rtx-forgot-backdrop{
     background:
-      radial-gradient(circle at 16% 14%, color-mix(in srgb,var(--fg-gold) 18%, transparent), transparent 30%),
+      radial-gradient(circle at 16% 14%, color-mix(in srgb,var(--fg-green) 18%, transparent), transparent 30%),
       radial-gradient(circle at 88% 88%, rgba(91,95,255,.12), transparent 34%),
       rgba(0,0,0,.70);
     backdrop-filter:blur(18px) saturate(128%);
@@ -627,14 +627,14 @@
         color-mix(in srgb,var(--fg-card) 88%,#000 12%) 64%,
         color-mix(in srgb,#261d10 22%,var(--fg-card))) padding-box,
       linear-gradient(135deg,
-        color-mix(in srgb,var(--fg-gold-2) 88%,transparent),
+        color-mix(in srgb,var(--fg-green-2) 88%,transparent),
         rgba(255,255,255,.10) 22%,
-        color-mix(in srgb,var(--fg-gold) 56%,transparent) 48%,
-        rgba(114,78,18,.42) 100%) border-box;
+        color-mix(in srgb,var(--fg-green) 56%,transparent) 48%,
+        rgba(0, 140, 56,.42) 100%) border-box;
     color:var(--fg-text);
     box-shadow:
       0 38px 120px rgba(0,0,0,.55),
-      0 12px 32px color-mix(in srgb,var(--fg-gold) 14%,transparent),
+      0 12px 32px color-mix(in srgb,var(--fg-green) 14%,transparent),
       inset 0 1px 0 rgba(255,255,255,.12);
   }
 
@@ -645,7 +645,7 @@
     width:auto;
     height:1px;
     border-radius:999px;
-    background:linear-gradient(90deg,transparent,rgba(255,228,147,.82),transparent);
+    background:linear-gradient(90deg,transparent,rgba(184, 255, 212,.82),transparent);
     opacity:.95;
     filter:none;
   }
@@ -656,7 +656,7 @@
     animation:none;
     background:
       linear-gradient(115deg,transparent 0 18%,rgba(255,255,255,.10) 28%,transparent 42%),
-      radial-gradient(circle at 50% 0%,rgba(255,228,147,.16),transparent 42%);
+      radial-gradient(circle at 50% 0%,rgba(184, 255, 212,.16),transparent 42%);
     opacity:.72;
   }
 
@@ -667,14 +667,14 @@
     background:
       radial-gradient(circle at 16% 6%,rgba(255,255,255,.14),transparent 30%),
       linear-gradient(135deg,
-        color-mix(in srgb,var(--fg-gold-2) 14%,transparent),
-        color-mix(in srgb,var(--fg-amber) 10%,transparent) 52%,
+        color-mix(in srgb,var(--fg-green-2) 14%,transparent),
+        color-mix(in srgb,var(--fg-green) 10%,transparent) 52%,
         transparent);
     pointer-events:none;
   }
 
   .rtx-forgot-enterprise .rtx-forgot-orb{filter:blur(14px);opacity:.55;animation:tnGlowFloat 6.8s ease-in-out infinite;}
-  .rtx-forgot-enterprise .rtx-forgot-orb-a{background:color-mix(in srgb,var(--fg-gold) 28%,transparent);}
+  .rtx-forgot-enterprise .rtx-forgot-orb-a{background:color-mix(in srgb,var(--fg-green) 28%,transparent);}
   .rtx-forgot-enterprise .rtx-forgot-orb-b{background:rgba(96,80,255,.14);}
 
   .rtx-forgot-enterprise .rtx-forgot-x{
@@ -683,29 +683,29 @@
     color:var(--fg-text);
   }
   .rtx-forgot-enterprise .rtx-forgot-x:hover{
-    border-color:color-mix(in srgb,var(--fg-gold) 48%,transparent);
-    background:color-mix(in srgb,var(--fg-gold) 9%,transparent);
-    color:var(--fg-gold-2);
+    border-color:color-mix(in srgb,var(--fg-green) 48%,transparent);
+    background:color-mix(in srgb,var(--fg-green) 9%,transparent);
+    color:var(--fg-green-2);
   }
 
   .rtx-forgot-enterprise .rtx-forgot-badge{
     background:
       radial-gradient(circle at 32% 24%,rgba(255,255,255,.82),transparent 28%),
-      linear-gradient(135deg,#ffe493,#d8a134 60%,#8b5f18);
+      linear-gradient(135deg,#21b95c,#05b84f 60%,#008c38);
     color:#1b1408;
     box-shadow:
-      0 18px 34px color-mix(in srgb,var(--fg-gold) 26%,transparent),
+      0 18px 34px color-mix(in srgb,var(--fg-green) 26%,transparent),
       inset 0 1px 0 rgba(255,255,255,.50),
       inset 0 -10px 18px rgba(58,37,7,.18);
   }
 
   .rtx-forgot-enterprise .rtx-forgot-kicker{
-    color:var(--fg-gold-2);
+    color:var(--fg-green-2);
     background:transparent;
     border:0;
     box-shadow:none;
   }
-  .rtx-forgot-enterprise .rtx-forgot-kicker span{color:var(--fg-gold-2);}
+  .rtx-forgot-enterprise .rtx-forgot-kicker span{color:var(--fg-green-2);}
 
   .rtx-forgot-enterprise .rtx-forgot-card h3{color:var(--fg-text);}
   .rtx-forgot-enterprise .rtx-forgot-card p{color:var(--fg-muted);}
@@ -717,9 +717,9 @@
   }
   .rtx-forgot-enterprise .rtx-forgot-note b{
     color:#17130a;
-    background:linear-gradient(135deg,#ffe493,#d59b25);
+    background:linear-gradient(135deg,#21b95c,#05b84f);
     border:0;
-    box-shadow:0 8px 18px color-mix(in srgb,var(--fg-gold) 18%,transparent),inset 0 1px 0 rgba(255,255,255,.42);
+    box-shadow:0 8px 18px color-mix(in srgb,var(--fg-green) 18%,transparent),inset 0 1px 0 rgba(255,255,255,.42);
   }
   .rtx-forgot-enterprise .rtx-forgot-note span{color:color-mix(in srgb,var(--fg-text) 82%,var(--fg-muted));}
 
@@ -730,25 +730,25 @@
       color-mix(in srgb,var(--fg-page) 78%,#05070b);
   }
   .rtx-forgot-enterprise .rtx-forgot-inputbox:focus-within{
-    border-color:color-mix(in srgb,var(--fg-gold) 78%,transparent);
+    border-color:color-mix(in srgb,var(--fg-green) 78%,transparent);
     box-shadow:
-      0 0 0 4px color-mix(in srgb,var(--fg-gold) 14%,transparent),
+      0 0 0 4px color-mix(in srgb,var(--fg-green) 14%,transparent),
       0 18px 44px rgba(0,0,0,.24),
       inset 0 1px 0 rgba(255,255,255,.08);
   }
-  .rtx-forgot-enterprise .rtx-input-icon{color:var(--fg-gold-2);}
+  .rtx-forgot-enterprise .rtx-input-icon{color:var(--fg-green-2);}
 
   .rtx-forgot-enterprise .rtx-btn.primary{
     color:#17130a;
-    background:linear-gradient(135deg,#fff0a7 0%,#e8bc53 54%,#b98222 100%);
+    background:linear-gradient(135deg,#21b95c 0%,#08b84f 54%,#05b84f 100%);
     box-shadow:
-      0 16px 34px color-mix(in srgb,var(--fg-gold) 24%,transparent),
+      0 16px 34px color-mix(in srgb,var(--fg-green) 24%,transparent),
       inset 0 1px 0 rgba(255,255,255,.62);
   }
   .rtx-forgot-enterprise .rtx-btn.primary:hover{
     filter:saturate(1.08) brightness(1.03);
     box-shadow:
-      0 20px 42px color-mix(in srgb,var(--fg-gold) 30%,transparent),
+      0 20px 42px color-mix(in srgb,var(--fg-green) 30%,transparent),
       inset 0 1px 0 rgba(255,255,255,.70);
   }
   .rtx-forgot-enterprise .rtx-btn.ghost{
@@ -757,8 +757,8 @@
     border-color:color-mix(in srgb,var(--fg-border) 84%,transparent);
   }
   .rtx-forgot-enterprise .rtx-btn.ghost:hover{
-    border-color:color-mix(in srgb,var(--fg-gold) 40%,transparent);
-    background:color-mix(in srgb,var(--fg-gold) 8%,transparent);
+    border-color:color-mix(in srgb,var(--fg-green) 40%,transparent);
+    background:color-mix(in srgb,var(--fg-green) 8%,transparent);
   }
 
 

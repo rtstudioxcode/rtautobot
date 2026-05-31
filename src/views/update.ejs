@@ -98,15 +98,15 @@
   --ue-text:var(--text,#f8fafc);
   --ue-muted:var(--muted,#94a3b8);
   --ue-border:var(--border,rgba(255,255,255,.10));
-  --ue-accent:var(--accent,#e8bc53);
-  --ue-accent-2:#ffe28a;
+  --ue-accent:var(--accent,#08b84f);
+  --ue-accent-2:#08b84f;
   --ue-soft:color-mix(in srgb,var(--ue-card) 82%,transparent);
   --ue-soft-2:color-mix(in srgb,var(--ue-card) 66%,transparent);
   --ue-shadow:rgba(0,0,0,.30);
   --ue-success:#22c55e;
   --ue-danger:#ef4444;
   --ue-info:#60a5fa;
-  --ue-warning:#f59e0b;
+  --ue-warning:#00b84a;
   position:relative;
   isolation:isolate;
   color:var(--ue-text);
@@ -156,7 +156,7 @@ body.light .upd-enterprise{
 .upd-hero p{margin:12px 0 0;color:var(--ue-muted);font-size:15px;line-height:1.75;max-width:760px;}
 .hero-actions{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;}
 .upd-btn{height:46px;border:1px solid var(--ue-border);border-radius:16px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;font-weight:900;transition:.2s ease;background:var(--ue-soft);color:var(--ue-text);}
-.upd-btn-primary{border:0;color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53 55%,#bd8626);box-shadow:0 14px 30px color-mix(in srgb,var(--ue-accent) 24%,transparent),inset 0 1px 0 rgba(255,255,255,.48);}
+.upd-btn-primary{border:0;color:#17130a;background:linear-gradient(135deg,#08b84f,#08b84f 55%,#05b84f);box-shadow:0 14px 30px color-mix(in srgb,var(--ue-accent) 24%,transparent),inset 0 1px 0 rgba(255,255,255,.48);}
 .upd-btn:hover{transform:translateY(-2px);filter:saturate(1.05);}
 .upd-btn:disabled{opacity:.65;cursor:wait;transform:none;}
 .upd-btn:disabled .btn-ico{animation:ueSpin 1s linear infinite;}
@@ -185,7 +185,7 @@ body.light .upd-enterprise{
 .id-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:900;color:color-mix(in srgb,var(--ue-text) 82%,var(--ue-muted));}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--ue-accent);margin-right:8px;box-shadow:0 0 14px color-mix(in srgb,var(--ue-accent) 48%,transparent);}
 .svc-ico{width:26px;height:26px;object-fit:contain;border-radius:9px;background:rgba(255,255,255,.06);padding:3px;border:1px solid var(--ue-border);}
-.name-badge{font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#17130a;background:linear-gradient(135deg,#ffe28a,#e8bc53);border-radius:999px;padding:4px 7px;margin-left:.5rem;white-space:nowrap;}
+.name-badge{font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#17130a;background:linear-gradient(135deg,#08b84f,#08b84f);border-radius:999px;padding:4px 7px;margin-left:.5rem;white-space:nowrap;}
 .chip{display:inline-flex;align-items:center;gap:.35rem;padding:5px 9px;font-size:11px;border-radius:999px;background:color-mix(in srgb,var(--ue-info) 16%,transparent);border:1px solid color-mix(in srgb,var(--ue-info) 35%,transparent);color:color-mix(in srgb,var(--ue-info) 80%,var(--ue-text));font-weight:900;}
 .pill{display:inline-flex;align-items:center;gap:.42rem;padding:8px 11px;border-radius:999px;font-weight:950;border:1px solid transparent;white-space:nowrap;font-size:12px;}
 .pill.ok{background:color-mix(in srgb,var(--ue-success) 18%,transparent);color:color-mix(in srgb,var(--ue-success) 78%,var(--ue-text));border-color:color-mix(in srgb,var(--ue-success) 32%,transparent);}

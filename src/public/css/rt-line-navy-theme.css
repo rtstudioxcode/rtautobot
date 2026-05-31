@@ -4,21 +4,21 @@
   Updated: 2026-05-31
 */
 :root{
-  --line-green:#06c755;
-  --line-green-2:#00e676;
-  --line-green-3:#12d46a;
+  --line-green:#07a84a;
+  --line-green-2:#079b47;
+  --line-green-3:#13b85a;
   --line-navy:#081426;
   --line-navy-2:#0d1b2a;
   --line-navy-3:#102033;
   --line-sky:#38bdf8;
   --line-danger:#ef4444;
-  --line-warn:#f59e0b;
+  --line-warn:#00b84a;
   --accent:var(--line-green)!important;
   --accent-2:var(--line-green-2)!important;
   --primary:var(--line-green)!important;
   --brand:var(--line-green)!important;
-  --gold:var(--line-green)!important;
-  --rtx-gold:var(--line-green)!important;
+  --line-green:#07a84a!important;
+  --rtx-line:var(--line-green)!important;
   --rtx-blue:var(--line-sky)!important;
   --rtx-green:var(--line-green)!important;
   --success:var(--line-green)!important;
@@ -120,7 +120,7 @@ html[data-theme="light"] .m-subnav{
 }
 .rt-brand-mark,.rt-pill-ico,.bal-ico,.sb-item .ico,.chip-ico-wrap,.m-iconbtn::before{
   background:linear-gradient(135deg,var(--line-green),var(--line-green-2))!important;
-  color:#03140b!important;
+  color:#f7fff9!important;
   box-shadow:0 12px 26px rgba(6,199,85,.28)!important;
 }
 .rt-brand-copy small,.sb-group,.rt-pill-text small{color:color-mix(in srgb,var(--line-green) 56%,var(--muted))!important;}
@@ -166,7 +166,7 @@ html[data-theme="dark"] .hero,html[data-theme="dark"] .hero-section,html[data-th
 }
 html[data-theme="light"] .hero,html[data-theme="light"] .hero-section,html[data-theme="light"] .rtx-hero,html[data-theme="light"] .bt-hero,html[data-theme="light"] .admin-hero,html[data-theme="light"] .dashboard-hero,html[data-theme="light"] .landing-hero{
   background:
-    radial-gradient(760px 360px at 84% 18%,rgba(6,199,85,.18),transparent 62%),
+    radial-gradient(760px 360px at 84% 18%,rgba(5,184,79,.14),transparent 62%),
     radial-gradient(580px 280px at 12% 0%,rgba(56,189,248,.14),transparent 58%),
     linear-gradient(135deg,#ffffff 0%,#edf9f5 100%)!important;
 }
@@ -179,20 +179,20 @@ p,small,.muted,.subtitle,.desc,.lead,.text-muted{color:var(--muted)!important;}
 }
 
 /* Buttons / tabs / pills */
-button,.btn,.pill,.tab,.tabs a,.tabs button,.cta,.btn-primary,.primary,.btn-gold,.gold-btn,.action-btn,
+button,.btn,.pill,.tab,.tabs a,.tabs button,.cta,.btn-primary,.primary,.btn-green,.green-btn,.action-btn,
 [type="submit"],a.button,a.btn{
   border-color:color-mix(in srgb,var(--line-green) 34%,var(--border))!important;
 }
-.btn-primary,.primary,.btn-gold,.gold-btn,.cta,[type="submit"],.tab.active,.tabs .active,.pill.primary,
+.btn-primary,.primary,.btn-green,.green-btn,.cta,[type="submit"],.tab.active,.tabs .active,.pill.primary,
 button.primary,button[type="submit"]{
   background:linear-gradient(135deg,var(--line-green),var(--line-green-2))!important;
-  color:#03140b!important;
-  box-shadow:0 16px 34px rgba(6,199,85,.24)!important;
+  color:#f7fff9!important;
+  box-shadow:0 16px 34px rgba(5,184,79,.18)!important;
 }
-.btn-primary:hover,.primary:hover,.btn-gold:hover,.gold-btn:hover,.cta:hover,[type="submit"]:hover,
+.btn-primary:hover,.primary:hover,.btn-green:hover,.green-btn:hover,.cta:hover,[type="submit"]:hover,
 button.primary:hover,button[type="submit"]:hover{
   transform:translateY(-1px);
-  box-shadow:0 20px 42px rgba(6,199,85,.30)!important;
+  box-shadow:0 20px 42px rgba(5,184,79,.22)!important;
 }
 .btn-secondary,.secondary,.ghost,.pill.ghost,.tab:not(.active),.tabs a:not(.active),.tabs button:not(.active){
   background:color-mix(in srgb,var(--card) 78%,transparent)!important;
@@ -237,26 +237,26 @@ thead,.table-head,.list-head{background:color-mix(in srgb,var(--line-green) 10%,
 /* Auth pages: keep split SaaS layout but make it LINE green/navy */
 .rtx-login,.rtx-register,.auth-page{
   background:
-    radial-gradient(900px 480px at 8% 10%,rgba(6,199,85,.24),transparent 58%),
+    radial-gradient(900px 480px at 8% 10%,rgba(5,184,79,.18),transparent 58%),
     linear-gradient(135deg,#06111f 0%,#081426 54%,#0a1c2f 100%)!important;
 }
 .rtx-hero,.rtx-card{
-  border-color:rgba(6,199,85,.22)!important;
+  border-color:rgba(5,184,79,.16)!important;
 }
 .rtx-lock,.rtx-feature-icon,.rtx-pill span{
   background:linear-gradient(135deg,var(--line-green),var(--line-green-2))!important;
-  color:#03140b!important;
+  color:#f7fff9!important;
 }
 .rtx-card .rtx-btn,.rtx-submit,.rtx-google,.rtx-line{
-  border-color:rgba(6,199,85,.24)!important;
+  border-color:rgba(5,184,79,.18)!important;
 }
 .rtx-submit,.rtx-line{
   background:linear-gradient(135deg,var(--line-green),var(--line-green-2))!important;
-  color:#03140b!important;
+  color:#f7fff9!important;
 }
 
-/* Decorative glows: remove old amber/gold feel */
-[class*="glow"],.rtx-card-glow,.rt-topbar-glow{background:radial-gradient(circle,rgba(6,199,85,.18),transparent 62%)!important;}
+/* Decorative glows: remove old green/#05b84f feel */
+[class*="glow"],.rtx-card-glow,.rt-topbar-glow{background:radial-gradient(circle,rgba(5,184,79,.14),transparent 62%)!important;}
 ::selection{background:rgba(6,199,85,.28);color:var(--text);}
 
 /* Light mode readability hard stop */
@@ -264,7 +264,7 @@ html[data-theme="light"] .container,
 html[data-theme="light"] main.container{
   color:#0f172a!important;
 }
-html[data-theme="light"] .container *:not(.btn):not(button):not([type="submit"]):not(.primary):not(.gold-btn):not(.btn-primary){
+html[data-theme="light"] .container *:not(.btn):not(button):not([type="submit"]):not(.primary):not(.green-btn):not(.btn-primary){
   text-shadow:none!important;
 }
 html[data-theme="light"] .muted,html[data-theme="light"] .subtitle,html[data-theme="light"] .desc,html[data-theme="light"] .lead,html[data-theme="light"] p{
@@ -278,4 +278,88 @@ html[data-theme="light"] .m-subnav .chip{
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
+}
+
+/* RTAUTOBOT LINE Green + Navy final accent sweep
+   Purpose: remove the old yellow/gold CTA/tab accents and normalize all shared UI accents to LINE green. */
+:root,
+html[data-theme="dark"],
+html[data-theme="light"]{
+  --line-green:#07a84a;
+  --line-green-2:#00b84a;
+  --line-green-3:#12e06b;
+  --line-mint:#08b84f;
+  --accent:var(--line-green) !important;
+  --accent-2:var(--line-green-2) !important;
+  --primary:var(--line-green) !important;
+  --premium-line:var(--line-green) !important;
+}
+
+.btn-primary,
+.btn-cta,
+.btn-gold,
+.lux-btn,
+.lux-btn--primary,
+.bt-btn-primary,
+.bt-tab.active,
+.tab.active,
+.tabs .active,
+.pill.active,
+.nav-pill.active,
+.dashx-chip,
+.hero-chip,
+.status-live,
+button[type="submit"],
+input[type="submit"],
+.rt-admin-settings .bt-tab.active,
+.rt-admin-settings .settings-save-btn,
+.rt-topbar .bal-ico,
+.rt-brand-logo{
+  background:linear-gradient(135deg,#08b84f 0%,#05b84f 48%,#00a843 100%) !important;
+  border-color:rgba(6,199,85,.62) !important;
+  color:#03150f !important;
+  box-shadow:0 16px 42px rgba(5,184,79,.16), inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+a.btn-primary:hover,
+button.btn-primary:hover,
+.btn-cta:hover,
+.lux-btn--primary:hover,
+.bt-tab.active:hover,
+button[type="submit"]:hover,
+input[type="submit"]:hover{
+  box-shadow:0 20px 54px rgba(5,184,79,.22),0 0 0 5px rgba(5,184,79,.10) !important;
+  transform:translateY(-1px);
+}
+
+.kicker,
+.badge,
+.chip,
+.as-kicker,
+.rt-admin-settings .as-kicker,
+.rt-admin-settings .admin-card__badge,
+.rt-admin-settings .empty-wallet-state,
+.custom-select .selected,
+select:focus,
+input:focus,
+textarea:focus{
+  border-color:rgba(6,199,85,.45) !important;
+  box-shadow:0 0 0 4px rgba(6,199,85,.09) !important;
+}
+
+.rt-admin-settings .bank-card,
+.card-lux,
+.panel,
+.service-card,
+.package-card{
+  border-color:rgba(5,184,79,.14) !important;
+}
+
+.rt-admin-settings .as-stat strong,
+.rt-admin-settings .fieldset__header h3,
+.rt-admin-settings .empty-wallet-state strong,
+.text-gold,
+.text-yellow,
+.text-amber{
+  color:#08b84f !important;
 }

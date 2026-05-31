@@ -1428,9 +1428,9 @@ function updateCharts(data) {
   pkg2Data  = ensureAtLeastTwo(data.pkg2Data.slice());
 
   // สร้าง sparkline
-  makeSpark("sparkTotal",  dailyData, "#facc15");
+  makeSpark("sparkTotal",  dailyData, "#05b84f");
   makeSpark("sparkPkg1",   pkg1Data,  "#38bdf8");
-  makeSpark("sparkPkg2",   pkg2Data,  "#fbbf24");
+  makeSpark("sparkPkg2",   pkg2Data,  "#05b84f");
   makeSpark("sparkOrders", dailyData.map(x => x * 0.02), "#a78bfa");
 
   makeMainCharts();
@@ -1512,7 +1512,7 @@ function externalSparkTooltip(context) {
   const dp = tooltip.dataPoints[0];
   const raw = Number(dp.raw || 0);
   const valueText = "฿ " + raw.toLocaleString();
-  const color = dp.dataset.borderColor || "#facc15";
+  const color = dp.dataset.borderColor || "#05b84f";
 
   tooltipEl.innerHTML = valueText;
   tooltipEl.style.opacity = 1;
@@ -1681,8 +1681,8 @@ function makeMainCharts() {
     }
 
     const bgGradient = ctx1.createLinearGradient(0, 0, 0, c1.height);
-    bgGradient.addColorStop(0, "rgba(250,204,21,0.30)");
-    bgGradient.addColorStop(0.4, "rgba(250,204,21,0.10)");
+    bgGradient.addColorStop(0, "rgba(6,199,85,0.30)");
+    bgGradient.addColorStop(0.4, "rgba(6,199,85,0.10)");
     bgGradient.addColorStop(1, "rgba(15,23,42,0)");
 
     const pointRadius = labels.length > 20 ? 0 : 3;
@@ -1694,7 +1694,7 @@ function makeMainCharts() {
         datasets: [{
           label: "ยอดรวม (บาท)",
           data: dailyData,
-          borderColor: "#facc15",
+          borderColor: "#05b84f",
           backgroundColor: bgGradient,
           borderWidth: 2.6,
           fill: true,
@@ -1702,7 +1702,7 @@ function makeMainCharts() {
           cubicInterpolationMode: "monotone",
           pointRadius,
           pointHoverRadius: pointRadius ? pointRadius + 1 : 4,
-          pointBackgroundColor: "#facc15",
+          pointBackgroundColor: "#05b84f",
           pointBorderColor: "#020617",
           pointBorderWidth: 1,
           spanGaps: true,
@@ -1725,7 +1725,7 @@ function makeMainCharts() {
             intersect: false,
             displayColors: false,
             backgroundColor: "rgba(15,15,23,0.96)",
-            borderColor: "#facc15",
+            borderColor: "#05b84f",
             borderWidth: 1,
             padding: 10,
             cornerRadius: 10,
@@ -1818,7 +1818,7 @@ function makeMainCharts() {
   gradPkg1.addColorStop(1, "rgba(15,23,42,0.10)");
 
   const gradPkg2 = ctx2.createLinearGradient(0, 0, 0, c2.height);
-  gradPkg2.addColorStop(0, "rgba(251,146,60,0.95)");
+  gradPkg2.addColorStop(0, "rgba(124, 255, 178,0.95)");
   gradPkg2.addColorStop(1, "rgba(15,23,42,0.10)");
 
   new Chart(c2, {
@@ -1843,7 +1843,7 @@ function makeMainCharts() {
           label: "Package 2",
           data: safePkg2,
           backgroundColor: gradPkg2,
-          borderColor: "rgba(251,146,60,1)",
+          borderColor: "rgba(124, 255, 178,1)",
           borderWidth: 1.4,
           borderRadius: 8,
           borderSkipped: false,
@@ -1854,14 +1854,14 @@ function makeMainCharts() {
           type: "line",
           label: "ยอดรวมต่อวัน",
           data: totalData,
-          borderColor: "#facc15",
-          backgroundColor: "rgba(250,204,21,0.15)",
+          borderColor: "#05b84f",
+          backgroundColor: "rgba(6,199,85,0.15)",
           borderWidth: 2.2,
           fill: false,
           tension: 0.35,
           cubicInterpolationMode: "monotone",
           pointRadius: 3,
-          pointBackgroundColor: "#facc15",
+          pointBackgroundColor: "#05b84f",
           pointBorderColor: "#020617",
           pointBorderWidth: 1,
           yAxisID: "y",
@@ -2006,7 +2006,7 @@ function renderYearlyChart(rows = []) {
   const byMonth = new Map((rows || []).map((r) => [Number(r.month), r]));
   const totals = Array.from({ length: 12 }, (_, i) => Number((byMonth.get(i + 1) || {}).total || 0));
   const ctx = canvas.getContext('2d'); if (yearlyChartInstance) yearlyChartInstance.destroy();
-  yearlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'ยอดขายรายเดือน', data: totals, borderRadius: 12, borderSkipped: false, backgroundColor: 'rgba(250,204,21,.72)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,15,23,.96)', borderColor: '#334155', borderWidth: 1, callbacks: { label(ctx) { return `ยอดขาย: ฿ ${Number(ctx.raw || 0).toLocaleString('th-TH')}`; } } } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(245,231,195,.9)' } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.07)' }, ticks: { color: 'rgba(245,231,195,.78)', callback(v){ return Number(v).toLocaleString('th-TH'); } } } } } });
+  yearlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'ยอดขายรายเดือน', data: totals, borderRadius: 12, borderSkipped: false, backgroundColor: 'rgba(6,199,85,.72)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,15,23,.96)', borderColor: '#334155', borderWidth: 1, callbacks: { label(ctx) { return `ยอดขาย: ฿ ${Number(ctx.raw || 0).toLocaleString('th-TH')}`; } } } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(184, 255, 212,.9)' } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.07)' }, ticks: { color: 'rgba(184, 255, 212,.78)', callback(v){ return Number(v).toLocaleString('th-TH'); } } } } } });
 }
 async function loadYearlySummary(year) { try { const res = await fetch(`/admin/bonustime/yearly.json?year=${encodeURIComponent(year)}`); const raw = await res.json().catch(() => ({})); if (!res.ok || !raw.ok) return renderYearlySummary({ ...yearlyInitial, yearlyTotalRevenue: 0, yearlyPkg1Revenue: 0, yearlyPkg2Revenue: 0, yearlyOrderCount: 0, yearlyPkg1Count: 0, yearlyPkg2Count: 0, yearlyBestMonth: null, yearlyMonthly: [], year }); renderYearlySummary(raw); } catch { renderYearlySummary({ ...yearlyInitial, yearlyTotalRevenue: 0, yearlyPkg1Revenue: 0, yearlyPkg2Revenue: 0, yearlyOrderCount: 0, yearlyPkg1Count: 0, yearlyPkg2Count: 0, yearlyBestMonth: null, yearlyMonthly: [], year }); } }
 document.getElementById('yearSelect')?.addEventListener('change', (e) => loadYearlySummary(e.target.value));
@@ -2014,9 +2014,9 @@ document.addEventListener('DOMContentLoaded', () => renderYearlySummary(yearlyIn
 
 // ================== INITIAL RENDER (หน้าตอนโหลดครั้งแรก) ==================
 if (dailyData.length) {
-  makeSpark("sparkTotal",  dailyData, "#facc15");
+  makeSpark("sparkTotal",  dailyData, "#05b84f");
   makeSpark("sparkPkg1",   pkg1Data,  "#38bdf8");
-  makeSpark("sparkPkg2",   pkg2Data,  "#fbbf24");
+  makeSpark("sparkPkg2",   pkg2Data,  "#05b84f");
   makeSpark("sparkOrders", dailyData.map(x => x * 0.02), "#a78bfa");
   makeMainCharts();
 }
@@ -2175,7 +2175,7 @@ async function fetchLogs() {
             const isWarn = lower.includes('warn') || lower.includes('warning');
             let markColor = '#3b82f6', rowBg = 'transparent', textColor = '#d1d5db';
             if (isError) { markColor = '#ef4444'; rowBg = 'rgba(239,68,68,0.08)'; textColor = '#fca5a5'; }
-            else if (isWarn) { markColor = '#f97316'; rowBg = 'rgba(249,115,22,0.08)'; textColor = '#fde68a'; }
+            else if (isWarn) { markColor = '#05b84f'; rowBg = 'rgba(6, 199, 85,0.08)'; textColor = '#08b84f'; }
             const time = first.timestamp ? new Date(first.timestamp).toLocaleTimeString('th-TH', { hour12: false }) : '--:--:--';
             return `
                 <div style="display:flex; gap:8px; padding:4px 12px; border-left:2px solid ${markColor}; background:${rowBg}; margin:0; line-height:1.2;">
@@ -2276,8 +2276,8 @@ async function confirmRedeploy(tenantId) {
         title: "Re-Deploy System",
         desc: `ยืนยันการ Build ใหม่สำหรับ ${tenantId}?\nCode ล่าสุดจะถูกดึงมาติดตั้งและเริ่มทำงานใหม่`,
         icon: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19L17.5 13M17.5 13L15 15.5M17.5 13L20 15.5"></path><path d="M12 19H6a3 3 0 0 1-1-5.83a6 6 0 1 1 11.83-1.17A3.01 3.01 0 0 1 21 15a3 3 0 0 1-3.5 2.95"></path></svg>`,
-        color: "#fb923c",
-        bgColor: "rgba(251, 146, 60, 0.1)",
+        color: "#08b84f",
+        bgColor: "rgba(124, 255, 178, 0.1)",
         btnText: "เริ่ม Re-Deploy",
         onConfirm: async () => {
             try {
@@ -2349,11 +2349,11 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   transition: background 0.18s ease;
 }
 .bonustime-admin .bt-tab.active {
-  color: var(--accent, #facc15);
+  color: var(--accent, #05b84f);
   font-weight: 300;
 }
 .bonustime-admin .bt-tab.active::after {
-  background: var(--accent, #facc15);
+  background: var(--accent, #05b84f);
 }
 .bonustime-admin .tabpane {
   display: none;
@@ -2370,7 +2370,7 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 }
 .bonustime-admin .bonustime-card.admin {
   background: var(--card);
-  border: 1px solid #facc1540;
+  border: 1px solid #05b84f40;
   border-radius: 18px;
   padding: 14px 16px;
   font-size: 14px;
@@ -2384,8 +2384,8 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   margin-inline: auto;
 }
 .bonustime-admin .bonustime-card.admin:hover {
-  border-color: var(--accent, #facc15);
-  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08);
+  border-color: var(--accent, #05b84f);
+  box-shadow: 0 0 0 1px rgba(6, 199, 85, 0.08);
 }
 .bonustime-admin .bonustime-card.admin .collapse-head {
   display: flex;
@@ -2430,9 +2430,9 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   font-size: 12px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(250, 204, 21, 0.7);
-  background: rgba(250, 204, 21, 0.15);
-  color: #fef9c3;
+  border: 1px solid rgba(6, 199, 85, 0.7);
+  background: rgba(6, 199, 85, 0.15);
+  color: #21b95c;
   white-space: nowrap;
 }
 
@@ -2445,9 +2445,9 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 
 /* ถ้า Service ไม่เปิดระบบวันหมดอายุ */
 .bonustime-admin .expiry-pill.no-expiry {
-  border-color: rgba(250, 204, 21, 0.52);
-  background: rgba(250, 204, 21, 0.10);
-  color: #fde68a;
+  border-color: rgba(6, 199, 85, 0.52);
+  background: rgba(6, 199, 85, 0.10);
+  color: #08b84f;
 }
 
 /* ปุ่มลบ Service */
@@ -2479,18 +2479,18 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 /* ปุ่มรีเซ็ต Service ที่หมดอายุเกิน 30 วัน */
 .bt-reset-btn {
   border-radius: 999px;
-  border: 1px solid rgba(250, 204, 21, 0.62);
-  background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(245, 158, 11, 0.10));
-  color: #fde68a;
+  border: 1px solid rgba(6, 199, 85, 0.62);
+  background: linear-gradient(135deg, rgba(6, 199, 85, 0.18), rgba(0, 184, 74, 0.10));
+  color: #08b84f;
   font-size: 12px;
   padding: 4px 10px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
 }
 .bt-reset-btn:hover {
-  background: linear-gradient(135deg, rgba(250, 204, 21, 0.34), rgba(245, 158, 11, 0.20));
-  border-color: rgba(250, 204, 21, 0.95);
-  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.22), 0 10px 24px rgba(245, 158, 11, 0.14);
+  background: linear-gradient(135deg, rgba(6, 199, 85, 0.34), rgba(0, 184, 74, 0.20));
+  border-color: rgba(6, 199, 85, 0.95);
+  box-shadow: 0 0 0 1px rgba(6, 199, 85, 0.22), 0 10px 24px rgba(0, 184, 74, 0.14);
 }
 .bt-reset-btn:active {
   transform: translateY(1px);
@@ -2595,12 +2595,12 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #facc15, #fbbf24);
+  background: linear-gradient(135deg, #05b84f, #05b84f);
   color: #111827;
   font-size: 14px;
   font-weight: 300;
   letter-spacing: 0.02em;
-  box-shadow: 0 8px 18px rgba(250, 204, 21, 0.25);
+  box-shadow: 0 8px 18px rgba(6, 199, 85, 0.25);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -2618,7 +2618,7 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 }
 .bt-add-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(250, 204, 21, 0.3);
+  box-shadow: 0 12px 24px rgba(6, 199, 85, 0.3);
   filter: brightness(1.02);
 }
 .bt-add-btn:active {
@@ -2720,8 +2720,8 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   --ultra-border: var(--border, #262730);
   --ultra-text: var(--text, #ffffff);
   --ultra-muted: var(--muted, #a1a1aa);
-  --ultra-accent: var(--accent, #facc15);
-  --ultra-bg-soft: rgba(250, 204, 21, 0.06);
+  --ultra-accent: var(--accent, #05b84f);
+  --ultra-bg-soft: rgba(6, 199, 85, 0.06);
 
   padding-top: 10px;
   padding-bottom: 18px;
@@ -2851,7 +2851,7 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 
 /* MAIN / SUB CHART SECTIONS */
 .ultra-chart.glass {
-  background: radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 46%),
+  background: radial-gradient(circle at top left, rgba(6, 199, 85, 0.12), transparent 46%),
               var(--ultra-card-bg);
   border-radius: var(--ultra-radius);
   border: 1px solid var(--ultra-border);
@@ -2936,7 +2936,7 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 
 .topdays-list .bar > div {
   height: 100%;
-  background: linear-gradient(90deg, #facc15, #fb923c);
+  background: linear-gradient(90deg, #05b84f, #08b84f);
   border-radius: inherit;
 }
 
@@ -3167,8 +3167,8 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 }
 
 .monitor-tabs .bt-tab.active {
-    color: #facc15;
-    border-bottom-color: #facc15;
+    color: #05b84f;
+    border-bottom-color: #05b84f;
 }
 
 /* 5. พื้นที่แสดง Log */
@@ -3270,12 +3270,12 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
 
 /* สีปุ่ม Redeploy (Orange Soft) */
 .bt-action-btn.redeploy {
-    background: rgba(251, 146, 60, 0.1);
-    color: #fb923c;
-    border-color: rgba(251, 146, 60, 0.2);
+    background: rgba(124, 255, 178, 0.1);
+    color: #08b84f;
+    border-color: rgba(124, 255, 178, 0.2);
 }
 .bt-action-btn.redeploy:hover {
-    background: #fb923c;
+    background: #08b84f;
     color: #fff;
 }
 
@@ -3334,12 +3334,12 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   --bt-card: color-mix(in srgb, var(--card, #17181d) 92%, transparent);
   --bt-card-2: color-mix(in srgb, var(--card, #17181d) 78%, var(--page, #08090d));
   --bt-soft: color-mix(in srgb, var(--card, #17181d) 84%, transparent);
-  --bt-text: var(--text, #fff6e6);
+  --bt-text: var(--text, #e8fff1);
   --bt-muted: var(--muted, #a7abb7);
   --bt-border: color-mix(in srgb, var(--border, #2a2d36) 78%, transparent);
-  --bt-accent: var(--accent, #f5c95b);
-  --bt-accent-2: color-mix(in srgb, var(--accent, #f5c95b) 72%, #ffffff);
-  --bt-gold: linear-gradient(135deg,#fff0a8 0%,#f2c85e 46%,#c99225 100%);
+  --bt-accent: var(--accent, #08b84f);
+  --bt-accent-2: color-mix(in srgb, var(--accent, #08b84f) 72%, #ffffff);
+  --bt-green: linear-gradient(135deg,#12b957 0%,#08a94b 52%,#067f3a 100%);
   --bt-green: #22c55e;
   --bt-red: #ef4444;
   --bt-blue: #38bdf8;
@@ -3420,7 +3420,7 @@ html[data-theme="light"] .bonustime-admin,
   transition:transform .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease!important;
 }
 .bonustime-admin .bt-tab:hover{transform:translateY(-1px);color:var(--bt-text)!important;background:var(--bt-soft)!important;}
-.bonustime-admin .bt-tab.active{color:#1c1608!important;background:var(--bt-gold)!important;box-shadow:0 14px 30px color-mix(in srgb,var(--bt-accent) 22%,transparent), inset 0 1px 0 rgba(255,255,255,.55)!important;}
+.bonustime-admin .bt-tab.active{color:#1c1608!important;background:var(--bt-green)!important;box-shadow:0 14px 30px color-mix(in srgb,var(--bt-accent) 22%,transparent), inset 0 1px 0 rgba(255,255,255,.55)!important;}
 .bonustime-admin .bt-tab::after,.bonustime-admin .bt-tab.active::after{display:none!important;content:none!important;}
 
 .bonustime-admin .page-head{
@@ -3441,7 +3441,7 @@ html[data-theme="light"] .bonustime-admin,
 .bonustime-admin button[type="submit"],
 .bonustime-admin .save-btn,
 .bonustime-admin .btn-primary{
-  border:0!important;border-radius:18px!important;background:var(--bt-gold)!important;color:#17130a!important;font-weight:1000!important;
+  border:0!important;border-radius:18px!important;background:var(--bt-green)!important;color:#17130a!important;font-weight:1000!important;
   box-shadow:0 14px 28px color-mix(in srgb,var(--bt-accent) 20%,transparent)!important;
   transition:transform .2s ease,filter .2s ease,box-shadow .2s ease!important;
 }
@@ -3471,7 +3471,7 @@ html[data-theme="light"] .bonustime-admin,
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
 .bonustime-admin .status-pill.sold{background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(16,185,129,.12))!important;color:#86efac!important;border-color:rgba(34,197,94,.35)!important;}
-.bonustime-admin .status-pill.free{background:linear-gradient(135deg,rgba(250,204,21,.16),rgba(245,158,11,.1))!important;color:var(--bt-accent-2)!important;border-color:rgba(250,204,21,.35)!important;}
+.bonustime-admin .status-pill.free{background:linear-gradient(135deg,rgba(6,199,85,.16),rgba(0,184,74,.1))!important;color:var(--bt-accent-2)!important;border-color:rgba(6,199,85,.35)!important;}
 .bonustime-admin .bt-delete-btn,
 .bonustime-admin .bt-action-btn.delete{
   border-radius:14px!important;background:rgba(239,68,68,.1)!important;color:#fecaca!important;border:1px solid rgba(239,68,68,.24)!important;
@@ -3479,14 +3479,14 @@ html[data-theme="light"] .bonustime-admin,
 .bonustime-admin .bt-delete-btn:hover,.bonustime-admin .bt-action-btn.delete:hover{background:#ef4444!important;color:white!important;}
 .bonustime-admin .bt-reset-btn{
   border-radius:14px!important;
-  background:linear-gradient(135deg,rgba(250,204,21,.16),rgba(245,158,11,.08))!important;
-  color:#fde68a!important;
-  border:1px solid rgba(250,204,21,.34)!important;
+  background:linear-gradient(135deg,rgba(6,199,85,.16),rgba(0,184,74,.08))!important;
+  color:#08b84f!important;
+  border:1px solid rgba(5,184,79,.24)!important;
 }
 .bonustime-admin .bt-reset-btn:hover{
-  background:linear-gradient(135deg,rgba(250,204,21,.34),rgba(245,158,11,.18))!important;
-  color:#fff7cc!important;
-  border-color:rgba(250,204,21,.72)!important;
+  background:linear-gradient(135deg,rgba(5,184,79,.24),rgba(0,184,74,.18))!important;
+  color:#d8ffe6!important;
+  border-color:rgba(6,199,85,.72)!important;
 }
 .bonustime-admin .collapse-icon{width:34px;height:34px;border-radius:13px;display:grid;place-items:center;background:var(--bt-soft);border:1px solid var(--bt-border);color:var(--bt-accent-2);transition:transform .22s ease;}
 .bonustime-admin .bonustime-card.open .collapse-icon{transform:rotate(180deg);}
@@ -3524,7 +3524,7 @@ html[data-theme="light"] .bonustime-admin,
   border:1px solid var(--bt-border)!important;border-radius:22px!important;background:var(--bt-soft)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
 }
 .bonustime-admin .ultra-chart-head,.bonustime-admin .monitor-header{border-bottom:1px solid var(--bt-border)!important;}
-.bonustime-admin .bar > div{background:var(--bt-gold)!important;border-radius:999px;}
+.bonustime-admin .bar > div{background:var(--bt-green)!important;border-radius:999px;}
 
 /* Dialogs */
 .bonustime-admin dialog::backdrop{background:rgba(0,0,0,.68)!important;backdrop-filter:blur(10px)!important;}
@@ -3605,15 +3605,15 @@ html[data-theme="light"] .bonustime-admin,
 
 .bonustime-admin .bt-switch-row:hover,
 #addTenantModal .bt-switch-row:hover{
-  border-color:rgba(246,211,116,.42);
+  border-color:rgba(124, 255, 178,.42);
   background:
-    radial-gradient(circle at 18% 50%, rgba(246,211,116,.12), transparent 30%),
+    radial-gradient(circle at 18% 50%, rgba(124, 255, 178,.12), transparent 30%),
     linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)),
     rgba(8,9,13,.9);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.08),
     0 18px 44px rgba(0,0,0,.30),
-    0 0 26px rgba(246,211,116,.08);
+    0 0 26px rgba(124, 255, 178,.08);
 }
 
 .bonustime-admin .bt-switch-input,
@@ -3687,13 +3687,13 @@ html[data-theme="light"] .bonustime-admin,
 
 .bonustime-admin .bt-switch-input:focus-visible + .bt-switch-ui,
 #addTenantModal .bt-switch-input:focus-visible + .bt-switch-ui{
-  outline:2px solid rgba(246,211,116,.78);
+  outline:2px solid rgba(124, 255, 178,.78);
   outline-offset:3px;
 }
 
 .bonustime-admin .bt-switch-label,
 #addTenantModal .bt-switch-label{
-  color:var(--t-text, #fff6de);
+  color:var(--t-text, #eef6ff);
   font-size:13px;
   font-weight:900;
   letter-spacing:.01em;
@@ -3703,7 +3703,7 @@ html[data-theme="light"] .bonustime-admin,
 
 .bonustime-admin .bt-switch-input:not(:checked) ~ .bt-switch-label,
 #addTenantModal .bt-switch-input:not(:checked) ~ .bt-switch-label{
-  color:rgba(255,246,222,.78);
+  color:rgba(238, 246, 255,.78);
 }
 
 .bonustime-admin .bt-switch-input:checked ~ .bt-switch-label,
@@ -3752,6 +3752,6 @@ html[data-theme="light"] .bonustime-admin,
 .bonustime-admin .ultra-yearly-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.bonustime-admin .ultra-yearly-head h3{margin:0 0 6px;font-size:clamp(20px,2.4vw,30px);color:var(--bt-text)}
 .bonustime-admin .ultra-year-select{display:grid;gap:7px;min-width:180px;color:var(--bt-accent-2);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.bonustime-admin .ultra-year-select select{height:48px;border-radius:16px;border:1px solid color-mix(in srgb,var(--bt-accent) 34%,transparent);background:rgba(8,8,12,.84);color:var(--bt-text);font-weight:900;padding:0 14px}
 .bonustime-admin .ultra-year-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.bonustime-admin .yearly-chart-wrap{margin-top:14px}.bonustime-admin .yearly-chart-wrap .ultra-chart-body{height:280px}
-.bonustime-admin .status-pill.expired,.bonustime-admin .expiry-pill.expired{border-color:rgba(255,91,91,.42)!important;background:rgba(255,91,91,.12)!important;color:#ffb4a8!important}.bonustime-admin .expiry-pill.active{border-color:rgba(64,220,146,.38)!important;background:rgba(64,220,146,.11)!important;color:#9dffd0!important}.bonustime-admin .expiry-pill.no-expiry{border-color:rgba(250,204,21,.46)!important;background:rgba(250,204,21,.1)!important;color:#fde68a!important}
+.bonustime-admin .status-pill.expired,.bonustime-admin .expiry-pill.expired{border-color:rgba(255,91,91,.42)!important;background:rgba(255,91,91,.12)!important;color:#ffb4a8!important}.bonustime-admin .expiry-pill.active{border-color:rgba(64,220,146,.38)!important;background:rgba(64,220,146,.11)!important;color:#9dffd0!important}.bonustime-admin .expiry-pill.no-expiry{border-color:rgba(6,199,85,.46)!important;background:rgba(6,199,85,.1)!important;color:#08b84f!important}
 @media(max-width:1100px){.bonustime-admin .ultra-year-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:680px){.bonustime-admin .ultra-yearly-head{flex-direction:column}.bonustime-admin .ultra-year-select{width:100%}.bonustime-admin .ultra-year-cards{grid-template-columns:1fr}}
 </style>
