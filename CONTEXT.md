@@ -16,6 +16,11 @@ RTAUTOBOT is a production Bonustime-focused website. The public-facing copy must
 - Queue/worker direction remains Bonustime-only.
 - Admin direction is Bonustime-only; broader admin polishing can be handled in later rounds.
 
+## Latest Uploaded Baseline
+- Latest source ZIP recorded: `rtautobot(9).zip` on 2026-05-31.
+- Treat this uploaded source as the current canonical baseline until another ZIP is provided.
+- Keep all future changes Bonustime-only and update this file with every code edit.
+
 ## Track Log
 
 ### 2026-05-31 — Public copy production polish
@@ -82,3 +87,30 @@ RTAUTOBOT is a production Bonustime-focused website. The public-facing copy must
 - Kept the page production-facing and RTAUTOBOT-scoped; wording now presents the page as a live payment-account control center instead of an internal migration/test screen.
 - Updated `/admin/settings` in `src/routes/admin-bonustime.js` to load all RTAUTOBOT-scoped topup accounts for the settings page and preserve account type (`DEPOSIT`/`WITHDRAW`) when editing or creating wallet records.
 - Kept customer topup/payment behavior separated by existing `production: "rtautobot"` scoping and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or other RTSMM-TH services.
+
+### 2026-05-31 — Latest source baseline captured from `rtautobot(9).zip`
+- Recorded the newly uploaded `rtautobot(9).zip` as the latest working source baseline for RTAUTOBOT / Bonustime-only. Use this source as the current reference until a newer ZIP is uploaded.
+- Confirmed runtime mounting in `src/index.js` remains focused on RTAUTOBOT essentials: `/`, `/bonustime`, `/admin` via `admin-bonustime.js`, auth, account, dashboard, wallet/topup, support, sitemap/robots, reset password, FAQ, and terms.
+- Confirmed queue runtime remains Bonustime-only: scheduler adds only `bonustime-expire`, and the worker executes only `bonustime-expire` while skipping non-Bonustime job names.
+- Confirmed payment/topup direction remains scoped to RTAUTOBOT with `production: "rtautobot"`, while user credit balance still uses the shared existing user wallet/credit data.
+- Confirmed `/admin/settings` is now the RTSMM-TH-style payment account settings page for RTAUTOBOT accounts only, with wallet cards, toggles, account add/edit controls, and production-scoped wallet records.
+- Confirmed `/admin` includes inline manual topup and pending topup controls; manual credit topup should happen inside the admin page modal instead of redirecting to the report page.
+- Confirmed `/admin/topup-report` should show all Methods for the selected month/year and should not put Method filtering inside the Report Period controls.
+- Confirmed `/admin/bonustime-panel` includes service expiry badges, `ไม่มีวันหมดอายุ` status for services without expiry, yearly Bonustime summary, and UI controls for service management.
+- Note for future edits: this uploaded source still contains some legacy files under `src/routes`, `src/models`, `src/lib`, and `src/scripts`; do not remount or revive APPS, OTP24, SMM, Telegram ordering, blog marketing pages, affiliate expansion, or non-Bonustime jobs unless explicitly requested. Runtime scope is determined by `src/index.js` and the Bonustime-only context above.
+- Ran `node --check` across all JavaScript files in the uploaded source and syntax passed.
+
+
+### 2026-05-31 — Admin dashboard premium redesign
+- Rebuilt `src/views/admin/dashboard.ejs` into a cleaner production-grade RTAUTOBOT admin hub with a larger control hero, premium black-gold metrics, compact system status card, polished quick-action panels, and a more readable pending topup board.
+- Kept `/admin` focused on Bonustime operations only: Bonustime Panel, payment account settings, topup history, inline manual topup, and pending topup actions.
+- Preserved inline manual topup behavior inside `/admin`; pending rows still prefill username, amount, Method, and transaction ID without redirecting to `/admin/topup-report`.
+- Preserved RTAUTOBOT topup scope using `production: "rtautobot"` and did not change the shared user wallet/credit model.
+- Did not reintroduce APPS, OTP24, SMM, Telegram ordering, or other non-Bonustime service surfaces.
+
+### 2026-05-31 — Admin dashboard active service counter
+- Updated `/admin` dashboard command card so the middle mini-stat no longer shows pending topup count as “รอตรวจ”.
+- Added backend calculation in `src/routes/admin-bonustime.js` for currently active Bonustime services: sold services with a valid expiry date that has not expired yet.
+- Explicitly excludes services marked as no-expiry (`LICENSE_DISABLED: true`) from this active-service count, per the requested dashboard definition.
+- Kept pending topup totals/counts in the dedicated topup metric and pending topup board, so payment review data remains available without mixing it into the Bonustime Automation service status card.
+- Maintained RTAUTOBOT/Bonustime-only scope and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or non-Bonustime jobs/routes.

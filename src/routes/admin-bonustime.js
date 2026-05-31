@@ -216,8 +216,13 @@ function getBangkokYearRange(yy) {
 
 router.get("/", async (_req, res) => {
   try {
-    const [serviceCount, walletCount, topupAgg, orderAgg, pendingTransactions] = await Promise.all([
-      (await getBonustimeUsersCollection()).countDocuments({}),
+    const bonustimeCol = await getBonustimeUsersCollection();
+    const [serviceCount, activeServiceDocs, walletCount, topupAgg, orderAgg, pendingTransactions] = await Promise.all([
+      bonustimeCol.countDocuments({}),
+      bonustimeCol.find({
+        serial_key: { $exists: true, $nin: [null, ""] },
+        LICENSE_DISABLED: { $ne: true },
+      }).project({ LICENSE_START_DATE: 1, LICENSE_DURATION_DAYS: 1, LICENSE_DISABLED: 1, serial_key: 1, LOTTO_ENABLED: 1 }).toArray(),
       Topup.countDocuments({ ...productionScope(), type: "DEPOSIT" }),
       Transaction.aggregate([
         { $match: { ...productionScope(), status: "completed", method: { $ne: "admin" } } },
@@ -233,6 +238,14 @@ router.get("/", async (_req, res) => {
         .lean(),
     ]);
 
+    const now = new Date();
+    const activeServiceCount = (activeServiceDocs || []).filter((doc) => {
+      const expiry = computeLicenseExpiry(doc);
+      // ไม่นับ Service ที่ตั้งเป็นไม่มีวันหมดอายุ ตามเงื่อนไขหน้า dashboard
+      if (expiry.disabled || !expiry.expiresAt) return false;
+      return expiry.expiresAt.getTime() > now.getTime();
+    }).length;
+
     const pendingTotal = (pendingTransactions || []).reduce((sum, tx) => sum + (Number(tx.amount || 0) || 0), 0);
 
     res.render("admin/dashboard", {
@@ -244,6 +257,7 @@ router.get("/", async (_req, res) => {
       stats: {
         serviceCount,
         walletCount,
+        activeServiceCount,
         pendingCount: pendingTransactions?.length || 0,
         pendingTotal,
         topupSum: topupAgg?.[0]?.sum || 0,
