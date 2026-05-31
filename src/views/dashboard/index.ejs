@@ -67,13 +67,13 @@
 
     <section class="dashx-grid dashx-grid-main">
       <article class="dashx-panel card-lux reveal-up" style="--delay:.22s">
-        <header class="dashx-panel__head">
+        <div class="dashx-headline">
           <div>
             <span class="dashx-label">Account Insight</span>
             <h2>ภาพรวมการเติบโต</h2>
           </div>
           <span class="dashx-chip">Live</span>
-        </header>
+        </div>
 
         <div class="dashx-progress-block">
           <div class="dashx-progress-row">
@@ -97,12 +97,12 @@
       </article>
 
       <aside class="dashx-panel card-lux reveal-up" style="--delay:.28s">
-        <header class="dashx-panel__head">
+        <div class="dashx-headline">
           <div>
             <span class="dashx-label">Quick Actions</span>
             <h2>เมนูลัด</h2>
           </div>
-        </header>
+        </div>
 
         <div class="dashx-quick-actions">
           <a href="/my/order"><span>⚡</span><strong>เริ่มสั่งซื้อ</strong><small>เลือกบริการและส่งงาน</small></a>
@@ -443,18 +443,53 @@
       min-height: 330px
     }
 
-    .dashx-panel__head {
+    .dashx-headline {
       position: relative;
       z-index: 1;
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 14px;
-      margin-bottom: 18px
+      margin-bottom: 18px;
+
+      /* กัน global theme ไปใส่พื้นหลังสี่เหลี่ยมให้ header ของ panel */
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
+    }
+
+    .dashx-headline::before,
+    .dashx-headline::after,
+    .dashx-headline>div::before,
+    .dashx-headline>div::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .dashx-headline>div {
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
 
     .dashx-panel h2 {
       margin: 0;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
       color: var(--dx-text);
       font-size: clamp(22px, 2.4vw, 34px);
       letter-spacing: -.04em
@@ -686,7 +721,7 @@
         padding: 18px
       }
 
-      .dashx-panel__head {
+      .dashx-headline {
         align-items: flex-start;
         flex-direction: column
       }
