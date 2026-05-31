@@ -114,3 +114,12 @@ RTAUTOBOT is a production Bonustime-focused website. The public-facing copy must
 - Explicitly excludes services marked as no-expiry (`LICENSE_DISABLED: true`) from this active-service count, per the requested dashboard definition.
 - Kept pending topup totals/counts in the dedicated topup metric and pending topup board, so payment review data remains available without mixing it into the Bonustime Automation service status card.
 - Maintained RTAUTOBOT/Bonustime-only scope and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or non-Bonustime jobs/routes.
+
+### 2026-05-31 — LINE Green + Navy theme correction pass
+- Updated from the latest RTAUTOBOT source after reviewing the current global CSS/layout and EJS page-level styling for conflicting black-gold/light-wash palette rules.
+- Added `src/public/css/rt-line-navy-theme.css` as a global theme override that keeps the existing RTAUTOBOT layout/components but changes the visual system to LINE Green + Navy/Dark, including sidebar, topbar, cards, hero blocks, tabs, buttons, forms, custom dropdowns, badges, tables, and auth pages.
+- Updated `src/views/layout.ejs` to load the new global theme override and added a final body-level cascade guard so EJS page-level `<style>` blocks do not pull the UI back into black-gold or overly pale light mode.
+- Improved light theme readability by using stronger navy text, clearer white/green-tinted cards, less transparency, and stronger borders/shadows so content remains legible instead of washed out.
+- Adjusted auth/login/register copy to keep the frontend production-facing for Bonustime Automation instead of generic Social/SMM wording.
+- Used `https://xautobot.online/` as visual reference for the LINE-green SaaS direction while preserving the existing RTAUTOBOT route/backend structure.
+- Scope remains Bonustime-only: no APPS, OTP24, SMM, Telegram ordering, or non-Bonustime jobs/routes were reintroduced.

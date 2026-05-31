@@ -2809,7 +2809,7 @@
       width: 74px !important;
       min-width: 74px !important;
       max-width: 74px !important;
-      height: 92px !important;
+      height: 77px !important;
       min-height: 92px !important;
 
       padding: 0 !important;
@@ -3063,6 +3063,7 @@
     }
   </style>
 
+  <link rel="stylesheet" href="/static/css/rt-line-navy-theme.css?v=20260531-line-navy">
 </head>
 <body class="<%- _bodyClass %>">
   <!-- Sidebar -->
@@ -3343,6 +3344,16 @@
 
     <main class="container">
       <%- body %>
+    <style id="rt-line-navy-body-final-override">
+      /* Final cascade: page-level EJS <style> blocks can appear in body, so this keeps the LINE/Navy theme consistent. */
+      :root{--accent:#06c755!important;--primary:#06c755!important;--gold:#06c755!important;--rtx-gold:#06c755!important;--success:#06c755!important;}
+      .btn-primary,.primary,.btn-gold,.gold-btn,.cta,button[type="submit"],[type="submit"],.tab.active,.tabs .active{background:linear-gradient(135deg,#06c755,#00e676)!important;color:#03140b!important;border-color:rgba(6,199,85,.55)!important;box-shadow:0 16px 34px rgba(6,199,85,.24)!important;}
+      .sidebar,.topbar.rt-topbar,.rt-mobile-topbar,.m-topbar,.m-subnav{border-color:color-mix(in srgb,#06c755 22%,var(--border,rgba(148,163,184,.18)))!important;}
+      html[data-theme="dark"] .sidebar{background:linear-gradient(180deg,#071323,#081426 54%,#050b14)!important;}
+      html[data-theme="light"] .sidebar{background:linear-gradient(180deg,#fff,#f5fffb 55%,#ebf7f2)!important;}
+      .status-pill,.badge,.label,.tag,.rtx-pill,.bt-pill{background:color-mix(in srgb,#06c755 13%,var(--card,#0c1828))!important;border-color:color-mix(in srgb,#06c755 36%,var(--border,rgba(148,163,184,.18)))!important;color:color-mix(in srgb,#06c755 82%,var(--text,#f8fbff))!important;}
+      input:focus,textarea:focus,select:focus,.custom-select-trigger:focus{border-color:#06c755!important;box-shadow:0 0 0 4px rgba(6,199,85,.18)!important;}
+    </style>
     </main>
 
     <footer class="rt-footer">
