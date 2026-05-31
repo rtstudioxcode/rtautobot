@@ -115,53 +115,63 @@
 </dialog>
 
 <!-- Forgot Password Modal -->
-<div id="forgotModal" class="rtx-forgot rtx-forgot-enterprise" hidden>
+<div id="forgotModal" class="rtx-forgot rtx-forgot-modal rtx-forgot-notice-clone" hidden>
   <div class="rtx-forgot-backdrop" aria-hidden="true"></div>
 
   <div class="rtx-forgot-card" role="dialog" aria-modal="true" aria-labelledby="fgTitle" aria-describedby="fgDesc">
-    <span class="rtx-forgot-border" aria-hidden="true"></span>
-    <span class="rtx-forgot-orb rtx-forgot-orb-a" aria-hidden="true"></span>
-    <span class="rtx-forgot-orb rtx-forgot-orb-b" aria-hidden="true"></span>
+    <div class="rtx-forgot-aura" aria-hidden="true"></div>
 
-    <button class="rtx-forgot-x" id="forgotX" type="button" aria-label="ปิด">×</button>
-
-    <div class="rtx-forgot-head">
-      <div class="rtx-forgot-badge" aria-hidden="true">
+    <div class="rtx-forgot-head" role="group" aria-labelledby="fgTitle" aria-describedby="fgDesc">
+      <span class="rtx-forgot-badge" aria-hidden="true">
         <span>🔐</span>
-      </div>
-      <div class="rtx-forgot-titlebox">
-        <div class="rtx-pill small rtx-forgot-kicker"><span>✦</span> Password Recovery</div>
-        <h3 id="fgTitle">รีเซ็ตรหัสผ่าน</h3>
-        <p id="fgDesc">กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้คุณอย่างปลอดภัย</p>
-      </div>
+      </span>
+      <span class="rtx-forgot-titlebox">
+        <span class="rtx-forgot-kicker">PASSWORD RECOVERY</span>
+        <span class="rtx-forgot-heading" id="fgTitle" role="heading" aria-level="3">รีเซ็ตรหัสผ่าน</span>
+        <span class="rtx-forgot-copy" id="fgDesc">กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้คุณอย่างปลอดภัย</span>
+      </span>
     </div>
 
-    <div class="rtx-forgot-notes" aria-label="ขั้นตอนการรีเซ็ตรหัสผ่าน">
-      <div class="rtx-forgot-note">
-        <b>01</b>
-        <span>ตรวจสอบอีเมลที่ผูกกับบัญชี</span>
-      </div>
-      <div class="rtx-forgot-note">
-        <b>02</b>
-        <span>ส่งลิงก์รีเซ็ตรหัสผ่านแบบใช้ครั้งเดียว</span>
-      </div>
-      <div class="rtx-forgot-note">
-        <b>03</b>
-        <span>ตั้งรหัสผ่านใหม่แล้วกลับมาเข้าสู่ระบบ</span>
-      </div>
-    </div>
+    <div class="rtx-forgot-body">
+      <div class="rtx-forgot-list" aria-label="ขั้นตอนการรีเซ็ตรหัสผ่าน">
+        <div class="rtx-forgot-item">
+          <span class="rtx-forgot-no">01</span>
+          <div>
+            <strong>ตรวจสอบอีเมลที่ผูกกับบัญชี</strong>
+            <small>กรอกอีเมลเดียวกับที่ใช้สมัคร เพื่อให้ระบบตรวจสอบบัญชีได้ถูกต้อง</small>
+          </div>
+        </div>
 
-    <label class="rtx-field forgot-field">
-      <span class="rtx-label">อีเมลที่ผูกกับบัญชี</span>
-      <div class="rtx-inputbox rtx-forgot-inputbox">
-        <span class="rtx-input-icon">✉️</span>
-        <input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com">
+        <div class="rtx-forgot-item">
+          <span class="rtx-forgot-no">02</span>
+          <div>
+            <strong>ส่งลิงก์รีเซ็ตรหัสผ่านแบบใช้ครั้งเดียว</strong>
+            <small>ลิงก์สำหรับตั้งรหัสผ่านใหม่จะถูกส่งไปยังอีเมลของคุณอย่างปลอดภัย</small>
+          </div>
+        </div>
+
+        <div class="rtx-forgot-item warn">
+          <span class="rtx-forgot-no">03</span>
+          <div>
+            <strong>ตั้งรหัสผ่านใหม่แล้วกลับมาเข้าสู่ระบบ</strong>
+            <small>หลังตั้งรหัสผ่านสำเร็จ สามารถกลับมาเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที</small>
+          </div>
+        </div>
       </div>
-    </label>
+
+      <label class="rtx-forgot-email" for="forgotEmail">
+        <span>อีเมลที่ผูกกับบัญชี</span>
+        <div class="rtx-forgot-inputwrap">
+          <i aria-hidden="true">✉️</i>
+          <input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com">
+        </div>
+      </label>
+    </div>
 
     <div class="rtx-forgot-actions">
-      <button class="rtx-btn ghost" id="forgotCancel" type="button">ยกเลิก</button>
-      <button class="rtx-btn primary rtx-forgot-submit" id="forgotSubmit" type="button">
+      <button class="rtx-forgot-btn ghost" id="forgotCancel" type="button">ยกเลิก</button>
+      <button class="rtx-forgot-btn primary" id="forgotSubmit" type="button">
+        <span class="shine" aria-hidden="true"></span>
         <span>ส่งลิงก์รีเซ็ต</span>
         <b aria-hidden="true">→</b>
       </button>
@@ -463,7 +473,45 @@
     filter:drop-shadow(0 8px 12px rgba(0,0,0,.22));
   }
 
-  .rtx-forgot-kicker{
+  
+.rtx-forgot-titlebox,
+.rtx-forgot-titlebox *,
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.rtx-forgot-titlebox{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  display:block;
+  width:auto;
+}
+
+
+/* notice-titlebox-clean-forgot */
+.rtx-forgot-titlebox,
+.rtx-forgot-titlebox *,
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+}
+.rtx-forgot-titlebox{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.rtx-forgot-heading,.rtx-forgot-copy{display:block;width:auto;}
+
+.rtx-forgot-kicker{
     margin-bottom:13px;
     box-shadow:0 12px 28px color-mix(in srgb,var(--rtx-accent) 13%,transparent);
   }
@@ -699,7 +747,45 @@
       inset 0 -10px 18px rgba(58,37,7,.18);
   }
 
-  .rtx-forgot-enterprise .rtx-forgot-kicker{
+  .rtx-forgot-enterprise 
+.rtx-forgot-titlebox,
+.rtx-forgot-titlebox *,
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.rtx-forgot-titlebox{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  display:block;
+  width:auto;
+}
+
+
+/* notice-titlebox-clean-forgot */
+.rtx-forgot-titlebox,
+.rtx-forgot-titlebox *,
+.rtx-forgot-heading,
+.rtx-forgot-copy{
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+}
+.rtx-forgot-titlebox{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.rtx-forgot-heading,.rtx-forgot-copy{display:block;width:auto;}
+
+.rtx-forgot-kicker{
     color:var(--fg-green-2);
     background:transparent;
     border:0;
@@ -863,6 +949,1437 @@
       transform:scale(.78);
     }
   }
+
+/* === NoticeModal final layout sync with /topup/index.ejs ===
+   Keeps modal header clean: icon + text + optional close button, no boxed title background. */
+#registerNoticeModal.rtx-notice .rtx-notice-head,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head{
+  display:grid !important;
+  grid-template-columns:76px minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:18px !important;
+  padding:26px 28px 24px !important;
+  margin:0 !important;
+  min-height:0 !important;
+  background:linear-gradient(135deg, rgba(0,194,103,.18), rgba(11,34,58,.20)) !important;
+  background-image:linear-gradient(135deg, rgba(0,194,103,.18), rgba(11,34,58,.20)) !important;
+  border:0 !important;
+  border-bottom:1px solid rgba(157,210,255,.13) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  position:relative !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-head{
+  grid-template-columns:76px minmax(0,1fr) !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-head::before,
+#registerNoticeModal.rtx-notice .rtx-notice-head::after,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head::before,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head::after,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head::before,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head::after,
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox::before,
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox::after,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox::before,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox::after,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox::before,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox::after{
+  content:none !important;
+  display:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-icon,
+#forgotModal.rtx-forgot-modal .rtx-forgot-icon,
+#btNoticeModal.bt-enterprise-notice .bt-notice-icon{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:76px !important;
+  height:76px !important;
+  min-width:76px !important;
+  border-radius:24px !important;
+  display:grid !important;
+  place-items:center !important;
+  align-self:center !important;
+  justify-self:start !important;
+  margin:0 !important;
+  font-size:30px !important;
+  line-height:1 !important;
+  background:linear-gradient(135deg, #36e681, #00bf63) !important;
+  border:1px solid rgba(89,255,175,.34) !important;
+  box-shadow:0 18px 50px rgba(0,194,103,.30), inset 0 1px 0 rgba(255,255,255,.20) !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:auto !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  gap:6px !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-kicker,
+#forgotModal.rtx-forgot-modal .rtx-forgot-kicker,
+#btNoticeModal.bt-enterprise-notice .bt-notice-kicker{
+  display:block !important;
+  width:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#38f58d !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  line-height:1.1 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-heading,
+#forgotModal.rtx-forgot-modal .rtx-forgot-heading,
+#btNoticeModal.bt-enterprise-notice .bt-notice-heading{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#f7fbff !important;
+  font-size:clamp(30px, 5vw, 48px) !important;
+  font-weight:950 !important;
+  line-height:.98 !important;
+  letter-spacing:-.055em !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  text-shadow:0 14px 34px rgba(0,0,0,.30) !important;
+  transform:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-copy,
+#forgotModal.rtx-forgot-modal .rtx-forgot-copy,
+#btNoticeModal.bt-enterprise-notice .bt-notice-copy{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#afbdca !important;
+  font-size:14px !important;
+  font-weight:800 !important;
+  line-height:1.55 !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+
+#forgotModal.rtx-forgot-modal .rtx-forgot-close,
+#btNoticeModal.bt-enterprise-notice .bt-notice-x{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  align-self:start !important;
+  justify-self:end !important;
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  border-radius:18px !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 !important;
+  position:relative !important;
+  top:auto !important;
+  right:auto !important;
+  background:rgba(255,255,255,.07) !important;
+  border:1px solid rgba(89,255,175,.25) !important;
+  color:#ecfff5 !important;
+  box-shadow:none !important;
+}
+
+@media (max-width:620px){
+  #registerNoticeModal.rtx-notice .rtx-notice-head,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-head,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-head{
+    grid-template-columns:64px minmax(0,1fr) 44px !important;
+    gap:14px !important;
+    padding:22px 20px 20px !important;
+    align-items:center !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-head{
+    grid-template-columns:64px minmax(0,1fr) !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-icon,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-icon,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-icon{
+    width:64px !important;
+    height:64px !important;
+    min-width:64px !important;
+    border-radius:21px !important;
+    font-size:26px !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-heading,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-heading,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-heading{
+    font-size:clamp(28px, 8vw, 38px) !important;
+    line-height:1.02 !important;
+  }
+  #forgotModal.rtx-forgot-modal .rtx-forgot-close,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-x{
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    border-radius:15px !important;
+  }
+}
+
+
+
+  /* ===== FINAL FORGOT PASSWORD MODAL — matched to register notice layout ===== */
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: none;
+    place-items: center;
+    padding: 22px;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(0, 195, 88, .18), transparent 34%),
+      radial-gradient(circle at 88% 78%, rgba(29, 75, 160, .18), transparent 36%),
+      rgba(0, 7, 14, .72) !important;
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal.show,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal:not([hidden]) {
+    display: grid !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal *,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal *::before,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal *::after {
+    box-sizing: border-box;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-card {
+    position: relative;
+    width: min(560px, calc(100vw - 28px));
+    max-height: min(92vh, 760px);
+    overflow: auto;
+    border: 1px solid rgba(0, 196, 92, .42) !important;
+    border-top: 4px solid rgba(0, 196, 92, .92) !important;
+    border-radius: 28px !important;
+    color: #f7fbff !important;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(0, 196, 92, .28), transparent 32%),
+      radial-gradient(circle at 82% 0%, rgba(50, 115, 255, .18), transparent 30%),
+      linear-gradient(150deg, rgba(11, 33, 46, .98), rgba(7, 22, 38, .98) 48%, rgba(11, 22, 55, .98)) !important;
+    box-shadow: 0 34px 90px rgba(0, 0, 0, .56), 0 0 0 1px rgba(255,255,255,.035) inset !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-card::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-close {
+    position: absolute !important;
+    top: 24px !important;
+    right: 24px !important;
+    z-index: 8 !important;
+    width: 52px !important;
+    height: 52px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(121, 255, 185, .32) !important;
+    color: #f8fffb !important;
+    background: rgba(255, 255, 255, .08) !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .22), 0 0 0 1px rgba(255,255,255,.04) inset !important;
+    cursor: pointer;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-head {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 76px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 20px !important;
+    padding: 30px 92px 30px 30px !important;
+    min-height: 142px !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(139, 169, 197, .22) !important;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(91, 255, 166, .16), transparent 34%),
+      linear-gradient(135deg, rgba(25, 88, 72, .34), rgba(5, 25, 44, .18)) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-head::before,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-head::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-icon {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 76px !important;
+    height: 76px !important;
+    flex: 0 0 76px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 22px !important;
+    color: #071427 !important;
+    font-size: 32px !important;
+    background: linear-gradient(135deg, #5ff29a, #05c95c) !important;
+    border: 1px solid rgba(122, 255, 184, .42) !important;
+    box-shadow: 0 20px 44px rgba(0, 198, 92, .28), 0 0 0 12px rgba(0, 196, 92, .08) !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-titlebox {
+    position: relative !important;
+    z-index: 2 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-titlebox::before,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-titlebox::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-kicker {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 0 8px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #31f084 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .095em !important;
+    line-height: 1.1 !important;
+    text-transform: uppercase !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-kicker::before {
+    content: "✦" !important;
+    display: inline-block !important;
+    color: #31f084 !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-heading {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #f8fbff !important;
+    font-size: clamp(32px, 6vw, 48px) !important;
+    font-weight: 950 !important;
+    letter-spacing: -.055em !important;
+    line-height: .98 !important;
+    text-shadow: 0 12px 28px rgba(0,0,0,.24) !important;
+    overflow: visible !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-copy {
+    display: block !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #aab9c9 !important;
+    font-size: 14px !important;
+    font-weight: 850 !important;
+    line-height: 1.55 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-body {
+    padding: 24px 30px 30px !important;
+    background: transparent !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-steps {
+    display: grid !important;
+    gap: 10px !important;
+    margin: 0 0 20px !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-step {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 16px !important;
+    min-height: 58px !important;
+    padding: 12px 16px !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(137, 166, 195, .20) !important;
+    background: rgba(255, 255, 255, .045) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-num {
+    width: 38px !important;
+    height: 38px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 13px !important;
+    color: #06152a !important;
+    background: linear-gradient(135deg, #25e474, #04be56) !important;
+    box-shadow: 0 14px 28px rgba(0, 196, 92, .18) !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-step strong {
+    color: #f8fbff !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    line-height: 1.35 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-field {
+    display: grid !important;
+    gap: 10px !important;
+    margin-top: 4px !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-field label {
+    color: #aebdca !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-inputwrap {
+    display: grid !important;
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    align-items: center !important;
+    min-height: 60px !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(0, 196, 92, .42) !important;
+    background: rgba(6, 19, 36, .80) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.025) inset !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-inputwrap span {
+    height: 100% !important;
+    display: grid !important;
+    place-items: center !important;
+    border-right: 1px solid rgba(0, 196, 92, .22) !important;
+    background: rgba(5, 16, 31, .72) !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-inputwrap input {
+    width: 100% !important;
+    height: 60px !important;
+    padding: 0 18px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    color: #f7fbff !important;
+    background: transparent !important;
+    font-size: 15px !important;
+    font-weight: 850 !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-inputwrap input::placeholder {
+    color: rgba(170, 185, 202, .62) !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-top: 24px !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-btn-ghost,
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-btn-primary {
+    min-height: 52px !important;
+    padding: 0 24px !important;
+    border-radius: 18px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-btn-ghost {
+    border: 1px solid rgba(0, 196, 92, .42) !important;
+    color: #f7fbff !important;
+    background: rgba(7, 20, 38, .55) !important;
+  }
+
+  #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-btn-primary {
+    border: 1px solid rgba(0, 220, 98, .80) !important;
+    color: #06152a !important;
+    background: linear-gradient(135deg, #24e574, #04c65a) !important;
+    box-shadow: 0 18px 38px rgba(0, 196, 92, .24) !important;
+  }
+
+  @media (max-width: 620px) {
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal {
+      padding: 12px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-card {
+      width: min(100%, 560px) !important;
+      border-radius: 24px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-head {
+      grid-template-columns: 62px minmax(0, 1fr) !important;
+      gap: 14px !important;
+      padding: 24px 72px 24px 22px !important;
+      min-height: 126px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-icon {
+      width: 62px !important;
+      height: 62px !important;
+      border-radius: 20px !important;
+      font-size: 27px !important;
+      box-shadow: 0 16px 34px rgba(0, 198, 92, .22), 0 0 0 9px rgba(0, 196, 92, .07) !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-close {
+      top: 20px !important;
+      right: 18px !important;
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 16px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-kicker {
+      font-size: 10px !important;
+      letter-spacing: .07em !important;
+      margin-bottom: 6px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-heading {
+      font-size: clamp(28px, 10vw, 40px) !important;
+      letter-spacing: -.06em !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-copy {
+      font-size: 13px !important;
+      line-height: 1.45 !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-body {
+      padding: 20px 20px 24px !important;
+    }
+
+    #forgotModal.rtx-forgot-enterprise.rtx-forgot-modal .rtx-forgot-actions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+    }
+  }
+
+
+  /* =========================================================
+     PASSWORD RECOVERY MODAL — CLONED FROM REGISTER SECURITY NOTICE
+     โครง/แสง/ระยะ/ขอบ/ปุ่ม ใช้ภาษาเดียวกับ Modal หน้า /register
+  ========================================================= */
+  #forgotModal.rtx-forgot-notice-clone[hidden]{display:none!important;}
+  #forgotModal.rtx-forgot-notice-clone{
+    --rn-card: color-mix(in srgb, var(--rtx-card,#17181d) 96%, #05060a 4%);
+    --rn-card2: color-mix(in srgb, var(--rtx-soft,#101116) 92%, #1c2437 8%);
+    --rn-text: var(--rtx-text,#eef6ff);
+    --rn-muted: var(--rtx-muted,#08b84f);
+    --rn-border: color-mix(in srgb, var(--rtx-border,rgba(255,255,255,.12)) 80%, var(--rtx-accent,#05b84f) 20%);
+    --rn-green: var(--rtx-accent,#05b84f);
+    --rn-green2: var(--rtx-accent2,#05b84f);
+    --rn-purple: #7c5cff;
+    position:fixed!important;
+    inset:0!important;
+    z-index:9999!important;
+    width:100%!important;
+    max-width:none!important;
+    display:grid!important;
+    place-items:center!important;
+    padding:clamp(12px,3vw,24px)!important;
+    border:0!important;
+    background:transparent!important;
+    overflow:auto!important;
+    color:var(--rn-text)!important;
+    isolation:isolate;
+  }
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-backdrop{
+    position:fixed!important;
+    inset:0!important;
+    background:
+      radial-gradient(circle at 20% 15%, color-mix(in srgb, var(--rn-green) 18%, transparent), transparent 34%),
+      radial-gradient(circle at 85% 80%, rgba(124,92,255,.22), transparent 36%),
+      rgba(0,0,0,.72)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(135%)!important;
+    backdrop-filter:blur(18px) saturate(135%)!important;
+    animation:rtxNoticeBackdropIn .28s ease both;
+  }
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+    position:relative!important;
+    width:min(560px, calc(100vw - 24px))!important;
+    max-width:min(560px, calc(100vw - 24px))!important;
+    max-height:min(92vh, 820px)!important;
+    overflow:auto!important;
+    border-radius:30px!important;
+    border:1px solid transparent!important;
+    color:var(--rn-text)!important;
+    background:
+      linear-gradient(145deg, var(--rn-card), var(--rn-card2)) padding-box,
+      linear-gradient(135deg, color-mix(in srgb, var(--rn-green) 72%, #fff 8%), rgba(124,92,255,.60), color-mix(in srgb, var(--rn-green2) 72%, #000 8%)) border-box!important;
+    box-shadow:
+      0 34px 110px rgba(0,0,0,.58),
+      0 0 0 1px rgba(255,255,255,.035),
+      inset 0 1px 0 rgba(255,255,255,.10)!important;
+    animation:rtxNoticeIn .42s cubic-bezier(.2,.88,.2,1) both!important;
+    isolation:isolate;
+  }
+  #forgotModal.rtx-forgot-notice-clone.is-closing .rtx-forgot-card{animation:rtxNoticeOut .18s ease both!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::-webkit-scrollbar{width:0;height:0;}
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::before{
+    content:""!important;
+    position:absolute!important;
+    inset:0 0 auto 0!important;
+    height:4px!important;
+    background:linear-gradient(90deg, #08b84f, #05b84f, #7c5cff, #08b84f)!important;
+    background-size:220% 100%!important;
+    animation:rtxNoticeTopline 4.8s linear infinite!important;
+    opacity:.95!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::after{
+    content:""!important;
+    position:absolute!important;
+    inset:-42% -30% auto auto!important;
+    width:320px!important;
+    height:320px!important;
+    border-radius:999px!important;
+    background:radial-gradient(circle, color-mix(in srgb, var(--rn-green) 24%, transparent), transparent 66%)!important;
+    filter:blur(3px)!important;
+    pointer-events:none!important;
+    z-index:-1!important;
+    animation:rtxNoticeOrb 5.4s ease-in-out infinite!important;
+  }
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-aura{
+    position:absolute!important;
+    inset:auto auto -90px -85px!important;
+    width:260px!important;
+    height:260px!important;
+    border-radius:999px!important;
+    background:radial-gradient(circle, rgba(124,92,255,.20), transparent 68%)!important;
+    pointer-events:none!important;
+    z-index:-1!important;
+    animation:rtxNoticeOrb 6.2s ease-in-out infinite reverse!important;
+  }
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+    position:relative!important;
+    display:flex!important;
+    gap:16px!important;
+    align-items:center!important;
+    grid-template-columns:none!important;
+    padding:24px 24px 20px!important;
+    min-height:0!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.075)!important;
+    border-radius:0!important;
+    background:
+      radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--rn-green) 18%, transparent), transparent 28%),
+      linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.015))!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::after,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox::after{content:none!important;display:none!important;}
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+    position:relative!important;
+    width:62px!important;
+    height:62px!important;
+    flex:0 0 62px!important;
+    border-radius:22px!important;
+    display:grid!important;
+    place-items:center!important;
+    background:
+      radial-gradient(circle at 30% 24%, rgba(255,255,255,.88), transparent 24%),
+      linear-gradient(135deg, #08b84f 0%, #05b84f 55%, #008c38 100%)!important;
+    color:#17130a!important;
+    box-shadow:
+      0 18px 36px color-mix(in srgb, var(--rn-green) 28%, transparent),
+      inset 0 1px 0 rgba(255,255,255,.55),
+      inset 0 -10px 18px rgba(78,43,5,.20)!important;
+    animation:rtxNoticeBadgeFloat 2.9s ease-in-out infinite!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge::before{
+    content:""!important;
+    position:absolute!important;
+    inset:-8px!important;
+    border-radius:26px!important;
+    border:1px solid color-mix(in srgb, var(--rn-green) 35%, transparent)!important;
+    opacity:.72!important;
+    animation:rtxNoticePulse 2.2s ease-in-out infinite!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge span{font-size:28px!important;filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))!important;}
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox *,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    background:transparent!important;
+    background-image:none!important;
+    box-shadow:none!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox{display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0!important;padding:0!important;margin:0!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-kicker{
+    color:#31f084!important;
+    font-size:12px!important;
+    font-weight:950!important;
+    letter-spacing:.07em!important;
+    line-height:1!important;
+    text-transform:uppercase!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-kicker::before{content:"✦";margin-right:8px;color:#31f084;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+    display:block!important;
+    width:auto!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    color:#f7fbff!important;
+    font-size:clamp(34px, 5.4vw, 48px)!important;
+    font-weight:950!important;
+    line-height:.98!important;
+    letter-spacing:-.055em!important;
+    text-shadow:0 14px 34px rgba(0,0,0,.30)!important;
+    transform:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    display:block!important;
+    width:auto!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    color:#afbdca!important;
+    font-size:14px!important;
+    font-weight:800!important;
+    line-height:1.55!important;
+    transform:none!important;
+  }
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{padding:20px 22px 6px!important;background:transparent!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-list{display:grid!important;gap:12px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{
+    display:grid!important;
+    grid-template-columns:46px minmax(0,1fr)!important;
+    gap:13px!important;
+    align-items:start!important;
+    padding:14px!important;
+    border-radius:20px!important;
+    border:1px solid rgba(255,255,255,.075)!important;
+    background:linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.018))!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.055)!important;
+    transform:translateY(8px);
+    opacity:0;
+    animation:rtxNoticeItemIn .42s cubic-bezier(.2,.8,.2,1) forwards!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item:nth-child(2){animation-delay:.08s!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item:nth-child(3){animation-delay:.16s!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item.warn{
+    border-color:color-mix(in srgb, var(--rn-green) 34%, rgba(255,255,255,.075))!important;
+    background:
+      radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--rn-green) 16%, transparent), transparent 44%),
+      linear-gradient(135deg, rgba(255,255,255,.058), rgba(255,255,255,.018))!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-no{
+    width:42px!important;
+    height:42px!important;
+    border-radius:16px!important;
+    display:grid!important;
+    place-items:center!important;
+    color:#17130a!important;
+    background:linear-gradient(135deg, #08b84f, #05b84f)!important;
+    font-size:13px!important;
+    font-weight:950!important;
+    box-shadow:0 12px 24px color-mix(in srgb, var(--rn-green) 20%, transparent)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item strong{display:block!important;color:var(--rn-text)!important;font-weight:950!important;margin:1px 0 4px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item small{display:block!important;color:color-mix(in srgb, var(--rn-muted) 88%, transparent)!important;line-height:1.55!important;font-weight:700!important;}
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email{
+    margin-top:14px!important;
+    display:grid!important;
+    gap:9px!important;
+    padding:13px 14px!important;
+    border-radius:18px!important;
+    border:1px solid color-mix(in srgb, var(--rn-green) 24%, rgba(255,255,255,.08))!important;
+    background:color-mix(in srgb, var(--rn-green) 8%, transparent)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email > span{color:color-mix(in srgb, var(--rn-muted) 92%, var(--rn-text) 8%)!important;font-weight:900!important;font-size:13px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap{
+    display:grid!important;
+    grid-template-columns:48px minmax(0,1fr)!important;
+    align-items:center!important;
+    min-height:58px!important;
+    overflow:hidden!important;
+    border-radius:18px!important;
+    border:1px solid color-mix(in srgb, var(--rn-green) 34%, rgba(255,255,255,.08))!important;
+    background:rgba(7,18,32,.72)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap i{height:100%!important;display:grid!important;place-items:center!important;border-right:1px solid rgba(5,184,79,.22)!important;font-style:normal!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap input{width:100%!important;height:58px!important;border:0!important;outline:0!important;background:transparent!important;color:#f7fbff!important;font:inherit!important;font-weight:850!important;padding:0 15px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap input::placeholder{color:rgba(175,189,202,.62)!important;}
+
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{display:flex!important;justify-content:flex-end!important;gap:10px!important;padding:16px 22px 22px!important;margin:0!important;background:transparent!important;border:0!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn{position:relative!important;overflow:hidden!important;min-height:48px!important;border-radius:999px!important;padding:0 18px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;cursor:pointer!important;font-weight:950!important;transition:transform .2s ease, filter .2s ease, box-shadow .2s ease!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn:hover{transform:translateY(-2px)!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.ghost{border:1px solid color-mix(in srgb, var(--rn-green) 34%, rgba(255,255,255,.08))!important;color:#f7fbff!important;background:rgba(255,255,255,.035)!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.primary{border:0!important;color:#17130a!important;background:linear-gradient(135deg, #08b84f 0%, #05b84f 48%, #05b84f 100%)!important;box-shadow:0 18px 38px color-mix(in srgb, var(--rn-green) 26%, transparent), inset 0 1px 0 rgba(255,255,255,.58)!important;padding-left:22px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.primary .shine{position:absolute!important;inset:-70% auto -70% -42%!important;width:42%!important;transform:rotate(18deg)!important;background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent)!important;animation:rtxNoticeShine 3.6s ease-in-out infinite!important;pointer-events:none!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.primary span:not(.shine),
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.primary b{position:relative!important;z-index:1!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn.primary b{display:grid!important;place-items:center!important;width:22px!important;height:22px!important;border-radius:999px!important;background:rgba(0,0,0,.13)!important;font-size:15px!important;}
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn:disabled{opacity:.62!important;cursor:wait!important;transform:none!important;filter:grayscale(.12)!important;}
+
+  @keyframes rtxNoticeBackdropIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes rtxNoticeIn{from{opacity:0;transform:translateY(18px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes rtxNoticeOut{to{opacity:0;transform:translateY(10px) scale(.985);}}
+  @keyframes rtxNoticeTopline{to{background-position:220% 0;}}
+  @keyframes rtxNoticeBadgeFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  @keyframes rtxNoticeOrb{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(-12px,10px,0) scale(1.04);}}
+  @keyframes rtxNoticePulse{0%,100%{transform:scale(.94);opacity:.35;}50%{transform:scale(1.08);opacity:.86;}}
+  @keyframes rtxNoticeItemIn{to{opacity:1;transform:translateY(0);}}
+  @keyframes rtxNoticeShine{0%,45%{left:-48%;}72%,100%{left:122%;}}
+
+  @media (max-width:560px){
+    #forgotModal.rtx-forgot-notice-clone{padding:11px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{width:calc(100vw - 22px)!important;max-width:calc(100vw - 22px)!important;border-radius:26px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{padding:20px 18px 16px!important;align-items:flex-start!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{width:54px!important;height:54px!important;flex-basis:54px!important;border-radius:19px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{padding:16px 16px 4px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{grid-template-columns:40px minmax(0,1fr)!important;padding:12px!important;border-radius:18px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-no{width:38px!important;height:38px!important;border-radius:14px!important;font-size:12px!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{padding:14px 16px 18px!important;display:grid!important;grid-template-columns:1fr!important;}
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn{width:100%!important;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    #forgotModal.rtx-forgot-notice-clone *,
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-backdrop{animation:none!important;transition:none!important;}
+  }
+
+  /* =========================================================
+     FINAL POLISH — PASSWORD RECOVERY MODAL
+     เอาพื้นหลังแยกของหัว Modal ออก + ปิดแถบเลื่อนให้ดูจบงาน
+  ========================================================= */
+  #forgotModal.rtx-forgot-notice-clone{
+    overflow:hidden!important;
+    scrollbar-width:none!important;
+    overscroll-behavior:contain!important;
+    padding:clamp(10px,2.2vw,18px)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone::-webkit-scrollbar,
+  #forgotModal.rtx-forgot-notice-clone *::-webkit-scrollbar{
+    width:0!important;
+    height:0!important;
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+    width:min(560px, calc(100vw - 24px))!important;
+    max-width:min(560px, calc(100vw - 24px))!important;
+    max-height:none!important;
+    overflow:hidden!important;
+    scrollbar-width:none!important;
+    border-radius:30px!important;
+    background:
+      radial-gradient(circle at 12% 9%, color-mix(in srgb, var(--rn-green) 16%, transparent), transparent 33%),
+      radial-gradient(circle at 88% 88%, rgba(124,92,255,.16), transparent 36%),
+      linear-gradient(145deg, var(--rn-card), var(--rn-card2)) padding-box,
+      linear-gradient(135deg, color-mix(in srgb, var(--rn-green) 72%, #fff 8%), rgba(124,92,255,.48), color-mix(in srgb, var(--rn-green2) 72%, #000 8%)) border-box!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+    padding:24px 34px 18px!important;
+    gap:17px!important;
+    align-items:center!important;
+    border:0!important;
+    border-bottom:1px solid color-mix(in srgb, var(--rn-border) 50%, transparent)!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::after{
+    content:none!important;
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+    width:68px!important;
+    height:68px!important;
+    flex-basis:68px!important;
+    border-radius:23px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox *,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    background:transparent!important;
+    background-image:none!important;
+    box-shadow:none!important;
+    border:0!important;
+    outline:0!important;
+    filter:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox{
+    gap:5px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-kicker{
+    font-size:12px!important;
+    letter-spacing:.075em!important;
+    color:#31f084!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+    font-size:clamp(38px, 5.3vw, 50px)!important;
+    line-height:.92!important;
+    letter-spacing:-.06em!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    max-width:410px!important;
+    font-size:14px!important;
+    line-height:1.45!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{
+    padding:18px 22px 4px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-list{
+    gap:11px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{
+    min-height:auto!important;
+    padding:13px 14px!important;
+    border-radius:20px!important;
+    align-items:center!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item strong{
+    margin:0 0 3px!important;
+    font-size:15px!important;
+    line-height:1.24!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item small{
+    font-size:13px!important;
+    line-height:1.42!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email{
+    margin-top:13px!important;
+    padding:12px 14px!important;
+    border-radius:19px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-inputwrap input{
+    min-height:54px!important;
+    height:54px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{
+    padding:16px 22px 20px!important;
+  }
+
+  @media (max-width:560px){
+    #forgotModal.rtx-forgot-notice-clone{
+      padding:10px!important;
+      overflow:hidden!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+      width:calc(100vw - 20px)!important;
+      max-width:calc(100vw - 20px)!important;
+      max-height:none!important;
+      overflow:hidden!important;
+      border-radius:26px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+      padding:19px 17px 15px!important;
+      gap:12px!important;
+      align-items:center!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+      width:54px!important;
+      height:54px!important;
+      flex-basis:54px!important;
+      border-radius:19px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+      font-size:clamp(32px, 10vw, 42px)!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+      font-size:12.5px!important;
+      line-height:1.35!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{
+      padding:14px 14px 2px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-list{
+      gap:9px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{
+      padding:10px!important;
+      grid-template-columns:38px minmax(0,1fr)!important;
+      gap:10px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item small{
+      font-size:12px!important;
+      line-height:1.32!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email{
+      margin-top:10px!important;
+      padding:10px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{
+      padding:12px 14px 16px!important;
+      gap:9px!important;
+    }
+  }
+
+
+
+  /* =========================================================
+     FINAL V3 — CLEAN PASSWORD RECOVERY MODAL
+     ลบเส้นขีดด้านบน/เส้นเฉียง และจัดหัว Modal ให้เป็นผืนเดียวแบบ Notice
+  ========================================================= */
+  #forgotModal.rtx-forgot-notice-clone,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+    scrollbar-width:none!important;
+    -ms-overflow-style:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone::-webkit-scrollbar,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::-webkit-scrollbar,
+  #forgotModal.rtx-forgot-notice-clone *::-webkit-scrollbar{
+    width:0!important;
+    height:0!important;
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone{
+    overflow:hidden!important;
+    padding:clamp(10px,2vw,18px)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+    overflow:hidden!important;
+    max-height:calc(100dvh - 24px)!important;
+    border:1px solid rgba(5,184,79,.48)!important;
+    border-top:1px solid rgba(5,184,79,.62)!important;
+    border-radius:30px!important;
+    background:
+      radial-gradient(circle at 10% 8%, rgba(5,184,79,.22), transparent 34%),
+      radial-gradient(circle at 88% 92%, rgba(124,92,255,.16), transparent 38%),
+      linear-gradient(150deg, rgba(10,31,42,.98), rgba(7,18,33,.985) 54%, rgba(11,19,50,.98))!important;
+    box-shadow:
+      0 34px 110px rgba(0,0,0,.58),
+      inset 0 1px 0 rgba(255,255,255,.08)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::after{
+    content:none!important;
+    display:none!important;
+    animation:none!important;
+    background:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-aura{
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+    position:relative!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:18px!important;
+    padding:28px 30px 26px!important;
+    margin:0!important;
+    border:0!important;
+    border-bottom:1px solid rgba(134,180,210,.14)!important;
+    background:
+      radial-gradient(circle at 8% 24%, rgba(95,242,154,.18), transparent 33%),
+      linear-gradient(135deg, rgba(45,113,85,.42), rgba(12,51,60,.24) 58%, rgba(9,29,50,.12))!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::after{
+    content:none!important;
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+    width:70px!important;
+    height:70px!important;
+    flex:0 0 70px!important;
+    border-radius:23px!important;
+    box-shadow:
+      0 22px 52px rgba(5,184,79,.32),
+      inset 0 1px 0 rgba(255,255,255,.42)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox{
+    min-width:0!important;
+    max-width:100%!important;
+    background:transparent!important;
+    background-image:none!important;
+    border:0!important;
+    box-shadow:none!important;
+    padding:0!important;
+    margin:0!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+    font-size:clamp(36px,5.2vw,50px)!important;
+    line-height:.95!important;
+    letter-spacing:-.06em!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    max-width:410px!important;
+    line-height:1.48!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{
+    padding:20px 24px 4px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-list{
+    gap:11px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{
+    padding:13px 14px!important;
+    border-radius:20px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email{
+    margin-top:13px!important;
+    padding:13px 14px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{
+    padding:16px 24px 22px!important;
+  }
+  @media (max-width:560px){
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+      max-height:calc(100dvh - 20px)!important;
+      border-radius:26px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+      padding:20px 18px 17px!important;
+      gap:13px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+      width:56px!important;
+      height:56px!important;
+      flex-basis:56px!important;
+      border-radius:19px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+      font-size:clamp(32px,9.6vw,42px)!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+      font-size:12.5px!important;
+    }
+  }
+
+  /* =========================================================
+     PASSWORD RECOVERY MODAL — TOPUP NOTICE HEADER MATCH
+     ปรับหัว Modal ให้เป็นผืนเดียวแบบ Payment Notice ไม่มีกรอบสี่เหลี่ยมซ้อน
+  ========================================================= */
+  #forgotModal.rtx-forgot-notice-clone{
+    padding:clamp(12px,2.4vw,24px)!important;
+    overflow:hidden!important;
+    scrollbar-width:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone::-webkit-scrollbar,
+  #forgotModal.rtx-forgot-notice-clone *::-webkit-scrollbar{
+    width:0!important;
+    height:0!important;
+    display:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-backdrop{
+    background:
+      radial-gradient(circle at 14% 9%, color-mix(in srgb,var(--rtx-accent,#05b84f) 25%, transparent), transparent 30%),
+      radial-gradient(circle at 86% 84%, rgba(55,66,170,.20), transparent 36%),
+      rgba(0,0,0,.72)!important;
+    backdrop-filter:blur(16px) saturate(126%)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+    width:min(560px, calc(100vw - 24px))!important;
+    max-width:min(560px, calc(100vw - 24px))!important;
+    max-height:none!important;
+    padding:0!important;
+    border-radius:28px!important;
+    border:1px solid color-mix(in srgb,var(--rtx-accent,#05b84f) 42%, rgba(255,255,255,.14))!important;
+    background:
+      radial-gradient(circle at 0% 0%, color-mix(in srgb,var(--rtx-accent,#05b84f) 13%, transparent), transparent 33%),
+      radial-gradient(circle at 100% 100%, rgba(42,55,150,.18), transparent 36%),
+      linear-gradient(145deg,#07151f 0%,#081324 46%,#0b1020 100%)!important;
+    box-shadow:
+      0 34px 95px rgba(0,0,0,.56),
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 0 0 1px rgba(255,255,255,.025)!important;
+    overflow:hidden!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::before,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card::after,
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-aura{
+    display:none!important;
+    content:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+    position:relative!important;
+    z-index:1!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:17px!important;
+    width:100%!important;
+    padding:30px 30px 26px!important;
+    border:0!important;
+    border-radius:0!important;
+    background:
+      radial-gradient(circle at 8% 16%, color-mix(in srgb,var(--rtx-accent,#05b84f) 34%, transparent), transparent 36%),
+      radial-gradient(circle at 86% 0%, rgba(14,184,79,.16), transparent 32%),
+      linear-gradient(135deg,rgba(32,105,79,.86) 0%,rgba(12,52,54,.68) 42%,rgba(8,22,36,.74) 100%)!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::before{
+    content:""!important;
+    position:absolute!important;
+    inset:0!important;
+    background:
+      linear-gradient(110deg,rgba(255,255,255,.10),transparent 42%),
+      radial-gradient(circle at 16% 0%,rgba(255,255,255,.13),transparent 28%)!important;
+    pointer-events:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head::after{
+    content:""!important;
+    position:absolute!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    height:1px!important;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rtx-accent,#05b84f) 36%, rgba(255,255,255,.22)),transparent)!important;
+    opacity:.95!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+    position:relative!important;
+    z-index:1!important;
+    width:62px!important;
+    height:62px!important;
+    flex:0 0 62px!important;
+    border-radius:18px!important;
+    background:
+      radial-gradient(circle at 28% 20%,rgba(255,255,255,.88),transparent 26%),
+      linear-gradient(135deg,#2ee37e 0%,#05b84f 62%,#079342 100%)!important;
+    box-shadow:
+      0 18px 38px rgba(5,184,79,.32),
+      inset 0 1px 0 rgba(255,255,255,.42)!important;
+    animation:none!important;
+    border:1px solid rgba(255,255,255,.13)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge::after{
+    content:""!important;
+    position:absolute!important;
+    inset:-8px!important;
+    border-radius:24px!important;
+    border:1px solid rgba(5,184,79,.25)!important;
+    background:rgba(5,184,79,.06)!important;
+    z-index:-1!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge span{
+    font-size:28px!important;
+    line-height:1!important;
+    filter:drop-shadow(0 7px 10px rgba(0,0,0,.28))!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-titlebox{
+    position:relative!important;
+    z-index:1!important;
+    display:block!important;
+    min-width:0!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+    padding:0!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-kicker{
+    display:flex!important;
+    align-items:center!important;
+    gap:8px!important;
+    width:max-content!important;
+    max-width:100%!important;
+    margin:0 0 6px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#29ef83!important;
+    font-size:12px!important;
+    line-height:1.15!important;
+    font-weight:950!important;
+    letter-spacing:.09em!important;
+    text-transform:uppercase!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-kicker::before{
+    content:""!important;
+    width:7px!important;
+    height:7px!important;
+    border-radius:999px!important;
+    background:#05d968!important;
+    box-shadow:0 0 14px rgba(5,217,104,.72)!important;
+    flex:0 0 7px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+    display:block!important;
+    margin:0!important;
+    padding:0!important;
+    color:#fff!important;
+    font-size:clamp(29px,5.6vw,43px)!important;
+    line-height:.98!important;
+    letter-spacing:-.055em!important;
+    font-weight:950!important;
+    text-shadow:0 3px 0 rgba(255,255,255,.12),0 15px 30px rgba(0,0,0,.42)!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+    display:block!important;
+    max-width:410px!important;
+    margin:7px 0 0!important;
+    padding:0!important;
+    color:rgba(226,238,248,.74)!important;
+    font-size:13.5px!important;
+    line-height:1.55!important;
+    font-weight:800!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{
+    padding:20px 28px 0!important;
+    background:
+      radial-gradient(circle at 2% 0%,rgba(255,255,255,.055),transparent 26%),
+      transparent!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-list{
+    gap:11px!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item{
+    min-height:58px!important;
+    padding:13px 14px!important;
+    border-radius:18px!important;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018)),
+      rgba(12,24,39,.72)!important;
+    border:1px solid rgba(255,255,255,.10)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-item.warn{
+    border-color:color-mix(in srgb,var(--rtx-accent,#05b84f) 52%, rgba(255,255,255,.10))!important;
+    background:
+      linear-gradient(180deg,rgba(5,184,79,.075),rgba(255,255,255,.018)),
+      rgba(12,24,39,.72)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-email{
+    margin-top:13px!important;
+    padding:13px 14px!important;
+    border-radius:18px!important;
+    background:rgba(5,184,79,.07)!important;
+    border:1px solid rgba(5,184,79,.34)!important;
+  }
+  #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{
+    padding:20px 28px 24px!important;
+    margin:0!important;
+    background:transparent!important;
+  }
+  @media (max-width:560px){
+    #forgotModal.rtx-forgot-notice-clone{
+      padding:10px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-card{
+      width:calc(100vw - 20px)!important;
+      max-width:calc(100vw - 20px)!important;
+      border-radius:25px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-head{
+      padding:24px 20px 21px!important;
+      gap:13px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge{
+      width:54px!important;
+      height:54px!important;
+      flex-basis:54px!important;
+      border-radius:17px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-badge span{
+      font-size:24px!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-heading{
+      font-size:clamp(31px,10vw,40px)!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-copy{
+      font-size:12.5px!important;
+      line-height:1.5!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-body{
+      padding:16px 16px 0!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-actions{
+      padding:16px 16px 20px!important;
+      display:grid!important;
+      grid-template-columns:1fr!important;
+    }
+    #forgotModal.rtx-forgot-notice-clone .rtx-forgot-btn{
+      width:100%!important;
+    }
+  }
+
 </style>
 
 <script type="module">

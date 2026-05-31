@@ -145,15 +145,15 @@
   <div class="rtx-notice-card" role="alertdialog">
     <div class="rtx-notice-aura" aria-hidden="true"></div>
 
-    <div class="rtx-notice-head">
-      <div class="rtx-notice-badge" aria-hidden="true">
+    <div class="rtx-notice-head" role="group" aria-labelledby="regNoticeTitle" aria-describedby="regNoticeText">
+      <span class="rtx-notice-badge" aria-hidden="true">
         <span>⚠️</span>
-      </div>
-      <div class="rtx-notice-titlebox">
+      </span>
+      <span class="rtx-notice-titlebox">
         <span class="rtx-notice-kicker">REGISTER SECURITY NOTICE</span>
-        <h3 id="regNoticeTitle">แจ้งเตือนก่อนสมัคร</h3>
-        <p id="regNoticeText">โปรดตรวจสอบข้อมูลให้ถูกต้องก่อนสร้างบัญชี</p>
-      </div>
+        <span class="rtx-notice-heading" id="regNoticeTitle" role="heading" aria-level="3">แจ้งเตือนก่อนสมัคร</span>
+        <span class="rtx-notice-copy" id="regNoticeText">โปรดตรวจสอบข้อมูลให้ถูกต้องก่อนสร้างบัญชี</span>
+      </span>
     </div>
 
     <div class="rtx-notice-body">
@@ -408,7 +408,45 @@
     filter:drop-shadow(0 3px 8px rgba(0,0,0,.18));
   }
 
-  .rtx-notice-kicker{
+  
+.rtx-notice-titlebox,
+.rtx-notice-titlebox *,
+.rtx-notice-heading,
+.rtx-notice-copy{
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.rtx-notice-titlebox{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.rtx-notice-heading,
+.rtx-notice-copy{
+  display:block;
+  width:auto;
+}
+
+
+/* notice-titlebox-clean-register */
+.rtx-notice-titlebox,
+.rtx-notice-titlebox *,
+.rtx-notice-heading,
+.rtx-notice-copy{
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+}
+.rtx-notice-titlebox{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.rtx-notice-heading,.rtx-notice-copy{display:block;width:auto;}
+
+.rtx-notice-kicker{
     display:inline-flex;
     margin-bottom:5px;
     color:color-mix(in srgb, var(--rn-green) 88%, #fff 8%);
@@ -418,7 +456,7 @@
     text-transform:uppercase;
   }
 
-  .rtx-notice-titlebox h3{
+  .rtx-notice-heading{
     margin:0;
     font-size:clamp(22px, 3vw, 30px);
     line-height:1.15;
@@ -427,7 +465,7 @@
     color:var(--rn-text);
   }
 
-  .rtx-notice-titlebox p{
+  .rtx-notice-copy{
     margin:6px 0 0;
     color:color-mix(in srgb, var(--rn-muted) 88%, var(--rn-text) 12%);
     font-weight:750;
@@ -632,6 +670,213 @@
   .rtx-meta{margin-top:auto;padding-top:36px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;color:color-mix(in srgb,var(--rtx-accent) 76%,var(--rtx-muted));font-size:12px;font-weight:900;}
   .rtx-meta i{width:5px;height:5px;border-radius:50%;background:var(--rtx-accent);opacity:.76;}
   
+
+
+/* === NoticeModal final layout sync with /topup/index.ejs ===
+   Keeps modal header clean: icon + text + optional close button, no boxed title background. */
+#registerNoticeModal.rtx-notice .rtx-notice-head,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head{
+  display:grid !important;
+  grid-template-columns:76px minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:18px !important;
+  padding:26px 28px 24px !important;
+  margin:0 !important;
+  min-height:0 !important;
+  background:linear-gradient(135deg, rgba(0,194,103,.18), rgba(11,34,58,.20)) !important;
+  background-image:linear-gradient(135deg, rgba(0,194,103,.18), rgba(11,34,58,.20)) !important;
+  border:0 !important;
+  border-bottom:1px solid rgba(157,210,255,.13) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  position:relative !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-head{
+  grid-template-columns:76px minmax(0,1fr) !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-head::before,
+#registerNoticeModal.rtx-notice .rtx-notice-head::after,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head::before,
+#forgotModal.rtx-forgot-modal .rtx-forgot-head::after,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head::before,
+#btNoticeModal.bt-enterprise-notice .bt-notice-head::after,
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox::before,
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox::after,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox::before,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox::after,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox::before,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox::after{
+  content:none !important;
+  display:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-icon,
+#forgotModal.rtx-forgot-modal .rtx-forgot-icon,
+#btNoticeModal.bt-enterprise-notice .bt-notice-icon{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:76px !important;
+  height:76px !important;
+  min-width:76px !important;
+  border-radius:24px !important;
+  display:grid !important;
+  place-items:center !important;
+  align-self:center !important;
+  justify-self:start !important;
+  margin:0 !important;
+  font-size:30px !important;
+  line-height:1 !important;
+  background:linear-gradient(135deg, #36e681, #00bf63) !important;
+  border:1px solid rgba(89,255,175,.34) !important;
+  box-shadow:0 18px 50px rgba(0,194,103,.30), inset 0 1px 0 rgba(255,255,255,.20) !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-titlebox,
+#forgotModal.rtx-forgot-modal .rtx-forgot-titlebox,
+#btNoticeModal.bt-enterprise-notice .bt-notice-titlebox{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:auto !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  gap:6px !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-kicker,
+#forgotModal.rtx-forgot-modal .rtx-forgot-kicker,
+#btNoticeModal.bt-enterprise-notice .bt-notice-kicker{
+  display:block !important;
+  width:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#38f58d !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  line-height:1.1 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-heading,
+#forgotModal.rtx-forgot-modal .rtx-forgot-heading,
+#btNoticeModal.bt-enterprise-notice .bt-notice-heading{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#f7fbff !important;
+  font-size:clamp(30px, 5vw, 48px) !important;
+  font-weight:950 !important;
+  line-height:.98 !important;
+  letter-spacing:-.055em !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  text-shadow:0 14px 34px rgba(0,0,0,.30) !important;
+  transform:none !important;
+}
+
+#registerNoticeModal.rtx-notice .rtx-notice-copy,
+#forgotModal.rtx-forgot-modal .rtx-forgot-copy,
+#btNoticeModal.bt-enterprise-notice .bt-notice-copy{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#afbdca !important;
+  font-size:14px !important;
+  font-weight:800 !important;
+  line-height:1.55 !important;
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+
+#forgotModal.rtx-forgot-modal .rtx-forgot-close,
+#btNoticeModal.bt-enterprise-notice .bt-notice-x{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  align-self:start !important;
+  justify-self:end !important;
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  border-radius:18px !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 !important;
+  position:relative !important;
+  top:auto !important;
+  right:auto !important;
+  background:rgba(255,255,255,.07) !important;
+  border:1px solid rgba(89,255,175,.25) !important;
+  color:#ecfff5 !important;
+  box-shadow:none !important;
+}
+
+@media (max-width:620px){
+  #registerNoticeModal.rtx-notice .rtx-notice-head,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-head,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-head{
+    grid-template-columns:64px minmax(0,1fr) 44px !important;
+    gap:14px !important;
+    padding:22px 20px 20px !important;
+    align-items:center !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-head{
+    grid-template-columns:64px minmax(0,1fr) !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-icon,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-icon,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-icon{
+    width:64px !important;
+    height:64px !important;
+    min-width:64px !important;
+    border-radius:21px !important;
+    font-size:26px !important;
+  }
+  #registerNoticeModal.rtx-notice .rtx-notice-heading,
+  #forgotModal.rtx-forgot-modal .rtx-forgot-heading,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-heading{
+    font-size:clamp(28px, 8vw, 38px) !important;
+    line-height:1.02 !important;
+  }
+  #forgotModal.rtx-forgot-modal .rtx-forgot-close,
+  #btNoticeModal.bt-enterprise-notice .bt-notice-x{
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    border-radius:15px !important;
+  }
+}
 
 </style>
 
