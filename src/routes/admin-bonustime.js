@@ -6,7 +6,7 @@ import { Topup } from "../models/Topup.js";
 import { Transaction } from "../models/Transaction.js";
 import { BonustimeOrder } from "../models/BonustimeOrder.js";
 import { config, connectMongoIfNeeded, resolveBonustimeDbName } from "../config.js";
-import { getNextServiceIdentity, parseServiceKey } from "../services/bonustimeMultiTenant.js";
+import { getNextServiceIdentity } from "../services/bonustimeMultiTenant.js";
 
 const router = Router();
 const PRODUCTION_KEY = "rtautobot";
@@ -71,19 +71,6 @@ function computeLicenseExpiry(doc = {}) {
     input: expires.toISOString().slice(0, 10),
     disabled: false,
   };
-}
-
-
-function isExpiredOverDays(expiry, days = 30) {
-  const expiresAt = expiry?.expiresAt instanceof Date ? expiry.expiresAt : null;
-  if (!expiresAt || !Number.isFinite(expiresAt.getTime())) return false;
-  return Date.now() - expiresAt.getTime() >= days * 24 * 60 * 60 * 1000;
-}
-
-function resolvePackageNote(doc = {}) {
-  const parsed = parseServiceKey(doc.serviceKey || doc.tenantId || doc.legacyTenantId || "");
-  const isPk2 = parsed?.group === "pk2" || doc.LOTTO_ENABLED === true;
-  return isPk2 ? "แพ็กเกจ 2 (สล็อต+บาคาร่า+หวย)" : "แพ็กเกจ 1 (สล็อต+บาคาร่า)";
 }
 
 function toThaiDate(d = new Date()) {
@@ -273,8 +260,8 @@ router.get("/", async (_req, res) => {
 
 router.get("/settings", async (_req, res) => {
   try {
-    const wallets = await Topup.find({ ...productionScope(), type: "DEPOSIT" })
-      .sort({ accountCode: 1, createdAt: 1 })
+    const wallets = await Topup.find({ ...productionScope() })
+      .sort({ type: 1, accountCode: 1, createdAt: 1 })
       .lean();
     res.render("admin/admin_setting", {
       title: "ตั้งค่าบัญชีรับเงิน | RTAUTOBOT",
@@ -308,7 +295,7 @@ router.post("/settings/wallets", async (req, res) => {
         accountNumber: String(row.accountNumber || "").trim(),
         accountCode: String(row.accountCode || "").trim().toLowerCase(),
         secret: String(row.secret || "").trim(),
-        type: "DEPOSIT",
+        type: String(row.type || "DEPOSIT").trim().toUpperCase() === "WITHDRAW" ? "WITHDRAW" : "DEPOSIT",
         isActive: !!row.isActive,
         isSMS: !!row.isSMS,
         isAuto: !!row.isAuto,
@@ -329,7 +316,7 @@ router.post("/settings/wallets", async (req, res) => {
         accountNumber: newAccountNumber,
         accountCode: newAccountCode,
         secret: newSecret,
-        type: "DEPOSIT",
+        type: String(nw.type || "DEPOSIT").trim().toUpperCase() === "WITHDRAW" ? "WITHDRAW" : "DEPOSIT",
         isActive: !!nw.isActive,
         isSMS: !!nw.isSMS,
         isAuto: !!nw.isAuto,
@@ -592,41 +579,36 @@ router.get("/bonustime-panel", async (_req, res) => {
       }
     }
 
-    const records = docs.map((doc) => {
-      const expiry = computeLicenseExpiry(doc);
-      const resetEligible = !!doc.serial_key && !expiry.disabled && isExpiredOverDays(expiry, 30);
-      return {
-        tenantId: doc.tenantId || doc.serviceKey || "",
-        legacyTenantId: doc.legacyTenantId || "",
-        serviceMode: doc.serviceMode || "multiTenant",
-        serviceGroup: doc.serviceGroup || "",
-        serviceNo: doc.serviceNo || null,
-        serviceKey: doc.serviceKey || doc.tenantId || "",
-        webhookUrl: doc.webhookUrl || doc.LINK || "",
-        LINK: doc.LINK || doc.webhookUrl || "",
-        serial_key: doc.serial_key || "",
-        username: ownerBySerial[doc.serial_key] || "",
-        ownerName: doc.ownerName || ownerDisplayBySerial[doc.serial_key] || "",
-        NAME: doc.NAME || "",
-        LOGO: doc.LOGO || "",
-        LOGIN_URL: doc.LOGIN_URL || "",
-        SIGNUP_URL: doc.SIGNUP_URL || "",
-        LINE_ADMIN: doc.LINE_ADMIN || "",
-        LOTTO_ENABLED: !!doc.LOTTO_ENABLED,
-        LICENSE_START_DATE: doc.LICENSE_START_DATE || "",
-        LICENSE_DURATION_DAYS: Number(doc.LICENSE_DURATION_DAYS || 0),
-        LICENSE_DISABLED: !!doc.LICENSE_DISABLED,
-        CHANNEL_ACCESS_TOKEN: doc.CHANNEL_ACCESS_TOKEN || "",
-        CHANNEL_SECRET: doc.CHANNEL_SECRET || "",
-        expiry,
-        expiresAt: expiry.expiresAt,
-        expiresAtLabel: expiry.label,
-        expiresAtInput: expiry.input,
-        licenseDisabled: expiry.disabled,
-        resetEligible,
-        note: doc.note || "",
-      };
-    });
+    const records = docs.map((doc) => ({
+      tenantId: doc.tenantId || doc.serviceKey || "",
+      legacyTenantId: doc.legacyTenantId || "",
+      serviceMode: doc.serviceMode || "multiTenant",
+      serviceGroup: doc.serviceGroup || "",
+      serviceNo: doc.serviceNo || null,
+      serviceKey: doc.serviceKey || doc.tenantId || "",
+      webhookUrl: doc.webhookUrl || doc.LINK || "",
+      LINK: doc.LINK || doc.webhookUrl || "",
+      serial_key: doc.serial_key || "",
+      username: ownerBySerial[doc.serial_key] || "",
+      ownerName: doc.ownerName || ownerDisplayBySerial[doc.serial_key] || "",
+      NAME: doc.NAME || "",
+      LOGO: doc.LOGO || "",
+      LOGIN_URL: doc.LOGIN_URL || "",
+      SIGNUP_URL: doc.SIGNUP_URL || "",
+      LINE_ADMIN: doc.LINE_ADMIN || "",
+      LOTTO_ENABLED: !!doc.LOTTO_ENABLED,
+      LICENSE_START_DATE: doc.LICENSE_START_DATE || "",
+      LICENSE_DURATION_DAYS: Number(doc.LICENSE_DURATION_DAYS || 0),
+      LICENSE_DISABLED: !!doc.LICENSE_DISABLED,
+      CHANNEL_ACCESS_TOKEN: doc.CHANNEL_ACCESS_TOKEN || "",
+      CHANNEL_SECRET: doc.CHANNEL_SECRET || "",
+      expiry: computeLicenseExpiry(doc),
+      expiresAt: computeLicenseExpiry(doc).expiresAt,
+      expiresAtLabel: computeLicenseExpiry(doc).label,
+      expiresAtInput: computeLicenseExpiry(doc).input,
+      licenseDisabled: computeLicenseExpiry(doc).disabled,
+      note: doc.note || "",
+    }));
 
     const { start, end } = monthRange();
     const currentYearRange = yearRange();
@@ -746,56 +728,6 @@ router.post("/bonustime/tenant", async (req, res) => {
   } catch (err) {
     glog.error("POST /admin/bonustime/tenant error:", err);
     return res.status(500).json({ ok: false, error: "สร้างรายการไม่สำเร็จ" });
-  }
-});
-
-
-router.post("/bonustime/tenant/:tenantId/reset", async (req, res) => {
-  try {
-    const { tenantId } = req.params;
-    const col = await getBonustimeUsersCollection();
-    const filter = { $or: [{ tenantId }, { serviceKey: tenantId }, { legacyTenantId: tenantId }] };
-    const doc = await col.findOne(filter);
-
-    if (!doc) return res.status(404).json({ ok: false, error: "ไม่พบ Service นี้" });
-
-    const expiry = computeLicenseExpiry(doc);
-    if (!doc.serial_key || expiry.disabled || !isExpiredOverDays(expiry, 30)) {
-      return res.status(400).json({
-        ok: false,
-        error: "รีเซ็ตได้เฉพาะ Service ที่ขายแล้วและหมดอายุเกิน 30 วันเท่านั้น",
-      });
-    }
-
-    const serviceKey = String(doc.serviceKey || doc.tenantId || tenantId || "").trim();
-    const update = {
-      NAME: serviceKey,
-      serial_key: "",
-      ownerName: "",
-      LOGO: "",
-      LOGIN_URL: "",
-      SIGNUP_URL: "",
-      LINE_ADMIN: "",
-      CHANNEL_ACCESS_TOKEN: "",
-      CHANNEL_SECRET: "",
-      LICENSE_START_DATE: toThaiDate(new Date()),
-      LICENSE_DURATION_DAYS: 30,
-      LICENSE_DISABLED: false,
-      note: resolvePackageNote(doc),
-      resetAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    const result = await col.updateOne(filter, {
-      $set: update,
-      $unset: { expiryNotifySent: "", expiryNotifySentAt: "" },
-    });
-
-    if (!result.matchedCount) return res.status(404).json({ ok: false, error: "ไม่พบ Service นี้" });
-    return res.json({ ok: true, reset: true, serviceKey });
-  } catch (err) {
-    glog.error("POST /admin/bonustime/tenant/reset error:", err);
-    return res.status(500).json({ ok: false, error: "รีเซ็ตไม่สำเร็จ" });
   }
 });
 

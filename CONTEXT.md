@@ -77,9 +77,8 @@ RTAUTOBOT is a production Bonustime-focused website. The public-facing copy must
 - เพิ่ม helper เฉพาะหน้า `rtAdminNotify(variant, title, text)` เพื่อรองรับ `window.notify.success`, `window.notify.push`, `window.showMsg` และ fallback alert อย่างปลอดภัย
 - ยังรักษา scope RTAUTOBOT/Bonustime-only และ production `rtautobot` เหมือนเดิม ไม่เพิ่ม route/job/service ของ APPS, OTP24, SMM กลับมา
 
-### 2026-05-31 — Bonustime expired service reset control
-- Updated `/admin/bonustime-panel` from the latest `rtautobot(8).zip` baseline to add a reset action for Services that have been sold and expired for more than 30 days.
-- The reset action is shown only on eligible expired Service cards and sits after the delete button, keeping normal active/recently expired Services protected from accidental reset.
-- Added `POST /admin/bonustime/tenant/:tenantId/reset` to return an eligible Service to available stock: restore `NAME` to the original service key, clear `serial_key`, owner name, logo, login/signup/contact links, LINE channel token/secret, reset usage duration to 30 days, re-enable expiry, set the start date to today, and restore the internal package note for pk1/pk2.
-- Kept webhook identity fields such as `tenantId`, `serviceKey`, `LINK`, and multi-tenant routing fields intact so the Service remains routed correctly after being reset.
-- Preserved the RTAUTOBOT/Bonustime-only scope and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or unrelated RTSMM-TH surfaces.
+### 2026-05-31 — Admin payment settings UI aligned with RTSMM-TH
+- Rebuilt `src/views/admin/admin_setting.ejs` to use the premium RTSMM-TH-style settings layout for the RTAUTOBOT payment account page: large system hero, account summary stats, black-gold tab bar, wallet cards, toggle switches, delete pills, and polished add-account form.
+- Kept the page production-facing and RTAUTOBOT-scoped; wording now presents the page as a live payment-account control center instead of an internal migration/test screen.
+- Updated `/admin/settings` in `src/routes/admin-bonustime.js` to load all RTAUTOBOT-scoped topup accounts for the settings page and preserve account type (`DEPOSIT`/`WITHDRAW`) when editing or creating wallet records.
+- Kept customer topup/payment behavior separated by existing `production: "rtautobot"` scoping and did not reintroduce APPS, OTP24, SMM, Telegram ordering, or other RTSMM-TH services.
