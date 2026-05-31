@@ -140,11 +140,21 @@
                         <% } %> -->
                       </div>
 
-                      <% if (!rec.licenseDisabled && rec.expiresAtInput) { %>
-                        <div class="expiry-pill" data-expiry="<%= rec.expiresAtInput %>">
-                          กำลังคำนวณ…
-                        </div>
-                      <% } %>
+                      <%
+                        const _licenseDisabled = Boolean(
+                          rec.licenseDisabled ||
+                          rec.LICENSE_DISABLED === true ||
+                          rec.LICENSE_DISABLED === 'true' ||
+                          rec.LICENSE_DISABLED === '1'
+                        );
+                      %>
+                      <div
+                        class="expiry-pill"
+                        data-expiry="<%= _licenseDisabled ? '' : (rec.expiresAtInput || '') %>"
+                        data-expiry-enabled="<%= _licenseDisabled ? '0' : '1' %>"
+                        data-no-expiry="<%= _licenseDisabled ? '1' : '0' %>">
+                        <%= _licenseDisabled ? 'ไม่มีวันหมดอายุ' : 'กำลังคำนวณ…' %>
+                      </div>
 
                     <% } else { %>
                       <div class="status-pill free">
@@ -1190,28 +1200,54 @@
 // ================== EXPIRY COUNTDOWN BADGES ==================
 (function () {
   const pills = document.querySelectorAll(
-    ".bonustime-admin .expiry-pill[data-expiry]"
+    ".bonustime-admin .expiry-pill"
   );
   if (!pills.length) return;
+
+  function setNoExpiry(el) {
+    el.textContent = "ไม่มีวันหมดอายุ";
+    el.classList.remove("expired", "active");
+    el.classList.add("no-expiry");
+
+    const statusPill = el.closest(".status-right")?.querySelector(".status-pill");
+    statusPill?.classList.remove("expired");
+  }
 
   function updateAll() {
     const now = new Date();
 
     pills.forEach((el) => {
       const dateStr = (el.dataset.expiry || "").trim();
-      if (!dateStr) return;
+      const noExpiry =
+        el.dataset.noExpiry === "1" ||
+        el.dataset.noExpiry === "true" ||
+        el.dataset.expiryEnabled === "0" ||
+        el.dataset.expiryEnabled === "false" ||
+        !dateStr;
+
+      if (noExpiry) {
+        setNoExpiry(el);
+        return;
+      }
 
       // นับถึง 23:59:59 ของวันหมดอายุ
       const end = new Date(dateStr + "T23:59:59");
-      if (isNaN(end.getTime())) return;
+      if (isNaN(end.getTime())) {
+        setNoExpiry(el);
+        return;
+      }
 
       const diffMs = end.getTime() - now.getTime();
 
       if (diffMs <= 0) {
         el.textContent = "หมดอายุแล้ว";
         el.classList.add("expired");
-        el.classList.remove("active");
-        el.closest(".status-right")?.querySelector(".status-pill")?.classList.add("expired");
+        el.classList.remove("active", "no-expiry");
+
+        el.closest(".status-right")
+          ?.querySelector(".status-pill")
+          ?.classList.add("expired");
+
         return;
       }
 
@@ -1228,13 +1264,15 @@
       label += `${String(minutes).padStart(2, "0")} นาที`;
 
       el.textContent = label;
-      el.classList.remove("expired");
+      el.classList.remove("expired", "no-expiry");
       el.classList.add("active");
-      el.closest(".status-right")?.querySelector(".status-pill")?.classList.remove("expired");
+
+      el.closest(".status-right")
+        ?.querySelector(".status-pill")
+        ?.classList.remove("expired");
     });
   }
 
-  // อัปเดตตอนโหลด + ทุก 30 วินาที
   updateAll();
   setInterval(updateAll, 30_000);
 })();
@@ -2403,6 +2441,13 @@ document.getElementById('railwayMonitorModal').addEventListener('close', () => {
   border-color: rgba(248, 113, 113, 0.9);
   background: rgba(127, 29, 29, 0.9);
   color: #fee2e2;
+}
+
+/* ถ้า Service ไม่เปิดระบบวันหมดอายุ */
+.bonustime-admin .expiry-pill.no-expiry {
+  border-color: rgba(250, 204, 21, 0.52);
+  background: rgba(250, 204, 21, 0.10);
+  color: #fde68a;
 }
 
 /* ปุ่มลบ Service */
@@ -3707,6 +3752,6 @@ html[data-theme="light"] .bonustime-admin,
 .bonustime-admin .ultra-yearly-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.bonustime-admin .ultra-yearly-head h3{margin:0 0 6px;font-size:clamp(20px,2.4vw,30px);color:var(--bt-text)}
 .bonustime-admin .ultra-year-select{display:grid;gap:7px;min-width:180px;color:var(--bt-accent-2);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.bonustime-admin .ultra-year-select select{height:48px;border-radius:16px;border:1px solid color-mix(in srgb,var(--bt-accent) 34%,transparent);background:rgba(8,8,12,.84);color:var(--bt-text);font-weight:900;padding:0 14px}
 .bonustime-admin .ultra-year-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.bonustime-admin .yearly-chart-wrap{margin-top:14px}.bonustime-admin .yearly-chart-wrap .ultra-chart-body{height:280px}
-.bonustime-admin .status-pill.expired,.bonustime-admin .expiry-pill.expired{border-color:rgba(255,91,91,.42)!important;background:rgba(255,91,91,.12)!important;color:#ffb4a8!important}.bonustime-admin .expiry-pill.active{border-color:rgba(64,220,146,.38)!important;background:rgba(64,220,146,.11)!important;color:#9dffd0!important}
+.bonustime-admin .status-pill.expired,.bonustime-admin .expiry-pill.expired{border-color:rgba(255,91,91,.42)!important;background:rgba(255,91,91,.12)!important;color:#ffb4a8!important}.bonustime-admin .expiry-pill.active{border-color:rgba(64,220,146,.38)!important;background:rgba(64,220,146,.11)!important;color:#9dffd0!important}.bonustime-admin .expiry-pill.no-expiry{border-color:rgba(250,204,21,.46)!important;background:rgba(250,204,21,.1)!important;color:#fde68a!important}
 @media(max-width:1100px){.bonustime-admin .ultra-year-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:680px){.bonustime-admin .ultra-yearly-head{flex-direction:column}.bonustime-admin .ultra-year-select{width:100%}.bonustime-admin .ultra-year-cards{grid-template-columns:1fr}}
 </style>
