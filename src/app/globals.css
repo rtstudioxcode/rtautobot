@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prompt font — self-hosted */
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-300.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Prompt'; src: url('/fonts/prompt/prompt-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
+
+@layer base {
+  :root {
+    --page: #08090d;
+    --card: #17181d;
+    --text: #e8fff1;
+    --muted: #08b84f;
+    --border: rgba(255,255,255,.10);
+    --accent: #08b84f;
+    --blue: #38a7ff;
+  }
+  html { font-family: 'Prompt', system-ui, sans-serif; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: #eef6ff;
+    background:
+      radial-gradient(circle at 13% 9%, rgba(8,184,79,0.18) 0%, transparent 28%),
+      radial-gradient(circle at 82% 18%, rgba(74,118,255,0.16) 0%, transparent 30%),
+      radial-gradient(circle at 50% 86%, rgba(128,74,255,0.10) 0%, transparent 32%),
+      #07080b;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px);
+    background-size: 58px 58px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 82%);
+  }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+}
+
+/* ============================================================
+   Global Keyframe Animations (ตรงตาม EJS originals)
+============================================================ */
+@keyframes rtxFloat {
+  from { transform: translate3d(0,0,0) scale(1); }
+  to   { transform: translate3d(18px,-22px,0) scale(1.08); }
+}
+@keyframes floatOrb {
+  from { transform: translate3d(0,0,0) scale(1); }
+  to   { transform: translate3d(14px,-18px,0) scale(1.06); }
+}
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dashxFloat {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-12px) scale(1.03); }
+}
+@keyframes shineSlide {
+  from { transform: translateX(-42%); }
+  to   { transform: translateX(142%); }
+}
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes pulseDot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .6; transform: scale(.86); }
+}
+@keyframes spinCw {
+  to { transform: rotate(360deg); }
+}
+
+/* Utility animation classes */
+.anim-float    { animation: floatOrb 9s ease-in-out infinite alternate; }
+.anim-float-2  { animation: floatOrb 9s ease-in-out infinite alternate; animation-delay: -2.5s; }
+.anim-float-3  { animation: floatOrb 9s ease-in-out infinite alternate; animation-delay: -5s; }
+.anim-rise     { animation: revealUp .65s ease both; }
+.anim-rise-2   { animation: revealUp .65s ease .12s both; }
+.anim-rise-3   { animation: revealUp .65s ease .24s both; }
+
+/* ============================================================
+   Page container
+============================================================ */
+.page-container {
+  width: min(1380px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+/* ============================================================
+   Sidebar + layout shell
+============================================================ */
+body {
+  display: flex;
+}
+
+/* sb-wrap: shifts right on desktop to leave room for the collapsed sidebar */
+.sb-wrap {
+  margin-left: 64px;
+  flex: 1;
+  min-height: 100vh;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left .28s cubic-bezier(.2,.8,.2,1);
+}
+
+/* When sidebar is hovered / expanded on desktop */
+body.sb-expanded .sb-wrap {
+  margin-left: 240px;
+}
+
+/* On mobile: no left margin, sidebar slides in as overlay */
+@media (max-width: 900px) {
+  .sb-wrap {
+    margin-left: 0 !important;
+  }
+}
+
+/* Prevent body scroll when mobile sidebar is open */
+body.sb-mobile-open {
+  overflow: hidden;
+}
+
+/* main content fills remaining space */
+.sb-wrap > main {
+  flex: 1;
+}
+
+/* footer stays at bottom */
+.rt-footer {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,.07);
+  color: rgba(238,246,255,.4);
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0,0,0,.2);
+}
+

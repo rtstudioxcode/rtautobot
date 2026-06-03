@@ -188,7 +188,7 @@ export async function checkAndSendBonustimeExpiryMails(opts = {}) {
 
     <div style="background:#020617;border-radius:24px;border:1px solid #111827;padding:28px 24px;">
       <div style="text-align: center; margin-bottom: 3px;">
-        <img src="${SITE_URL}/static/assets/logo/logo-rtautobot.png" alt="RTAUTOBOT" style="height:200px; margin-bottom:3px;" />
+        <img src="${SITE_URL}/assets/logo/logo-rtautobot.png" alt="RTAUTOBOT" style="height:200px; margin-bottom:3px;" />
       </div>
 
       <h1 style="margin: 4px 0 8px; font-size:20px; color:#fde68a;">

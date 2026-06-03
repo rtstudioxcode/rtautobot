@@ -27,4 +27,4 @@ usageLogSchema.index(
 );
 
 // ตั้งชื่อคอลเลกชันเป็น usage_logs ชัดๆ (ตัวเลือกที่ 3)
-export const UsageLog = model('UsageLog', usageLogSchema, 'usage_logs');
+export const UsageLog = mongoose.models.UsageLog || model('UsageLog', usageLogSchema, 'usage_logs');

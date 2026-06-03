@@ -1,0 +1,298 @@
+export const metadata = { title: 'ติดต่อเรา | RTAUTOBOT Support' };
+
+const CSS = `
+.support-enterprise{
+  --sp-bg:#07080b;--sp-card:#111218;--sp-card2:#17181f;--sp-text:#eef6ff;
+  --sp-muted:#08b84f;--sp-green:#08b84f;--sp-green2:#05b84f;--sp-line:#2ee66f;--sp-blue:#56b7ff;
+  position:relative;min-height:calc(100vh - 56px);
+  padding:clamp(28px,4vw,64px) clamp(16px,3vw,42px) 70px;
+  color:var(--sp-text);overflow:hidden;isolation:isolate;
+}
+.support-bg{position:absolute;inset:0;z-index:-2;background:
+  radial-gradient(circle at 18% 8%,rgba(124,255,178,.14),transparent 30%),
+  radial-gradient(circle at 80% 14%,rgba(86,183,255,.12),transparent 28%),
+  radial-gradient(circle at 52% 86%,rgba(124,255,178,.10),transparent 34%),
+  linear-gradient(180deg,#07080b,#0c0d12 48%,#07080b);}
+.support-bg .mesh{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:radial-gradient(circle at center,#000 0 48%,transparent 78%);opacity:.35;}
+.support-bg .orb{position:absolute;border-radius:999px;filter:blur(12px);opacity:.65;animation:supportFloat 8s ease-in-out infinite;}
+.support-bg .orb-a{width:240px;height:240px;left:5%;top:8%;background:rgba(124,255,178,.14);}
+.support-bg .orb-b{width:320px;height:320px;right:4%;bottom:8%;background:rgba(86,183,255,.10);animation-delay:-2s;}
+.support-hero{max-width:1120px;margin:0 auto 26px;text-align:center;padding:38px 24px;
+  border:1px solid rgba(124,255,178,.16);border-radius:34px;
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  box-shadow:0 28px 80px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.06);
+  position:relative;overflow:hidden;animation:supportHeroIn .9s cubic-bezier(.16,1,.3,1) both;}
+.support-hero::before{content:"";position:absolute;inset:0 0 auto;height:3px;
+  background:linear-gradient(90deg,transparent,#08b84f,#56b7ff,transparent);opacity:.9;}
+.support-kicker{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;
+  border:1px solid rgba(124,255,178,.24);background:rgba(124,255,178,.08);
+  color:#08b84f;font-weight:900;letter-spacing:.08em;font-size:12px;}
+.support-hero h1{margin:20px 0 12px;font-size:clamp(40px,6vw,76px);line-height:.98;letter-spacing:-.05em;}
+.support-hero h1 span{background:linear-gradient(135deg,#eef6ff,#08b84f 55%,#05b84f);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.support-hero>p{max-width:760px;margin:0 auto;color:var(--sp-muted);font-weight:700;line-height:1.85;font-size:clamp(15px,1.4vw,18px);}
+.support-quickbar{margin:26px auto 0;max-width:780px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.support-quickbar div{position:relative;overflow:hidden;padding:18px;border-radius:22px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.07);
+  transition:transform .35s ease,border-color .35s ease,background .35s ease;}
+.support-quickbar div:hover{transform:translateY(-4px);border-color:rgba(124,255,178,.26);background:rgba(124,255,178,.055);}
+.support-quickbar strong{display:block;color:#08b84f;font-size:20px;font-weight:950;}
+.support-quickbar small{display:block;margin-top:4px;color:#08b84f;font-weight:800;}
+.support-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.support-card{position:relative;overflow:hidden;min-height:520px;padding:26px;border-radius:30px;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(145deg,rgba(29,30,38,.96),rgba(10,11,16,.96));
+  box-shadow:0 24px 60px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.055);
+  display:flex;flex-direction:column;justify-content:space-between;
+  transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),border-color .55s ease,box-shadow .55s ease,background .55s ease;
+  animation:supportCardIn .82s cubic-bezier(.16,1,.3,1) both;}
+.support-card:nth-child(1){animation-delay:.05s}
+.support-card:nth-child(2){animation-delay:.14s}
+.support-card:nth-child(3){animation-delay:.23s}
+.support-card:hover{transform:translateY(-8px) rotateX(1.2deg) rotateY(-1.2deg);
+  border-color:rgba(124,255,178,.38);
+  box-shadow:0 34px 90px rgba(0,0,0,.44),0 0 0 1px rgba(124,255,178,.10),inset 0 1px 0 rgba(255,255,255,.08);}
+.support-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,rgba(124,255,178,0),rgba(124,255,178,.42),rgba(86,183,255,.24),rgba(46,230,111,.18),rgba(124,255,178,0));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.36;pointer-events:none;
+  animation:supportBorderPulse 4.6s ease-in-out infinite;}
+.support-card::after{content:"";position:absolute;inset:-60% auto -60% -32%;width:38%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);
+  transform:rotate(18deg) translateX(-120%);animation:supportCardSweep 6s ease-in-out infinite;pointer-events:none;}
+.support-card.primary-card{border-color:rgba(124,255,178,.28);}
+.card-glow{position:absolute;right:-72px;top:-72px;width:220px;height:220px;border-radius:50%;
+  background:rgba(124,255,178,.16);filter:blur(8px);pointer-events:none;
+  animation:supportGlowMove 7.5s ease-in-out infinite;}
+.card-glow.blue{background:rgba(86,183,255,.16);}
+.card-glow.cyan{background:rgba(46,230,111,.12);}
+.support-card-head{position:relative;z-index:1;display:grid;gap:18px;}
+.support-icon{position:relative;width:74px;height:74px;border-radius:24px;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  font-size:32px;background:linear-gradient(135deg,#21b95c,#05b84f);color:#111;
+  box-shadow:0 18px 38px rgba(24,201,100,.16);overflow:hidden;
+  transform-style:preserve-3d;isolation:isolate;animation:supportIconFloat 5.6s ease-in-out infinite;}
+.support-icon::before{content:"";position:absolute;inset:-42%;
+  background:conic-gradient(from 180deg,transparent 0 18%,rgba(255,255,255,.36) 24%,transparent 32% 62%,rgba(255,255,255,.20) 70%,transparent 78% 100%);
+  opacity:.42;animation:supportIconSweep 4.8s linear infinite;z-index:0;}
+.support-icon::after{content:"";position:absolute;inset:7px;border-radius:inherit;
+  background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.36),transparent 36%);opacity:.55;z-index:1;pointer-events:none;}
+.support-icon .brand-svg{position:absolute!important;left:50%!important;top:50%!important;
+  width:36px!important;height:36px!important;display:block!important;
+  transform:translate(-50%,-50%)!important;transform-origin:center center!important;
+  z-index:2!important;margin:0!important;overflow:visible!important;filter:drop-shadow(0 7px 13px rgba(0,0,0,.24));}
+.support-icon.line-icon{background:linear-gradient(135deg,#7bf889,#15c85d);color:#fff;box-shadow:0 18px 38px rgba(46,230,111,.20);}
+.support-icon.line-icon .brand-svg{width:38px!important;height:38px!important;}
+.support-icon.tg-icon{background:linear-gradient(135deg,#72d2ff,#2689d8);color:white;box-shadow:0 18px 38px rgba(86,183,255,.22);}
+.support-icon.tg-icon .brand-svg,.support-icon.news-icon .brand-svg{width:35px!important;height:35px!important;}
+.support-icon.news-icon{background:linear-gradient(135deg,#5ad2ff,#2ee66f);box-shadow:0 18px 38px rgba(46,230,111,.18);}
+.support-label{display:inline-flex;width:max-content;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;
+  border-radius:999px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);
+  color:#21b95c;font-weight:900;font-size:12px;letter-spacing:.04em;}
+.support-label.recommended{color:#08b84f;border-color:rgba(24,201,100,.16);background:rgba(124,255,178,.08);}
+.support-label.news{color:#9cf4bd;border-color:rgba(46,230,111,.18);background:rgba(46,230,111,.07);}
+.support-card h2{margin:0 0 10px;font-size:clamp(26px,2.3vw,38px);line-height:1.05;letter-spacing:-.03em;}
+.support-card>div>div>p{margin:0;color:var(--sp-muted);line-height:1.75;font-weight:700;}
+.support-points{position:relative;z-index:1;display:grid;gap:13px;margin:26px 0;padding:0;list-style:none;}
+.support-points li{display:flex;gap:11px;align-items:flex-start;color:#21b95c;font-weight:800;line-height:1.55;
+  transition:transform .35s ease;}
+.support-points li:hover{transform:translateX(6px);}
+.support-points .sp-check{color:#08b84f;flex-shrink:0;margin-top:2px;}
+.channel-preview{position:relative;z-index:1;display:grid;gap:12px;margin:24px 0;}
+.channel-preview div{padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.035);transition:transform .35s ease,border-color .35s ease;}
+.channel-preview div:hover{transform:translateX(6px);border-color:rgba(24,201,100,.16);}
+.channel-preview b{display:block;color:#08b84f;font-weight:950;}
+.channel-preview small{display:block;margin-top:4px;color:#08b84f;font-weight:750;line-height:1.45;}
+.support-btn{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  width:100%;padding:17px 18px;border-radius:20px;text-decoration:none;font-weight:950;
+  color:#12100a;border:1px solid rgba(24,201,100,.22);
+  background:linear-gradient(135deg,#21b95c,#08b84f 48%,#05b84f);
+  box-shadow:0 18px 36px rgba(24,201,100,.14);overflow:hidden;
+  transition:transform .32s ease,box-shadow .32s ease,filter .32s ease;}
+.support-btn::before{content:"";position:absolute;inset:-80% auto -80% -30%;width:42%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  transform:rotate(18deg);animation:supportShine 3.6s ease-in-out infinite;}
+.support-btn:hover{transform:translateY(-3px);filter:saturate(1.08) brightness(1.04);
+  box-shadow:0 24px 54px rgba(124,255,178,.24);}
+.support-btn.secondary{color:white;background:linear-gradient(135deg,#50bfff,#266bd7);
+  border-color:rgba(86,183,255,.35);box-shadow:0 18px 36px rgba(86,183,255,.14);}
+.support-btn.secondary:hover{box-shadow:0 24px 54px rgba(86,183,255,.22);}
+.support-btn.channel{background:linear-gradient(135deg,#08b84f,#2ee66f);}
+.support-btn.channel:hover{box-shadow:0 24px 54px rgba(46,230,111,.18);}
+.support-btn span{display:inline-flex;align-items:center;gap:10px;position:relative;z-index:1;}
+.support-arrow{font-size:18px;position:relative;z-index:1;}
+.support-info{max-width:1180px;margin:18px auto 0;padding:28px;border-radius:30px;
+  border:1px solid rgba(124,255,178,.16);
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  display:grid;grid-template-columns:1fr 1.2fr;gap:24px;align-items:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);}
+.support-info h2{margin:0 0 10px;font-size:clamp(26px,3vw,42px);line-height:1.12;}
+.support-info>div>p{margin:0;color:var(--sp-muted);font-weight:700;line-height:1.75;}
+.support-info .sp-label{color:var(--sp-muted);}
+.support-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.support-checklist span{display:flex;align-items:center;gap:10px;padding:16px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.18);font-weight:850;color:#21b95c;
+  transition:transform .35s ease,border-color .35s ease;}
+.support-checklist span:hover{transform:translateX(6px);border-color:rgba(24,201,100,.16);}
+.support-checklist .sp-ico{color:#08b84f;}
+.reveal-ready{animation:supportIn .72s cubic-bezier(.2,.8,.2,1) both;}
+.support-grid .reveal-ready:nth-child(2){animation-delay:.08s;}
+.support-grid .reveal-ready:nth-child(3){animation-delay:.16s;}
+@keyframes supportIn{from{opacity:0;transform:translateY(22px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes supportFloat{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(0,-18px,0) scale(1.04);}}
+@keyframes supportShine{0%,55%{transform:translateX(-120%) rotate(18deg);}78%,100%{transform:translateX(420%) rotate(18deg);}}
+@keyframes supportHeroIn{from{opacity:0;transform:translateY(24px) scale(.982);filter:blur(8px);}to{opacity:1;transform:none;filter:blur(0);}}
+@keyframes supportCardIn{from{opacity:0;transform:translateY(28px) scale(.97);filter:blur(10px);}to{opacity:1;transform:none;filter:blur(0);}}
+@keyframes supportIconFloat{0%,100%{transform:translate3d(0,0,0) rotate(0deg);}35%{transform:translate3d(0,-5px,0) rotate(-1.4deg);}70%{transform:translate3d(0,3px,0) rotate(1.2deg);}}
+@keyframes supportIconSweep{to{transform:rotate(360deg);}}
+@keyframes supportGlowMove{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(-18px,20px,0) scale(1.12);}}
+@keyframes supportBorderPulse{0%,100%{opacity:.22;}50%{opacity:.52;}}
+@keyframes supportCardSweep{0%,58%{transform:rotate(18deg) translateX(-140%);opacity:0;}68%{opacity:.75;}86%,100%{transform:rotate(18deg) translateX(520%);opacity:0;}}
+@media(max-width:1050px){
+  .support-grid{grid-template-columns:1fr;}
+  .support-card{min-height:auto;}
+  .support-info{grid-template-columns:1fr;}}
+@media(max-width:680px){
+  .support-enterprise{padding:18px 12px 46px;}
+  .support-hero{padding:28px 18px;border-radius:26px;}
+  .support-quickbar{grid-template-columns:1fr;}
+  .support-card{padding:22px;border-radius:24px;}
+  .support-card-head{grid-template-columns:auto 1fr;align-items:center;}
+  .support-icon{width:58px;height:58px;border-radius:18px;font-size:26px;}
+  .support-checklist{grid-template-columns:1fr;}
+  .support-btn{padding:15px 16px;border-radius:18px;}}
+@media(prefers-reduced-motion:reduce){
+  .support-icon,.support-icon::before,.support-card,.support-card::before,.support-card::after,
+  .card-glow,.support-hero,.reveal-ready,.support-btn::before{animation:none!important;transition:none!important;}}
+`;
+
+const LineSVG = () => (
+  <svg viewBox="0 0 24 24" className="brand-svg line-svg" role="img" aria-label="LINE">
+    <path fill="#FFFFFF" d="M20.59 10.34c0-4.63-4.64-8.39-10.35-8.39C4.52 1.95 0 5.71 0 10.34c0 4.15 3.58 7.62 8.42 8.28.33.07.79.22.9.51.1.27.07.69.03.97l-.15.92c-.05.27-.22 1.05.92.57 1.14-.48 6.15-3.62 8.39-6.2 1.55-1.7 2.08-3.43 2.08-6.05Zm-13.5 2.2H5.04a.39.39 0 0 1-.39-.39V8.04c0-.21.17-.39.39-.39s.39.18.39.39v3.72h1.66c.21 0 .39.17.39.39s-.18.39-.39.39Zm2.12-.39a.39.39 0 0 1-.78 0V8.04c0-.21.18-.39.39-.39s.39.18.39.39v4.11Zm4.29 0a.39.39 0 0 1-.7.24L10.8 9.67v2.48a.39.39 0 0 1-.78 0V8.04a.39.39 0 0 1 .7-.24l2 2.72V8.04c0-.21.17-.39.39-.39s.39.18.39.39v4.11Zm3.71-3.69h-1.66v1.03h1.66c.21 0 .39.17.39.39s-.18.39-.39.39h-1.66v1.03h1.66c.21 0 .39.17.39.39s-.18.39-.39.39h-2.05a.39.39 0 0 1-.39-.39V8.04c0-.21.18-.39.39-.39h2.05c.21 0 .39.18.39.39s-.18.39-.39.39Z"/>
+  </svg>
+);
+
+const TelegramSVG = () => (
+  <svg viewBox="0 0 24 24" className="brand-svg telegram-svg" role="img" aria-label="Telegram">
+    <path fill="#FFFFFF" d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0Zm5.89 8.17-1.97 9.31c-.15.66-.54.82-1.1.51l-3.04-2.24-1.47 1.41c-.16.16-.3.3-.61.3l.22-3.11 5.67-5.12c.25-.22-.05-.34-.38-.12l-7 4.41-3.01-.94c-.66-.2-.67-.66.14-.98L17.1 7.07c.55-.2 1.03.12.79 1.1Z"/>
+  </svg>
+);
+
+export default function SupportPage() {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <section className="support-enterprise" aria-labelledby="supportTitle">
+        <div className="support-bg" aria-hidden="true">
+          <span className="orb orb-a" />
+          <span className="orb orb-b" />
+          <span className="mesh" />
+        </div>
+
+        <header className="support-hero reveal-ready">
+          <div className="support-kicker">🎧 RTAUTOBOT SUPPORT CENTER</div>
+          <h1 id="supportTitle">ติดต่อทีมงาน <span>RTAUTOBOT</span></h1>
+          <p>ศูนย์ช่วยเหลือสำหรับผู้ใช้บริการ Bonustime ติดต่อได้รวดเร็ว ตรวจสอบง่าย และมีช่องทางสำรองพร้อมใช้งาน เพื่อให้ทุกปัญหาถูกดูแลอย่างเป็นระบบ</p>
+          <div className="support-quickbar" role="list" aria-label="ข้อมูลสรุปบริการ Support">
+            <div role="listitem"><strong>Line OA</strong><small>ช่องทางหลัก</small></div>
+            <div role="listitem"><strong>Telegram</strong><small>ช่องทางสำรอง</small></div>
+            <div role="listitem"><strong>Channel</strong><small>ติดตามข่าวสาร</small></div>
+          </div>
+        </header>
+
+        <div className="support-grid">
+          {/* LINE OA */}
+          <article className="support-card primary-card reveal-ready">
+            <div className="card-glow" aria-hidden="true" />
+            <div className="support-card-head">
+              <div className="support-icon line-icon" aria-hidden="true">
+                <LineSVG />
+              </div>
+              <div>
+                <span className="support-label recommended">ช่องทางหลัก</span>
+                <h2>Line OA</h2>
+                <p>เหมาะสำหรับแจ้งปัญหา เติมเงิน ออเดอร์ไม่เข้า ตรวจสอบสถานะ หรือสอบถามบริการทั่วไป</p>
+              </div>
+            </div>
+            <ul className="support-points">
+              <li><span className="sp-check">✔</span> ติดต่อแอดมินได้สะดวกที่สุด</li>
+              <li><span className="sp-check">✔</span> ส่งหลักฐานสลิป / เลขออเดอร์ / ภาพหน้าจอได้ทันที</li>
+              <li><span className="sp-check">✔</span> เหมาะกับเคสเร่งด่วนที่ต้องการตรวจสอบเป็นรายบัญชี</li>
+            </ul>
+            <a className="support-btn main" href="https://line.me/R/ti/p/@507vkplq?ts=10301611&oat_content=url" target="_blank" rel="noopener noreferrer">
+              <span>💬 ติดต่อผ่าน Line OA</span>
+              <span className="support-arrow">↗</span>
+            </a>
+          </article>
+
+          {/* Telegram */}
+          <article className="support-card reveal-ready">
+            <div className="card-glow blue" aria-hidden="true" />
+            <div className="support-card-head">
+              <div className="support-icon tg-icon" aria-hidden="true">
+                <TelegramSVG />
+              </div>
+              <div>
+                <span className="support-label">ช่องทางสำรอง</span>
+                <h2>Telegram Support</h2>
+                <p>ใช้เป็นช่องทางสำรองเมื่อต้องการติดต่อผ่าน Telegram หรือกรณี Line ไม่สะดวก</p>
+              </div>
+            </div>
+            <ul className="support-points">
+              <li><span className="sp-check">✔</span> ติดต่อทีมงานผ่าน Line OA ไม่สะดวกหรือมีปัญหาในการใช้งาน</li>
+              <li><span className="sp-check">✔</span> ติดต่อสำรองได้เมื่อช่องทางหลักไม่พร้อม</li>
+              <li><span className="sp-check">✔</span> ส่งรายละเอียดงานและ Log ให้ตรวจสอบได้ง่าย</li>
+            </ul>
+            <a className="support-btn secondary" href="https://t.me/rtstudioxcode168" target="_blank" rel="noopener noreferrer">
+              <span>✈ ติดต่อผ่าน Telegram</span>
+              <span className="support-arrow">↗</span>
+            </a>
+          </article>
+
+          {/* Channel */}
+          <article className="support-card channel-card reveal-ready">
+            <div className="card-glow cyan" aria-hidden="true" />
+            <div className="support-card-head">
+              <div className="support-icon news-icon" aria-hidden="true">
+                <TelegramSVG />
+              </div>
+              <div>
+                <span className="support-label news">ข่าวสารและอัปเดต</span>
+                <h2>Telegram Channel</h2>
+                <p>ติดตามประกาศ อัปเดตระบบ แจ้งเตือนบริการ และข่าวสำคัญของ RTAUTOBOT</p>
+              </div>
+            </div>
+            <div className="channel-preview">
+              <div><b>System Update</b><small>แจ้งปรับปรุงระบบ / ฟีเจอร์ใหม่</small></div>
+              <div><b>Service News</b><small>ข่าวบริการ Bonustime</small></div>
+              <div><b>Announcement</b><small>ประกาศสำคัญที่ผู้ใช้ควรทราบ</small></div>
+            </div>
+            <a className="support-btn channel" href="https://t.me/rtautobot168" target="_blank" rel="noopener noreferrer">
+              <span>✈ ติดตาม Telegram Channel</span>
+              <span className="support-arrow">↗</span>
+            </a>
+          </article>
+        </div>
+
+        <section className="support-info reveal-ready" aria-label="คำแนะนำก่อนติดต่อ Support">
+          <div>
+            <span className="support-label sp-label">ข้อมูลสำหรับติดต่อ Support</span>
+            <h2>เตรียมข้อมูลให้ครบ ทีมงานจะตรวจสอบได้เร็วขึ้น</h2>
+            <p>เพื่อให้แก้ปัญหาได้ไวที่สุด กรุณาแนบข้อมูลที่เกี่ยวข้อง เช่น ชื่อผู้ใช้ เลขออเดอร์ หลักฐานการเติมเงิน หรือภาพหน้าจอปัญหา</p>
+          </div>
+          <div className="support-checklist">
+            <span><span className="sp-ico">👤</span> ชื่อผู้ใช้ / อีเมลบัญชี</span>
+            <span><span className="sp-ico">🧾</span> เลขออเดอร์หรือรายการเติมเงิน</span>
+            <span><span className="sp-ico">🖼</span> รูปภาพหรือหลักฐานที่เกี่ยวข้อง</span>
+            <span><span className="sp-ico">⏱</span> วันเวลาโดยประมาณที่พบปัญหา</span>
+          </div>
+        </section>
+      </section>
+    </>
+  );
+}

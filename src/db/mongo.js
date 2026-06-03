@@ -8,18 +8,10 @@ const isGlobalLogEnabled = () => {
 };
 
 const glog = {
-  log: (...args) => {
-    if (isGlobalLogEnabled()) glog.log(...args);
-  },
-  info: (...args) => {
-    if (isGlobalLogEnabled()) glog.info(...args);
-  },
-  warn: (...args) => {
-    if (isGlobalLogEnabled()) glog.warn(...args);
-  },
-  error: (...args) => {
-    if (isGlobalLogEnabled()) glog.error(...args);
-  },
+  log: (...args) => { if (isGlobalLogEnabled()) console.log(...args); },
+  info: (...args) => { if (isGlobalLogEnabled()) console.info(...args); },
+  warn: (...args) => { if (isGlobalLogEnabled()) console.warn(...args); },
+  error: (...args) => { if (isGlobalLogEnabled()) console.error(...args); },
 };
 
 function pickEnvInt(names, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {

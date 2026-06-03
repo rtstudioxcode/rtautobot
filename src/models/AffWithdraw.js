@@ -11,4 +11,4 @@ const AffWithdrawSchema = new mongoose.Schema({
 
 AffWithdrawSchema.index({ createdAt: -1 });
 
-export const AffWithdraw = mongoose.model('AffWithdraw', AffWithdrawSchema);
+export const AffWithdraw = mongoose.models.AffWithdraw || mongoose.model('AffWithdraw', AffWithdrawSchema);

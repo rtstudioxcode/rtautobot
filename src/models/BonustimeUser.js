@@ -34,7 +34,5 @@ const BonustimeUserSchema = new mongoose.Schema(
   { collection: "users" }
 );
 
-export const BonustimeUser = getBonustimeDb().model(
-  "users",
-  BonustimeUserSchema
-);
+const _btDb = getBonustimeDb();
+export const BonustimeUser = _btDb.models['users'] || _btDb.model("users", BonustimeUserSchema);

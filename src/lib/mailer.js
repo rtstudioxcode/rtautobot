@@ -7,7 +7,7 @@ import { config } from '../config.js';
 
 
 const getBrandUrl = () => (typeof config !== 'undefined' && config?.brand?.rtautobotSite) ? config.brand.rtautobotSite : 'https://rtautobot.com';
-const getBrandLogo = () => `${getBrandUrl()}/static/assets/logo/logo-rtautobot.png`;
+const getBrandLogo = () => `${getBrandUrl()}/assets/logo/logo-rtautobot.png`;
 
 // ───────── GLOBAL LOG ─────────
 const isGlobalLogEnabled = () => {

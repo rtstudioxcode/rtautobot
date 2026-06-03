@@ -1,52 +1,48 @@
 {
   "name": "rtautobot-bonustime",
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "obfuscate": "node src/scripts/obfuscate-css.js",
-    "obfuscate:restore": "node src/scripts/obfuscate-css.js --restore"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "worker": "node src/worker.js"
   },
   "engines": {
     "node": "20.x"
   },
   "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "iron-session": "^8.0.3",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.74.1",
-    "compression": "^1.8.1",
-    "connect-mongo": "^5.1.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dayjs": "^1.11.18",
     "dotenv": "^16.4.5",
-    "ejs": "^3.1.10",
-    "express": "^4.19.2",
-    "express-ejs-layouts": "^2.5.1",
-    "express-rate-limit": "^7.5.1",
-    "express-session": "^1.17.3",
-    "express-slow-down": "^3.1.0",
-    "input": "^1.0.1",
     "ioredis": "^5.10.1",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.6.0",
-    "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^6.9.15",
     "p-limit": "^5.0.0",
     "qs": "^6.11.2",
-    "rate-limit-mongo": "^2.3.2",
     "telegram": "^2.26.22",
     "ulid": "^3.0.1",
     "undici": "^7.16.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "nodemon": "^3.1.14"
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
   },
-  "description": "RTAUTOBOT Bonustime web app split from RTSMM-TH while using the same MongoDB wallet/user data."
+  "description": "RTAUTOBOT Bonustime — Next.js + Tailwind CSS"
 }

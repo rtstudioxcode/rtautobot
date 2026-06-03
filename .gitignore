@@ -1,5 +1,7 @@
 # ไฟล์ src หลัก
 node_modules/
+.next/
+Viewsเก่า/
 package-lock.json
 .env
 .env.*

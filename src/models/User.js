@@ -18,7 +18,8 @@ const UserSchema = new mongoose.Schema({
 
   // ── โปรไฟล์ ─────────────────────────────────────────────
   name: { type: String, default: '' },
-  avatarUrl: { type: String, default: '/static/logo/icon-logo.png' },
+  avatarUrl: { type: String, default: '/assets/logo/icon-logo.png' },
+  avatarVer: { type: Number, default: 0 },
 
   // ── กระเป๋าเงิน ─────────────────────────────────────────
   balance: { type: Number, default: 0 },
@@ -90,4 +91,4 @@ UserSchema.methods.addBalance = async function (amount) {
 UserSchema.index({ totalSpentRaw: 1 });
 UserSchema.index({ levelIndex: 1 });
 
-export const User = mongoose.model('User', UserSchema);
+export const User = mongoose.models.User || mongoose.model('User', UserSchema);

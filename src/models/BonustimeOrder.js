@@ -17,4 +17,4 @@ const BonustimeOrderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export const BonustimeOrder = mongoose.model("BonustimeOrder", BonustimeOrderSchema);
+export const BonustimeOrder = mongoose.models.BonustimeOrder || mongoose.model("BonustimeOrder", BonustimeOrderSchema);
