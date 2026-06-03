@@ -33,11 +33,6 @@ export async function POST(request) {
 
     const newBalance = await u.addBalance(n);
 
-    if (session?.user && String(session.user._id) === String(u._id)) {
-      session.user.balance = newBalance;
-      await session.save();
-    }
-
     if (txId) {
       // Approve an existing pending transaction
       const updated = await Transaction.findOneAndUpdate(
@@ -63,7 +58,7 @@ export async function POST(request) {
       });
     }
 
-    return NextResponse.json({ ok: true, userId: String(u._id), username: u.username, balance: newBalance });
+    return NextResponse.json({ ok: true, balance: newBalance });
   } catch (e) {
     console.error('POST /api/admin/manual-topup', e);
     return NextResponse.json({ ok: false, error: String(e?.message || e) }, { status: 500 });

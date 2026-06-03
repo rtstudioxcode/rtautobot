@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import ManualTopupModal from './ManualTopupModal.jsx';
 
 const CSS = `
@@ -116,7 +115,6 @@ function labelMethod(m) {
 }
 
 export default function AdminDashboardClient({ stats, pendingList }) {
-  const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState(null);
 
@@ -150,10 +148,9 @@ export default function AdminDashboardClient({ stats, pendingList }) {
       const r = await fetch(`/admin/topup/${encodeURIComponent(id)}/reject`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j?.error || 'ปฏิเสธไม่สำเร็จ');
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { type: 'success', title: 'ปฏิเสธรายการสำเร็จ', text: 'รายการเติมเครดิตถูกปฏิเสธแล้ว' } }));
-      router.refresh();
+      location.reload();
     } catch (err) {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { type: 'error', title: 'ทำรายการไม่สำเร็จ', text: err?.message || 'ปฏิเสธไม่สำเร็จ' } }));
+      alert('ทำรายการไม่สำเร็จ: ' + (err?.message || ''));
     }
   }
 
@@ -299,7 +296,7 @@ export default function AdminDashboardClient({ stats, pendingList }) {
         </section>
       </div>
 
-      <ManualTopupModal open={modalOpen} onClose={() => setModalOpen(false)} prefill={prefill} onDone={() => router.refresh()} />
+      <ManualTopupModal open={modalOpen} onClose={() => setModalOpen(false)} prefill={prefill} />
     </>
   );
 }

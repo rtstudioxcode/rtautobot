@@ -228,13 +228,6 @@ export default function BonustimeDetailPage() {
   const [editData, setEditData] = useState({});
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [showExtend, setShowExtend] = useState(false);
   const [selectedDays, setSelectedDays] = useState(null);
   const [railwayInfo, setRailwayInfo] = useState(null);
@@ -267,12 +260,12 @@ export default function BonustimeDetailPage() {
     setMsg(null);
     try {
       const key = record?.serviceKey || record?.tenantId;
-      if (!key) { notifyMsg({ type: 'error', text: 'ไม่พบ serviceKey / tenantId' }); return; }
+      if (!key) { setMsg({ type: 'error', text: 'ไม่พบ serviceKey / tenantId' }); return; }
       const res = await fetch(`/api/railway/service-info/${encodeURIComponent(key)}`);
       const data = await res.json();
       if (data.ok) setRailwayInfo(data);
-      else notifyMsg({ type: 'error', text: data.error || data.message || 'โหลดข้อมูล Railway ไม่สำเร็จ' });
-    } catch { notifyMsg({ type: 'error', text: 'โหลดข้อมูล Railway ไม่สำเร็จ' }); }
+      else setMsg({ type: 'error', text: data.error || data.message || 'โหลดข้อมูล Railway ไม่สำเร็จ' });
+    } catch { setMsg({ type: 'error', text: 'โหลดข้อมูล Railway ไม่สำเร็จ' }); }
     setRailwayLoading(false);
   }
 
@@ -285,14 +278,14 @@ export default function BonustimeDetailPage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message || 'บันทึกไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: 'บันทึกสำเร็จ' });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message || 'บันทึกไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: 'บันทึกสำเร็จ' });
     setEditMode(false);
     setRecord((r) => ({ ...r, ...editData }));
   }
 
   async function handleExtend() {
-    if (!selectedDays) { notifyMsg({ type: 'error', text: 'กรุณาเลือกระยะเวลา' }); return; }
+    if (!selectedDays) { setMsg({ type: 'error', text: 'กรุณาเลือกระยะเวลา' }); return; }
     setBusy(true); setMsg(null);
     const res = await fetch(`/api/bonustime/${id}/extend`, {
       method: 'POST',
@@ -301,8 +294,8 @@ export default function BonustimeDetailPage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message || 'ต่ออายุไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: `ต่ออายุสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message || 'ต่ออายุไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: `ต่ออายุสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
     setShowExtend(false); setSelectedDays(null);
     setUser((u) => ({ ...u, balance: data.balance }));
     loadPage();
@@ -314,8 +307,8 @@ export default function BonustimeDetailPage() {
     const res = await fetch(`/api/bonustime/${id}/upgrade-lotto`, { method: 'POST' });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message || 'อัปเกรดไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: `อัปเกรดสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message || 'อัปเกรดไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: `อัปเกรดสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
     setUser((u) => ({ ...u, balance: data.balance }));
     setRecord((r) => ({ ...r, LOTTO_ENABLED: true }));
   }
@@ -338,9 +331,9 @@ export default function BonustimeDetailPage() {
         document.execCommand('copy');
         document.body.removeChild(ta);
       }
-      notifyMsg({ type: 'success', text: 'คัดลอกลิงก์ Webhook แล้ว' });
+      setMsg({ type: 'success', text: 'คัดลอกลิงก์ Webhook แล้ว' });
     } catch {
-      notifyMsg({ type: 'error', text: 'คัดลอกลิงก์ไม่สำเร็จ กรุณาลองใหม่' });
+      setMsg({ type: 'error', text: 'คัดลอกลิงก์ไม่สำเร็จ กรุณาลองใหม่' });
     }
   }
 
@@ -360,8 +353,8 @@ export default function BonustimeDetailPage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.error || 'Restart ไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: 'ส่งคำสั่ง Restart สำเร็จ' });
+    if (!data.ok) { setMsg({ type: 'error', text: data.error || 'Restart ไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: 'ส่งคำสั่ง Restart สำเร็จ' });
     setTimeout(loadRailwayInfo, 5000);
   }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import GlobalSelect from '../../../components/GlobalSelect.jsx';
 
 const CSS = `
 @keyframes auRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -370,15 +369,10 @@ export default function AdminUsersPage() {
                     </label>
                     <label className="au-field">
                       <span>Role</span>
-                      <GlobalSelect
-                        value={editRole}
-                        onChange={(v) => setEditRole(v)}
-                        options={[
-                          { value: 'user', label: 'user — สมาชิกทั่วไป' },
-                          { value: 'admin', label: 'admin — ผู้ดูแลระบบ' },
-                        ]}
-                        ariaLabel="เลือก Role ผู้ใช้"
-                      />
+                      <select className="au-input au-select" value={editRole} onChange={e => setEditRole(e.target.value)}>
+                        <option value="user">user — สมาชิกทั่วไป</option>
+                        <option value="admin">admin — ผู้ดูแลระบบ</option>
+                      </select>
                     </label>
                     <label className="au-field">
                       <span>ยอดเงิน</span>

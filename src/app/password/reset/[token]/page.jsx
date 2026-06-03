@@ -73,18 +73,11 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (password !== confirm) { notifyMsg({ ok: false, text: 'รหัสผ่านไม่ตรงกัน' }); return; }
-    if (password.length < 8) { notifyMsg({ ok: false, text: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' }); return; }
+    if (password !== confirm) { setMsg({ ok: false, text: 'รหัสผ่านไม่ตรงกัน' }); return; }
+    if (password.length < 8) { setMsg({ ok: false, text: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' }); return; }
     setLoading(true); setMsg(null);
     try {
       const res = await fetch('/api/password/reset', {
@@ -94,13 +87,13 @@ export default function ResetPasswordPage() {
       });
       const d = await res.json();
       if (d.ok) {
-        notifyMsg({ ok: true, text: 'เปลี่ยนรหัสผ่านสำเร็จ กำลังเข้าสู่ระบบ...' });
+        setMsg({ ok: true, text: 'เปลี่ยนรหัสผ่านสำเร็จ กำลังเข้าสู่ระบบ...' });
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
-        notifyMsg({ ok: false, text: d.message || 'ลิงก์ไม่ถูกต้องหรือหมดอายุแล้ว' });
+        setMsg({ ok: false, text: d.message || 'ลิงก์ไม่ถูกต้องหรือหมดอายุแล้ว' });
       }
     } catch {
-      notifyMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
+      setMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
     } finally {
       setLoading(false);
     }

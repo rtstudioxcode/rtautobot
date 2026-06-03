@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -381,57 +380,9 @@ export default function Topbar({ user }) {
     router.refresh();
   }
 
-  const [liveBalance, setLiveBalance] = useState(Number(user?.balance || 0));
-
-  useEffect(() => {
-    setLiveBalance(Number(user?.balance || 0));
-  }, [user?._id, user?.balance]);
-
-  useEffect(() => {
-    if (!user?._id) return undefined;
-    let ignore = false;
-
-    async function refreshBalance() {
-      try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' });
-        const data = await res.json().catch(() => ({}));
-        const next = Number(data?.user?.balance);
-        if (!ignore && data?.ok && Number.isFinite(next)) setLiveBalance(next);
-      } catch {}
-    }
-
-    function onBalanceUpdated(event) {
-      const detail = event?.detail || {};
-      const sameUserId = detail.userId && String(detail.userId) === String(user._id);
-      const sameUsername = detail.username && String(detail.username).toLowerCase() === String(user.username || '').toLowerCase();
-      const next = Number(detail.balance);
-      if ((sameUserId || sameUsername) && Number.isFinite(next)) {
-        setLiveBalance(next);
-        return;
-      }
-      refreshBalance();
-    }
-
-    function onVisibilityOrFocus() {
-      if (document.visibilityState === 'visible') refreshBalance();
-    }
-
-    window.addEventListener('rt:balance-updated', onBalanceUpdated);
-    window.addEventListener('rt:balance-refresh', refreshBalance);
-    window.addEventListener('focus', onVisibilityOrFocus);
-    document.addEventListener('visibilitychange', onVisibilityOrFocus);
-    refreshBalance();
-
-    return () => {
-      ignore = true;
-      window.removeEventListener('rt:balance-updated', onBalanceUpdated);
-      window.removeEventListener('rt:balance-refresh', refreshBalance);
-      window.removeEventListener('focus', onVisibilityOrFocus);
-      document.removeEventListener('visibilitychange', onVisibilityOrFocus);
-    };
-  }, [user?._id, user?.username]);
-
-  const balance = Number(liveBalance || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const balance = typeof user?.balance === 'number'
+    ? user.balance.toLocaleString('th-TH', { maximumFractionDigits: 2 })
+    : '0';
 
   const hasAvatar = user?.avatarUrl && !user.avatarUrl.includes('icon-logo');
 

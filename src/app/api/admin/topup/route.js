@@ -67,11 +67,6 @@ export async function POST(request) {
 
       const newBalance = await u.addBalance(n);
 
-      if (session?.user && String(session.user._id) === String(u._id)) {
-        session.user.balance = newBalance;
-        await session.save();
-      }
-
       await Transaction.create({
         production: PRODUCTION_KEY,
         userId: u._id,
@@ -83,7 +78,7 @@ export async function POST(request) {
         note: note || `admin manual topup by ${session.user.username}`,
       });
 
-      return NextResponse.json({ ok: true, userId: String(u._id), username: u.username, balance: newBalance });
+      return NextResponse.json({ ok: true, balance: newBalance });
     }
 
     if (action === 'save-wallet') {

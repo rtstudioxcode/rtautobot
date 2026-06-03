@@ -290,9 +290,6 @@ export default function RegisterPage() {
 
   const showMsg = ({ variant = 'info', icon, title = '', text = '' }) => {
     const imap = { info: '❔', success: '✅', warn: '⚠️', error: '✖' };
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { variant, title, text } }));
-    }
     setMsgVariant(variant);
     setMsgIcon(icon || imap[variant] || '❔');
     setMsgTitle(title);

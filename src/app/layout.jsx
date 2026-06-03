@@ -3,7 +3,6 @@ import { getSession } from '../lib/session.js';
 import Sidebar from '../components/Sidebar.jsx';
 import SbBackdrop from '../components/SbBackdrop.jsx';
 import Topbar from '../components/Topbar.jsx';
-import GlobalNotify from '../components/GlobalNotify.jsx';
 
 export const metadata = {
   title: { default: 'RTAUTOBOT | ระบบ Bonustime อัตโนมัติ', template: '%s | RTAUTOBOT' },
@@ -55,6 +54,30 @@ export default async function RootLayout({ children }) {
           }}
         />
         <script
+          id="service-worker-cleanup"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(reg){
+          try { reg.unregister(); } catch (e) {}
+        });
+      }).catch(function(){});
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys){
+        keys.forEach(function(key){
+          try { caches.delete(key); } catch (e) {}
+        });
+      }).catch(function(){});
+    }
+  } catch (e) {}
+})();`,
+          }}
+        />
+        <script
           id="turnstile-callback"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
@@ -72,7 +95,6 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body>
-        <GlobalNotify />
         {/* Sidebar (fixed, full height) */}
         <Sidebar user={user} />
 

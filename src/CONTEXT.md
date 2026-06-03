@@ -71,24 +71,8 @@
 - Updated `src/app/bonustime/page.jsx` to disable the page-level `.page.bonustime::before` glow/background layer behind the top hero area.
 - The Bonustime hero now matches the cleaner spacing/background behavior of other pages: only the section cards themselves render their glass/gradient surfaces, without an extra green backdrop block behind them.
 
-## 2026-06-03 — Global Notify system for Next.js app
-- Added `src/components/GlobalNotify.jsx`, a client-side top-right global notification system modeled after the old EJS `views/layout.ejs` notify behavior.
-- Mounted `<GlobalNotify />` in `src/app/layout.jsx` so every page has `window.notify`, `window.showMsg`, `window.dispatchNotify`, and the `rt:notify` event available globally.
-- The global notify supports `success`, `error`, `warn`, and `info` variants, mobile-safe top-right positioning, auto-dismiss, close buttons, and an alert fallback (`window.alert` renders as a notify card).
-- Updated common action pages to dispatch global notifications whenever their existing local `msg` state is set: `account`, `topup`, `bonustime`, `bonustime/[id]`, `admin/bonustime`, `admin/settings`, and `password/reset/[token]`.
-- Updated the register page `showMsg()` helper to also dispatch global notify events so register/OTP actions use the same notification layer.
-- Kept existing inline/page flash UI for compatibility, but global Notify is now the shared notification layer for user actions across the app.
-- Also moved `themeColor` from `metadata` to `viewport` in `src/app/layout.jsx` to align with Next.js App Router metadata requirements.
-
-## 2026-06-03 — Manual topup realtime balance + Global Notify
-- Fixed manual admin topup flow so successful topups dispatch Global Notify instead of only local modal status.
-- Added `rt:balance-updated` / `rt:balance-refresh` events and made `Topbar` keep a live balance state by fetching `/api/auth/me` from the DB, so credit changes show immediately without logout/login.
-- Manual topup APIs now update the current session balance when the admin credits their own account and return `{ userId, username, balance }` for realtime UI updates.
-- Admin dashboard manual topup modal no longer forces `location.reload()` after success; it closes cleanly and refreshes server components through `router.refresh()`.
-
-## 2026-06-03 — Global Custom Dropdown Selector
-- Added `src/components/GlobalSelect.jsx`, a shared client-side custom selector system for RTAUTOBOT Next.js pages.
-- `GlobalSelect` replaces native `<select>` controls with a consistent dark/glass green dropdown, top-layer portal menu, keyboard support, outside-click close, mobile-safe sizing, and high z-index so menus are not clipped by modals/cards/sidebar layouts.
-- `GlobalComboBox` replaces the manual topup username native datalist with a styled searchable dropdown, keeping typed username search behavior while avoiding the browser’s grey native suggestion UI.
-- Updated selector/dropdown usage across current pages: `/admin/bonustime` month/year selectors, manual topup user + method selectors, `/admin/settings` wallet type/bank selectors, `/admin/users` role selector, and `/topup` history method filter.
-- No native `<select>` or `<datalist>` remains in `src/app`/`src/components`; future pages should use `GlobalSelect` or `GlobalComboBox` instead of browser-default dropdowns.
+## 2026-06-03 — Legacy Service Worker cleanup
+- Added `src/app/sw.js/route.js` so `/sw.js` returns a no-store cleanup service worker instead of 404.
+- The cleanup worker unregisters itself, clears old browser caches, and lets the browser return to normal network handling because RTAUTOBOT V2 no longer uses PWA/service-worker caching.
+- Added a small `service-worker-cleanup` script in `src/app/layout.jsx` to unregister stale service workers and delete cache entries for existing users/pages without needing logout/login or manual DevTools cleanup.
+- Moved `themeColor` from `metadata` to the App Router `viewport` export in `src/app/layout.jsx` while touching the layout, preventing the related Next.js metadata warning from returning.

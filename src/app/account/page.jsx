@@ -554,13 +554,6 @@ export default function AccountPage() {
   const [tab, setTab] = useState('profile');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [affiliateData, setAffiliateData] = useState(null);
   const [showPw, setShowPw] = useState({ cur: false, new: false, con: false });
   const fileRef = useRef(null);
@@ -596,8 +589,8 @@ export default function AccountPage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.error || data.message || 'บันทึกไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: 'บันทึกสำเร็จ' });
+    if (!data.ok) { setMsg({ type: 'error', text: data.error || data.message || 'บันทึกไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: 'บันทึกสำเร็จ' });
     setUser((u) => ({ ...u, name: data.user?.name ?? u.name, email: data.user?.email ?? u.email }));
   }
 
@@ -605,7 +598,7 @@ export default function AccountPage() {
     e.preventDefault(); setBusy(true); setMsg(null);
     const form = new FormData(e.target);
     if (form.get('newPassword') !== form.get('confirmPassword')) {
-      notifyMsg({ type: 'error', text: 'รหัสผ่านใหม่ไม่ตรงกัน' }); setBusy(false); return;
+      setMsg({ type: 'error', text: 'รหัสผ่านใหม่ไม่ตรงกัน' }); setBusy(false); return;
     }
     const res = await fetch('/api/account/password', {
       method: 'POST',
@@ -614,7 +607,7 @@ export default function AccountPage() {
     });
     const data = await res.json();
     setBusy(false);
-    notifyMsg(data.ok ? { type: 'success', text: 'เปลี่ยนรหัสผ่านสำเร็จ' } : { type: 'error', text: data.message || 'ไม่สำเร็จ' });
+    setMsg(data.ok ? { type: 'success', text: 'เปลี่ยนรหัสผ่านสำเร็จ' } : { type: 'error', text: data.message || 'ไม่สำเร็จ' });
     if (data.ok) e.target.reset();
   }
 
@@ -627,8 +620,8 @@ export default function AccountPage() {
     const res = await fetch('/api/account/avatar', { method: 'POST', body: form });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message || 'อัปโหลดไม่สำเร็จ' }); return; }
-    notifyMsg({ type: 'success', text: 'เปลี่ยนรูปสำเร็จ' });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message || 'อัปโหลดไม่สำเร็จ' }); return; }
+    setMsg({ type: 'success', text: 'เปลี่ยนรูปสำเร็จ' });
     setUser((u) => ({ ...u, avatarUrl: data.avatarUrl }));
   }
 
@@ -638,7 +631,7 @@ export default function AccountPage() {
     const data = await res.json();
     setBusy(false);
     if (data.ok) { setUser((u) => ({ ...u, affiliateKey: data.key || u.affiliateKey })); loadAffiliate(); }
-    else notifyMsg({ type: 'error', text: data.error || 'สร้างลิงก์ไม่สำเร็จ' });
+    else setMsg({ type: 'error', text: data.error || 'สร้างลิงก์ไม่สำเร็จ' });
   }
 
   if (loading) return <div style={{ padding: '80px', textAlign: 'center', color: '#666' }}>กำลังโหลด...</div>;

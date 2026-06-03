@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import GlobalSelect from '../../components/GlobalSelect.jsx';
 
 const BANK_LABELS = {
   bbl:'ธนาคารกรุงเทพ', kbank:'ธนาคารกสิกรไทย', ktb:'ธนาคารกรุงไทย',
@@ -80,7 +79,6 @@ const CSS = `
 .tp-section-head.compact{margin-bottom:12px;}
 .tp-history-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
 .tp-history-filter{min-height:42px;border-radius:14px;border:1px solid var(--tp-border);background:var(--tp-soft);color:var(--tp-text);padding:0 12px;font-weight:800;outline:none;}
-.tp-history-custom-select{width:min(260px,100%);}
 .tp-history-count{padding:8px 12px;border-radius:999px;background:var(--tp-soft);color:var(--tp-muted);border:1px solid var(--tp-border);}
 .tp-wallet-rail{display:grid;gap:10px;border:0;margin:0;padding:0;overflow:visible;}
 .tp-wallet-tab{width:100%;border:1px solid transparent;border-radius:20px;background:transparent;padding:12px;display:grid;grid-template-columns:48px 1fr 22px;gap:12px;align-items:center;color:var(--tp-text);cursor:pointer;text-align:left;transition:transform .22s ease,border .22s ease,background .22s ease,box-shadow .22s ease;}
@@ -329,13 +327,6 @@ export default function TopupPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [qrModal, setQrModal] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [qrExpired, setQrExpired] = useState(false);
@@ -410,10 +401,10 @@ export default function TopupPage() {
           stopTxWatcher(); clearCountdown();
           if (j.status === 'completed') {
             const amt = j.amount ?? null;
-            notifyMsg({ type: 'ok', text: `เติมเงินสำเร็จ!${amt != null ? ` เพิ่มเครดิต ฿${Number(amt).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ''}` });
+            setMsg({ type: 'ok', text: `เติมเงินสำเร็จ!${amt != null ? ` เพิ่มเครดิต ฿${Number(amt).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ''}` });
             setQrModal(null); setQrExpired(false); loadPage();
           } else {
-            notifyMsg({ type: 'err', text: j.status === 'failed' ? 'การชำระล้มเหลว กรุณาลองใหม่' : 'รายการถูกยกเลิก' });
+            setMsg({ type: 'err', text: j.status === 'failed' ? 'การชำระล้มเหลว กรุณาลองใหม่' : 'รายการถูกยกเลิก' });
             setQrModal(null);
           }
           return;
@@ -433,7 +424,7 @@ export default function TopupPage() {
   async function submitTopup(e, walletCode) {
     e.preventDefault();
     const base = Math.floor(Number(amount));
-    if (!base || base < 1) { notifyMsg({ type: 'err', text: 'จำนวนเงินขั้นต่ำ 1 บาท' }); return; }
+    if (!base || base < 1) { setMsg({ type: 'err', text: 'จำนวนเงินขั้นต่ำ 1 บาท' }); return; }
     setBusy(true); setMsg(null);
     try {
       const res = await fetch('/api/topup/create', {
@@ -442,7 +433,7 @@ export default function TopupPage() {
         body: JSON.stringify({ amount: base, method: walletCode }),
       });
       const j = await res.json();
-      if (!res.ok || !j?.ok) { notifyMsg({ type: 'err', text: j?.message || 'สร้างคำสั่งเติมเงินไม่สำเร็จ' }); setBusy(false); return; }
+      if (!res.ok || !j?.ok) { setMsg({ type: 'err', text: j?.message || 'สร้างคำสั่งเติมเงินไม่สำเร็จ' }); setBusy(false); return; }
       currentTxIdRef.current = j.txId;
       const displayAmount = Number(j.displayAmount ?? j.amount ?? base);
       const expiresIn = Number(j.expiresIn || 300);
@@ -454,7 +445,7 @@ export default function TopupPage() {
       } else {
         setQrModal(modalData); startCountdown(expiresIn); startTxWatcher(j.txId, expiresIn);
       }
-    } catch (err) { notifyMsg({ type: 'err', text: `ขัดข้อง: ${err.message}` }); }
+    } catch (err) { setMsg({ type: 'err', text: `ขัดข้อง: ${err.message}` }); }
     setBusy(false);
   }
 
@@ -465,9 +456,9 @@ export default function TopupPage() {
       const r = await fetch(`/api/topup/cancel/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j?.ok) throw new Error(j?.message || 'ยกเลิกไม่สำเร็จ');
-      notifyMsg({ type: 'ok', text: 'ยกเลิกรายการแล้ว สามารถสร้างรายการใหม่ได้เลย' });
+      setMsg({ type: 'ok', text: 'ยกเลิกรายการแล้ว สามารถสร้างรายการใหม่ได้เลย' });
       stopTxWatcher(); clearCountdown(); setQrModal(null); setQrExpired(false); loadPage();
-    } catch (err) { notifyMsg({ type: 'err', text: err.message }); }
+    } catch (err) { setMsg({ type: 'err', text: err.message }); }
   }
 
   function closeQrModal() { stopTxWatcher(); clearCountdown(); setQrModal(null); setQrExpired(false); }
@@ -688,16 +679,12 @@ export default function TopupPage() {
                 <h2>ประวัติการเติมเงินล่าสุด</h2>
               </div>
               <div className="tp-history-actions">
-                <GlobalSelect
-                  className="tp-history-custom-select"
-                  value={historyFilter}
-                  onChange={(v) => setHistoryFilter(v)}
-                  options={[
-                    { value: 'all', label: 'ทุกช่องทาง' },
-                    ...historyMethods.map((code) => ({ value: code, label: BANK_LABELS[code] || code.toUpperCase() })),
-                  ]}
-                  ariaLabel="กรองประวัติเติมเงินตามช่องทาง"
-                />
+                <select className="tp-history-filter" value={historyFilter} onChange={e => setHistoryFilter(e.target.value)}>
+                  <option value="all">ทุกช่องทาง</option>
+                  {historyMethods.map(code => (
+                    <option key={code} value={code}>{BANK_LABELS[code] || code.toUpperCase()}</option>
+                  ))}
+                </select>
                 <div className="tp-history-count">{transactions.length.toLocaleString('th-TH')} รายการ</div>
               </div>
             </div>

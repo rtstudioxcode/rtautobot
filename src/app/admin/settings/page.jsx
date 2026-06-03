@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import GlobalSelect from '../../../components/GlobalSelect.jsx';
 
 const CSS = `
 .rt-admin-settings {
@@ -474,13 +473,6 @@ export default function AdminSettingsPage() {
   const [busy, setBusy] = useState(false);
   const [savingWalletId, setSavingWalletId] = useState(null);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [newWallet, setNewWallet] = useState({ ...EMPTY_NEW });
   const audioCtxRef = useRef(null);
 
@@ -568,9 +560,9 @@ export default function AdminSettingsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.message || 'บันทึกบัญชีไม่สำเร็จ');
       if (data.wallets) setWallets(data.wallets);
-      notifyMsg({ type: 'ok', text: '✅ บันทึกบัญชีรับเงินสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
+      setMsg({ type: 'ok', text: '✅ บันทึกบัญชีรับเงินสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
     } catch (err) {
-      notifyMsg({ type: 'err', text: '❌ ' + (err.message || 'บันทึกบัญชีไม่สำเร็จ') });
+      setMsg({ type: 'err', text: '❌ ' + (err.message || 'บันทึกบัญชีไม่สำเร็จ') });
       await loadWallets();
     } finally {
       setSavingWalletId(null);
@@ -605,9 +597,9 @@ export default function AdminSettingsPage() {
       if (!res.ok || !data.ok) throw new Error(data.message || 'บันทึกไม่สำเร็จ');
       if (data.wallets) setWallets(data.wallets);
       setNewWallet({ ...EMPTY_NEW });
-      notifyMsg({ type: 'ok', text: '✅ บันทึกข้อมูลสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
+      setMsg({ type: 'ok', text: '✅ บันทึกข้อมูลสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
     } catch (err) {
-      notifyMsg({ type: 'err', text: '❌ ' + (err.message || 'บันทึกไม่สำเร็จ') });
+      setMsg({ type: 'err', text: '❌ ' + (err.message || 'บันทึกไม่สำเร็จ') });
     } finally {
       setBusy(false);
     }
@@ -805,28 +797,28 @@ export default function AdminSettingsPage() {
                   </div>
                   <div className="form-group">
                     <label>ประเภทบัญชี</label>
-                    <GlobalSelect
+                    <select
                       value={newWallet.type}
-                      onChange={(v) => setNewWallet((p) => ({ ...p, type: v }))}
-                      options={[
-                        { value: 'DEPOSIT', label: 'บัญชีฝาก' },
-                        { value: 'WITHDRAW', label: 'บัญชีถอน' },
-                      ]}
-                      ariaLabel="เลือกประเภทบัญชี"
-                    />
+                      onChange={(e) => setNewWallet((p) => ({ ...p, type: e.target.value }))}
+                    >
+                      <option value="DEPOSIT">บัญชีฝาก</option>
+                      <option value="WITHDRAW">บัญชีถอน</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className="grid cols-2 gap-md mt-sm">
                   <div className="form-group">
                     <label>บัญชีธนาคาร / Wallet</label>
-                    <GlobalSelect
+                    <select
                       value={newWallet.accountCode}
-                      onChange={(v) => setNewWallet((p) => ({ ...p, accountCode: v }))}
-                      placeholder="เลือกธนาคารหรือ TrueMoney Wallet"
-                      options={BANKS_LIST.map((b) => ({ value: b.code, label: b.label }))}
-                      ariaLabel="เลือกบัญชีธนาคารหรือ Wallet"
-                    />
+                      onChange={(e) => setNewWallet((p) => ({ ...p, accountCode: e.target.value }))}
+                    >
+                      <option value="" disabled>เลือกธนาคารหรือ TrueMoney Wallet</option>
+                      {BANKS_LIST.map((b) => (
+                        <option key={b.code} value={b.code}>{b.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="form-group">
                     <label>เลขบัญชี / เบอร์</label>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import GlobalSelect from '../../../components/GlobalSelect.jsx';
 
 const CSS = `
 /* ===== BASE ===== */
@@ -58,7 +57,6 @@ const CSS = `
 .ultra-summary-title h2{font-size:clamp(18px,2.2vw,22px);margin:0;}
 .ultra-summary-title p{margin:4px 0 0;color:var(--ultra-muted);}
 .ultra-month-select{display:flex;align-items:center;gap:8px;font-size:14px;}
-.ultra-month-select .rt-select-wrap{min-width:150px;}
 .ultra-month-select select{background:var(--ultra-card-bg);color:var(--ultra-text);border-radius:999px;border:1px solid var(--ultra-border);padding:6px 14px;font-size:14px;}
 .ultra-cards{display:grid;margin-bottom:20px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:var(--ultra-gap);}
 .ultra-card.glass{background:linear-gradient(135deg,rgba(24,24,27,.96),rgba(15,23,42,.96));border-radius:var(--ultra-radius);border:1px solid var(--ultra-border);padding:14px 16px 12px;display:flex;flex-direction:column;gap:8px;}
@@ -222,13 +220,6 @@ export default function AdminBonustimePage() {
   const [savingIds, setSavingIds] = useState(new Set());
   const [savedIds, setSavedIds] = useState(new Set());
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [busy, setBusy] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [addLotto, setAddLotto] = useState(false);
@@ -302,8 +293,8 @@ export default function AdminBonustimePage() {
     const res = await fetch('/api/admin/bonustime', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete-service', id }) });
     const data = await res.json();
     setBusy(false);
-    if (data.ok) { setRecords(prev => prev.filter(r => String(r._id) !== id)); notifyMsg({ type: 'success', text: 'ลบ Service สำเร็จ' }); }
-    else notifyMsg({ type: 'error', text: data.error || 'ลบไม่สำเร็จ' });
+    if (data.ok) { setRecords(prev => prev.filter(r => String(r._id) !== id)); setMsg({ type: 'success', text: 'ลบ Service สำเร็จ' }); }
+    else setMsg({ type: 'error', text: data.error || 'ลบไม่สำเร็จ' });
   }
 
   async function handleResetService(id, name, force = false) {
@@ -312,8 +303,8 @@ export default function AdminBonustimePage() {
     const res = await fetch('/api/admin/bonustime', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reset-service', id, force }) });
     const data = await res.json();
     setBusy(false);
-    if (data.ok) { notifyMsg({ type: 'success', text: 'รีเซ็ต Service สำเร็จ' }); loadRecords(); }
-    else notifyMsg({ type: 'error', text: data.error || 'รีเซ็ตไม่สำเร็จ' });
+    if (data.ok) { setMsg({ type: 'success', text: 'รีเซ็ต Service สำเร็จ' }); loadRecords(); }
+    else setMsg({ type: 'error', text: data.error || 'รีเซ็ตไม่สำเร็จ' });
   }
 
   async function handleAddService() {
@@ -321,8 +312,8 @@ export default function AdminBonustimePage() {
     const res = await fetch('/api/admin/bonustime', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add-service', lotto: addLotto }) });
     const data = await res.json();
     setAddBusy(false);
-    if (data.ok) { setShowAdd(false); notifyMsg({ type: 'success', text: 'เพิ่ม Service สำเร็จ' }); loadRecords(); }
-    else notifyMsg({ type: 'error', text: data.error || 'เพิ่มไม่สำเร็จ' });
+    if (data.ok) { setShowAdd(false); setMsg({ type: 'success', text: 'เพิ่ม Service สำเร็จ' }); loadRecords(); }
+    else setMsg({ type: 'error', text: data.error || 'เพิ่มไม่สำเร็จ' });
   }
 
   async function handleRailwayRestart(rec) {
@@ -334,11 +325,11 @@ export default function AdminBonustimePage() {
     try {
       const infoRes = await fetch(`/api/railway/service-info/${encodeURIComponent(key)}`);
       const info = await infoRes.json();
-      if (!info.ok) { notifyMsg({ type: 'error', text: 'โหลดข้อมูล Railway ไม่สำเร็จ' }); return; }
+      if (!info.ok) { setMsg({ type: 'error', text: 'โหลดข้อมูล Railway ไม่สำเร็จ' }); return; }
       const res = await fetch('/api/railway/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: info.serviceId, environmentId: info.environmentId, tenantId: key, deploymentId: info.deploymentId }) });
       const data = await res.json();
-      notifyMsg(data.ok ? { type: 'success', text: `Restart ${key} สำเร็จ` } : { type: 'error', text: data.error || 'Restart ไม่สำเร็จ' });
-    } catch { notifyMsg({ type: 'error', text: 'Restart ไม่สำเร็จ' }); }
+      setMsg(data.ok ? { type: 'success', text: `Restart ${key} สำเร็จ` } : { type: 'error', text: data.error || 'Restart ไม่สำเร็จ' });
+    } catch { setMsg({ type: 'error', text: 'Restart ไม่สำเร็จ' }); }
     setRailwayBusy(prev => { const n = new Set(prev); n.delete(id); return n; });
   }
 
@@ -608,18 +599,12 @@ function SummaryTab({ statsYear, statsMonth, onYearChange, onMonthChange, stats,
           <p className="muted small">เลือกเดือนด้านขวาเพื่อดูยอดขาย</p>
         </div>
         <div className="ultra-month-select">
-          <GlobalSelect
-            value={statsMonth}
-            onChange={(v) => onMonthChange(Number(v))}
-            options={MONTHS_TH.map((m, i) => ({ value: i + 1, label: m }))}
-            ariaLabel="เลือกเดือนสรุปยอด Bonustime"
-          />
-          <GlobalSelect
-            value={statsYear}
-            onChange={(v) => onYearChange(Number(v))}
-            options={years.map((y) => ({ value: y, label: String(y + 543) }))}
-            ariaLabel="เลือกปีสรุปยอด Bonustime"
-          />
+          <select value={statsMonth} onChange={e => onMonthChange(Number(e.target.value))}>
+            {MONTHS_TH.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+          </select>
+          <select value={statsYear} onChange={e => onYearChange(Number(e.target.value))}>
+            {years.map(y => <option key={y} value={y}>{y + 543}</option>)}
+          </select>
         </div>
       </header>
 

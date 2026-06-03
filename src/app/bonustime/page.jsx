@@ -562,13 +562,6 @@ export default function BonustimePage() {
   const [extendModal, setExtendModal] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  function notifyMsg(payload) {
-    setMsg(payload);
-    if (payload && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: payload }));
-    }
-  }
-
   const [showNotice, setShowNotice] = useState(false);
 
   useEffect(() => {
@@ -624,8 +617,8 @@ export default function BonustimePage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message }); return; }
-    notifyMsg({ type: 'success', text: `สั่งซื้อสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message }); return; }
+    setMsg({ type: 'success', text: `สั่งซื้อสำเร็จ! เหลือเงิน ฿${Number(data.balance).toLocaleString()}` });
     setOrderModal(null);
     setUser((u) => ({ ...u, balance: data.balance }));
     setTab('history');
@@ -645,8 +638,8 @@ export default function BonustimePage() {
     });
     const data = await res.json();
     setBusy(false);
-    if (!data.ok) { notifyMsg({ type: 'error', text: data.message }); return; }
-    notifyMsg({ type: 'success', text: 'ต่ออายุสำเร็จ!' });
+    if (!data.ok) { setMsg({ type: 'error', text: data.message }); return; }
+    setMsg({ type: 'success', text: 'ต่ออายุสำเร็จ!' });
     setExtendModal(null);
     setUser((u) => ({ ...u, balance: data.balance }));
     loadHistory();
@@ -658,7 +651,7 @@ export default function BonustimePage() {
 
     const text = String(link || '').trim();
     if (!text) {
-      notifyMsg({ type: 'error', text: 'ยังไม่มีลิงก์ Webhook ให้คัดลอก' });
+      setMsg({ type: 'error', text: 'ยังไม่มีลิงก์ Webhook ให้คัดลอก' });
       return;
     }
 
@@ -677,9 +670,9 @@ export default function BonustimePage() {
         document.execCommand('copy');
         document.body.removeChild(ta);
       }
-      notifyMsg({ type: 'success', text: 'คัดลอกลิงก์ Webhook แล้ว' });
+      setMsg({ type: 'success', text: 'คัดลอกลิงก์ Webhook แล้ว' });
     } catch (err) {
-      notifyMsg({ type: 'error', text: 'คัดลอกลิงก์ไม่สำเร็จ กรุณาลองอีกครั้ง' });
+      setMsg({ type: 'error', text: 'คัดลอกลิงก์ไม่สำเร็จ กรุณาลองอีกครั้ง' });
     }
   }
 
@@ -763,7 +756,7 @@ export default function BonustimePage() {
                     setMsg(null);
                     const res = await fetch('/api/bonustime/next?type=normal');
                     const d = await res.json();
-                    if (!d.ok) { notifyMsg({ type: 'error', text: d.message }); return; }
+                    if (!d.ok) { setMsg({ type: 'error', text: d.message }); return; }
                     setOrderModal({ type: 'normal', item: d.item });
                   }}
                   busy={busy}
@@ -779,7 +772,7 @@ export default function BonustimePage() {
                     setMsg(null);
                     const res = await fetch('/api/bonustime/next?type=lotto');
                     const d = await res.json();
-                    if (!d.ok) { notifyMsg({ type: 'error', text: d.message }); return; }
+                    if (!d.ok) { setMsg({ type: 'error', text: d.message }); return; }
                     setOrderModal({ type: 'lotto', item: d.item });
                   }}
                   busy={busy}

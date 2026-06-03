@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import GlobalSelect, { GlobalComboBox } from '../../components/GlobalSelect.jsx';
 
 const METHODS = [
   { value: 'admin', label: 'Admin' },
@@ -31,7 +30,7 @@ const CSS = `
 .rt-mtu-btn.success{background:linear-gradient(135deg,#8dffc0,#23ba6a)}
 `;
 
-export default function ManualTopupModal({ open, onClose, prefill, onDone }) {
+export default function ManualTopupModal({ open, onClose, prefill }) {
   const [username, setUsername] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('admin');
@@ -70,12 +69,7 @@ export default function ManualTopupModal({ open, onClose, prefill, onDone }) {
   async function handleSubmit(e) {
     e.preventDefault();
     const amt = Number(amount || 0);
-    if (!username || !(amt > 0)) {
-      const text = 'กรุณากรอกชื่อผู้ใช้และจำนวนเงินให้ครบถ้วน';
-      setStatus('❌ ' + text);
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { type: 'warn', title: 'ข้อมูลไม่ครบ', text } }));
-      return;
-    }
+    if (!username || !(amt > 0)) { setStatus('❌ กรุณากรอกชื่อผู้ใช้และจำนวนเงินให้ครบถ้วน'); return; }
     setStatus('⏳ กำลังทำรายการ...');
     try {
       const r = await fetch('/api/admin/manual-topup', {
@@ -85,19 +79,10 @@ export default function ManualTopupModal({ open, onClose, prefill, onDone }) {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j?.error || 'เติมเงินไม่สำเร็จ');
-      const successText = `เติมเครดิตสำเร็จให้ ${username} จำนวน ฿${amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      setStatus(`✅ ${successText}`);
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { type: 'success', title: 'เติมเครดิตสำเร็จ', text: successText } }));
-      window.dispatchEvent(new CustomEvent('rt:balance-updated', {
-        detail: { userId: j.userId, username: j.username || username, balance: j.balance }
-      }));
-      window.dispatchEvent(new CustomEvent('rt:balance-refresh'));
-      if (typeof onDone === 'function') onDone(j);
-      setTimeout(() => { onClose(); }, 650);
+      setStatus(`✅ เติมเงินสำเร็จให้ ${username} จำนวน ${amt.toLocaleString()} บาท`);
+      setTimeout(() => { onClose(); location.reload(); }, 900);
     } catch (err) {
-      const errorText = err?.message || 'ทำรายการไม่สำเร็จ';
-      setStatus('❌ ' + errorText);
-      window.dispatchEvent(new CustomEvent('rt:notify', { detail: { type: 'error', title: 'เติมเครดิตไม่สำเร็จ', text: errorText } }));
+      setStatus('❌ ' + (err?.message || 'ทำรายการไม่สำเร็จ'));
     }
   }
 
@@ -121,20 +106,19 @@ export default function ManualTopupModal({ open, onClose, prefill, onDone }) {
             <input type="hidden" value={txId} />
             <label>
               <span>ชื่อผู้ใช้</span>
-              <GlobalComboBox
-                inputRef={usernameRef}
+              <input
+                ref={usernameRef}
+                className="rt-mtu-input"
+                list="manualUserList"
                 value={username}
-                onInputChange={(v) => { setUsername(v); searchUsers(v.trim()); }}
-                onSelect={(v) => { setUsername(v); searchUsers(String(v).trim()); }}
-                options={users.map((u) => ({
-                  value: u.username,
-                  label: u.username,
-                  subLabel: u.email || '',
-                }))}
+                onChange={e => { setUsername(e.target.value); searchUsers(e.target.value.trim()); }}
+                autoComplete="off"
                 required
                 placeholder="พิมพ์ Username หรือเลือกจากรายการ"
-                ariaLabel="เลือกผู้ใช้สำหรับเติมเงิน"
               />
+              <datalist id="manualUserList">
+                {users.map(u => <option key={u.username} value={u.username} label={`${u.username}${u.email ? ' · ' + u.email : ''}`} />)}
+              </datalist>
             </label>
 
             <label>
@@ -152,12 +136,14 @@ export default function ManualTopupModal({ open, onClose, prefill, onDone }) {
 
             <label>
               <span>Method การเติมเงิน</span>
-              <GlobalSelect
+              <select
+                className="rt-mtu-input"
                 value={method}
-                onChange={(v) => setMethod(v)}
-                options={METHODS}
-                ariaLabel="เลือก Method การเติมเงิน"
-              />
+                onChange={e => setMethod(e.target.value)}
+                required
+              >
+                {METHODS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </label>
 
             <div className="rt-mtu-note">
