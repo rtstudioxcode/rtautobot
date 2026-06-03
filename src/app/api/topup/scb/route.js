@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 import { ensureInit } from '../../../../lib/setup.js';
 import { Topup } from '../../../../models/Topup.js';

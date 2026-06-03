@@ -76,3 +76,8 @@
 - The cleanup worker unregisters itself, clears old browser caches, and lets the browser return to normal network handling because RTAUTOBOT V2 no longer uses PWA/service-worker caching.
 - Added a small `service-worker-cleanup` script in `src/app/layout.jsx` to unregister stale service workers and delete cache entries for existing users/pages without needing logout/login or manual DevTools cleanup.
 - Moved `themeColor` from `metadata` to the App Router `viewport` export in `src/app/layout.jsx` while touching the layout, preventing the related Next.js metadata warning from returning.
+
+## 2026-06-03 — Railway Next build dynamic API route fix
+- Fixed Railway/Next.js production build failures where App Router attempted to statically pre-render API route handlers such as `/api/topup/wallets`, `/api/topup/history`, `/api/bonustime/products`, and `/api/bonustime/next`.
+- Added `export const dynamic = 'force-dynamic'` and `export const revalidate = 0` to all `src/app/api/**/route.js` handlers so authenticated/database-backed API routes are always treated as runtime routes instead of static generation targets.
+- This prevents `DYNAMIC_SERVER_USAGE` errors caused by `cookies()`/iron-session and avoids static page generation timeouts during `npm run build` on Railway.
