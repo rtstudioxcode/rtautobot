@@ -1,3 +1,20 @@
+## 2026-06-04 — Global Notify and Native Select bridge
+- Mounted global client UI helpers in `src/app/layout.tsx` so every page gets the shared notification system and automatic native select enhancement.
+- Reworked `src/components/GlobalNotify.tsx` to match the legacy `views/layout.ejs` Notify behavior: top-right toast stack, `window.notify`, `window.showMsg`, `window.dispatchNotify`, `rt:notify` event support, and browser `alert()` mapped to Notify cards.
+- Added `src/components/GlobalNativeSelect.tsx` to auto-enhance all native single `<select>` elements across App Router pages into the legacy premium custom dropdown style, while preserving the original hidden `<select>` for React state, forms, and API flow compatibility.
+- Selects can opt out with `data-native-select="true"` or `multiple`, and `window.RTCustomSelect.refresh()` remains available for dynamic pages/modals.
+
+
+## 2026-06-04 — TypeScript / TSX migration scaffold
+- Migrated all source files under `src` from `.jsx` to `.tsx` for frontend React/App Router UI and from `.js` to `.ts` for backend/API/lib/model/service/queue/worker code.
+- Added `tsconfig.json` and `next-env.d.ts` for Next.js TypeScript support.
+- Added `typescript` and `tsx` package entries and changed the worker script to `tsx src/worker.ts` so the standalone BullMQ worker can run from TypeScript source.
+- Removed all `// @ts-nocheck` compatibility guards from migrated source files and fixed TypeScript checker errors so the package can pass `tsc --noEmit` without suppressing whole files.
+- Removed explicit local `.js`/`.jsx` import extensions so renamed `.ts`/`.tsx` modules resolve cleanly through Next/TypeScript bundler resolution.
+- Converted `tailwind.config.js` to `tailwind.config.ts` and limited Tailwind content scanning to `./src/**/*.{ts,tsx}`.
+- Preserved the App Router route folder `src/app/sw.js/route.ts` intentionally so `/sw.js` continues to exist for legacy service worker cleanup while the handler itself is TypeScript.
+- Verified there are no remaining `.js`/`.jsx` files in the package, no local `.js`/`.jsx` source imports, and `tsc --noEmit` passes in this migrated package.
+
 
 ## 2026-06-01 NoticeModal header final cleanup
 - Updated NoticeModal presentation for `views/auth/register.ejs`, `views/auth/login.ejs` forgot-password modal, and `views/bonustime/index.ejs` to match the clean `/topup` notice style.
@@ -81,3 +98,38 @@
 - Fixed Railway/Next.js production build failures where App Router attempted to statically pre-render API route handlers such as `/api/topup/wallets`, `/api/topup/history`, `/api/bonustime/products`, and `/api/bonustime/next`.
 - Added `export const dynamic = 'force-dynamic'` and `export const revalidate = 0` to all `src/app/api/**/route.js` handlers so authenticated/database-backed API routes are always treated as runtime routes instead of static generation targets.
 - This prevents `DYNAMIC_SERVER_USAGE` errors caused by `cookies()`/iron-session and avoids static page generation timeouts during `npm run build` on Railway.
+
+## 2026-06-04 — Global Notify and Custom Select follow-up
+- Mounted Global Notify and Global Native Select in `src/app/layout.tsx` so all pages can use the shared notification stack and custom dropdown enhancer.
+- Added `src/lib/clientNotify.ts` for client-side notification helpers: `notifyFromPayload`, `notifyMsg`, and `copyTextWithNotify`.
+- Updated action feedback in Bonustime, Bonustime detail, Account, Topup, Admin Bonustime, Admin Settings, Admin Dashboard, Admin Report, Login, Register, and Password flows so `setMsg`/action errors also trigger the global notify UI instead of only rendering inline page messages.
+- Updated direct copy buttons such as affiliate link and admin service link copy to call `copyTextWithNotify`, so copy actions show the global notify toast immediately.
+- Kept existing inline message state where pages already had it, but global notify is now triggered in parallel for user-facing action feedback.
+
+## 2026-06-04 — Account redeem points and affiliate withdraw fix
+- Added `src/app/api/account/points/redeem/route.ts` so users can redeem available account points into wallet credit from `/account` once they have at least 100 points.
+- The redeem flow recalculates spend/level/points before processing, credits the user's balance, increments `pointsRedeemed` and `redeemedSpent`, logs a completed `Transaction`, recalculates totals again, and syncs session balance/level so the topbar can update after refresh.
+- Extended `src/app/api/account/affiliate/route.ts` with `withdraw-balance` action so affiliate withdrawable income can be paid directly into wallet credit.
+- Affiliate withdrawal now increments user balance and `affiliate.paidTHB`, writes an `AffWithdraw` success record, logs a completed `Transaction`, returns fresh affiliate summary, and updates the session balance.
+- Added `affiliate.withdrawableTHB` and `affiliate.btBonusTHB` to `src/models/User.ts` so Mongoose strict schema does not drop fields used by affiliate reward calculations.
+- Updated `src/app/account/page.tsx` buttons to call the new APIs, show Global Notify success/error messages, refresh account/affiliate state, and refresh the server layout after balance-changing actions.
+
+## 2026-06-04 Global Confirm UI
+- Added `src/components/GlobalConfirm.tsx` and mounted it from `src/app/layout.tsx` next to GlobalNotify/GlobalNativeSelect.
+- Added promise-based `confirmAction()` in `src/lib/clientNotify.ts`, mapped to `window.rtConfirm`, `window.UIConfirm`, and `window.uiConfirm`.
+- Replaced browser `confirm()` usage in account affiliate withdraw, points redeem, admin topup reject, admin wallet delete, admin bonustime delete/reset/restart, and bonustime detail upgrade/restart flows.
+- Confirm UI uses a production SaaS dark/glass dialog with green primary action, danger/warning variants, ESC/backdrop cancel, Enter confirm, and mobile bottom-sheet behavior.
+
+
+## 2026-06-04 Global Notify single-source update
+- Removed in-page flash bars from main action pages so success/error feedback uses only Global Notify at the top-right.
+- Kept action state and business logic intact; only duplicate inline message rendering was removed.
+
+## 2026-06-04 — Embedded Worker on `npm run start`
+
+- Added `src/instrumentation.ts` and `src/server/embeddedWorker.ts` so `next start` boots the Bonustime BullMQ worker and scheduler automatically in the same Railway service.
+- `npm run start` remains `next start`; no separate `npm run worker` service is required for normal deployment.
+- Embedded boot flow: connect Mongo → refresh secure_config → start secure_config auto reload → start BullMQ repeat scheduler → start BullMQ worker.
+- Added global guards to prevent duplicate workers during hot reload/runtime re-entry.
+- Added env escape hatch: `RTAUTOBOT_DISABLE_EMBEDDED_WORKER=1` or `DISABLE_EMBEDDED_WORKER=1` skips the embedded worker if a separate worker service is ever needed.
+- Kept `npm run worker` as an emergency/manual fallback and updated it to start the scheduler before the worker.
