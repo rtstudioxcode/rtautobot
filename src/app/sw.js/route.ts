@@ -13,18 +13,18 @@ self.addEventListener('activate', (event) => {
     try {
       const keys = await caches.keys();
       await Promise.all(keys.map((key) => caches.delete(key)));
-    } catch (e: any) {}
+    } catch (e) {}
 
     try {
       await self.registration.unregister();
-    } catch (e: any) {}
+    } catch (e) {}
 
     try {
       const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (const client of clients) {
-        try { client.navigate(client.url); } catch (e: any) {}
+        try { client.navigate(client.url); } catch (e) {}
       }
-    } catch (e: any) {}
+    } catch (e) {}
   })());
 });
 

@@ -1,69 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
 
-export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/dashboard';
 
-  const [form, setForm] = useState({ login: '', password: '' });
-  const [showPass, setShowPass] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotBusy, setForgotBusy] = useState(false);
-  const [forgotMsg, setForgotMsg] = useState(null);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
-      router.push(nextPath);
-      router.refresh();
-    } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleForgot(e) {
-    e.preventDefault();
-    if (!forgotEmail) return;
-    setForgotBusy(true);
-    setForgotMsg(null);
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
-      });
-      const d = await res.json();
-      if (d.ok) setForgotMsg({ ok: true, text: 'ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว' });
-      else setForgotMsg({ ok: false, text: d.message || 'ไม่พบอีเมลนี้ในระบบ' });
-    } catch {
-      setForgotMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
-    } finally {
-      setForgotBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <style>{`
+const loginStyles = `
         .rtx-login{position:relative;min-height:100vh;display:grid;place-items:center;padding:clamp(22px,4vw,54px);overflow:hidden;isolation:isolate;color:#eef6ff;}
         .rtx-bg{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 15% 28%,rgba(8,184,79,0.32),transparent 31%),radial-gradient(circle at 92% 78%,rgba(61,137,255,0.20),transparent 34%),linear-gradient(135deg,rgba(7,8,11,0.92),#07080c);}
         .rtx-grid{position:absolute;inset:-1px;background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:54px 54px;mask-image:radial-gradient(circle at 50% 50%,#000 0 45%,transparent 72%);opacity:.36;z-index:-2;}
@@ -145,7 +89,87 @@ export default function LoginPage() {
         .rtx-forgot-msg{padding:11px 14px;border-radius:14px;font-size:13px;font-weight:700;margin-bottom:12px;}
         .rtx-forgot-msg.ok{background:rgba(8,184,79,0.12);border:1px solid rgba(8,184,79,0.28);color:#38e986;}
         .rtx-forgot-msg.err{background:rgba(255,95,115,0.12);border:1px solid rgba(255,95,115,0.28);color:#ffb6bf;}
-      `}</style>
+      `;
+
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next') || '/dashboard';
+
+  const [form, setForm] = useState({ login: '', password: '' });
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState(null);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('translate', 'no');
+      document.body?.setAttribute('translate', 'no');
+      document.documentElement.classList.add('notranslate');
+      document.body?.classList.add('notranslate');
+      if (!document.querySelector('meta[name="google"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'google';
+        meta.content = 'notranslate';
+        document.head.appendChild(meta);
+      }
+    } catch {}
+  }, []);
+
+
+
+
+
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
+      router.push(nextPath);
+      router.refresh();
+    } catch {
+      setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleForgot(e) {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setForgotBusy(true);
+    setForgotMsg(null);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const d = await res.json();
+      if (d.ok) setForgotMsg({ ok: true, text: 'ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว' });
+      else setForgotMsg({ ok: false, text: d.message || 'ไม่พบอีเมลนี้ในระบบ' });
+    } catch {
+      setForgotMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: loginStyles }} />
 
       <section className="rtx-login">
         {/* Background */}
@@ -234,6 +258,7 @@ export default function LoginPage() {
                   </button>
                 </div>
               </label>
+
 
               <button className="rtx-submit" type="submit" disabled={loading}>
                 <span>{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</span>

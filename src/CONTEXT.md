@@ -173,3 +173,8 @@
 - The new `CloudflareTurnstile` component registers simple global callbacks, loads Cloudflare via `next/script`, and uses the native `cf-turnstile` auto-render markup with `data-cfasync="false"`, fixed Thai language, dark theme, auto retry, and auto refresh on expiry.
 - Localhost/local bypass remains controlled by `/api/public/turnstile` and `src/lib/turnstile.ts`; production domains still require Turnstile when configured in `secure_config`.
 - Updated `src/types/turnstile.d.ts` for the new callback names: `rtTurnstileSuccess`, `rtTurnstileExpired`, and `rtTurnstileError`.
+
+## 2026-06-04 — Temporarily remove Turnstile from login
+- Temporarily removed the Cloudflare Turnstile widget from `src/app/login/page.tsx` so `/login` no longer loads `challenges.cloudflare.com` or blocks login on client-side challenge errors.
+- Updated `/api/auth/login` to stop requiring/verifying a `turnstileToken`; the existing IP rate limit remains active as the temporary protection layer.
+- Kept the Turnstile config/lib files in the codebase for future re-enable, but they are no longer used by the login flow.
