@@ -167,9 +167,9 @@
 - Turnstile still loads only on `/login` when production Turnstile config is enabled; local development bypass behavior remains unchanged.
 - Reinforced the same no-translate protection client-side in `src/app/login/page.tsx` before lazy-loading Turnstile, and rendered Turnstile with `language: 'th'` instead of auto language detection to reduce Chrome/Google Translate interference inside the Turnstile iframe.
 
-
-## 2026-06-04 — Turnstile production/local regression deep fix
-- Rechecked the current `rtautobot(14).zip` source after the login Turnstile regression appeared when local bypass / production-only Turnstile logic was added.
-- Root issue in the uploaded source was still in `src/app/login/page.tsx`: the login page loaded Cloudflare Turnstile with a global `onload=onTurnstileLoad` callback and also retried `renderTurnstile` every 450ms. In production this can re-enter rendering during React remounts or extension interference and causes Turnstile challenge failures such as `600010`.
-- Replaced the login Turnstile loader with a browser-level singleton promise, detects any existing Turnstile script by both `id` and `src`, removes the global onload callback/event path, removes the render interval, and only renders once per config/retry cycle.
-- Added safe widget cleanup, retry UI, `data-cfasync="false"`, and Turnstile auto refresh/retry options while keeping localhost/local bypass and production verification behavior unchanged.
+## 2026-06-04 — Rewrite Turnstile login widget from scratch
+- Rebuilt the `/login` Turnstile client logic in `src/app/login/page.tsx` instead of patching the old explicit-render loop.
+- Removed the old manual loader pattern that used `onload=onTurnstileLoad`, `turnstile-ready`, repeated render polling, and widget refs tied to the previous flow.
+- The new `CloudflareTurnstile` component registers simple global callbacks, loads Cloudflare via `next/script`, and uses the native `cf-turnstile` auto-render markup with `data-cfasync="false"`, fixed Thai language, dark theme, auto retry, and auto refresh on expiry.
+- Localhost/local bypass remains controlled by `/api/public/turnstile` and `src/lib/turnstile.ts`; production domains still require Turnstile when configured in `secure_config`.
+- Updated `src/types/turnstile.d.ts` for the new callback names: `rtTurnstileSuccess`, `rtTurnstileExpired`, and `rtTurnstileError`.
