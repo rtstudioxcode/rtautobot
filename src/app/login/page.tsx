@@ -6,56 +6,79 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
 
 const TURNSTILE_SCRIPT_ID = 'cf-turnstile-api';
-const TURNSTILE_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad';
+const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
-function dispatchTurnstileReady() {
-  try { window.dispatchEvent(new Event('turnstile-ready')); } catch {}
-}
-
-function loadTurnstileScript(forceReload = false) {
+function waitForTurnstileReady(timeoutMs = 10000) {
   if (typeof window === 'undefined') return Promise.resolve(false);
-  if (!forceReload && window.turnstile?.render) return Promise.resolve(true);
+  if (window.turnstile?.render) return Promise.resolve(true);
 
   return new Promise<boolean>((resolve) => {
-    let done = false;
-    const finish = (ok: boolean) => {
-      if (done) return;
-      done = true;
-      if (ok) dispatchTurnstileReady();
-      resolve(ok);
-    };
-
-    window.onTurnstileLoad = function () {
-      finish(Boolean(window.turnstile?.render));
-    };
-
-    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
-    if (existing) {
-      if (forceReload) {
-        try { existing.remove(); } catch {}
-      } else {
-        if (window.turnstile?.render) return finish(true);
-        existing.addEventListener('load', () => finish(Boolean(window.turnstile?.render)), { once: true });
-        existing.addEventListener('error', () => finish(false), { once: true });
-        window.setTimeout(() => finish(Boolean(window.turnstile?.render)), 9000);
+    const startedAt = Date.now();
+    const tick = () => {
+      if (window.turnstile?.render) {
+        resolve(true);
         return;
       }
+      if (Date.now() - startedAt >= timeoutMs) {
+        resolve(false);
+        return;
+      }
+      window.setTimeout(tick, 60);
+    };
+    tick();
+  });
+}
+
+function findExistingTurnstileScript() {
+  if (typeof document === 'undefined') return null;
+  return (
+    (document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null) ||
+    (document.querySelector('script[src*="challenges.cloudflare.com/turnstile/v0/api.js"]') as HTMLScriptElement | null)
+  );
+}
+
+function loadTurnstileScript() {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (window.turnstile?.render) return Promise.resolve(true);
+
+  const w = window as any;
+  if (w.__rtTurnstileLoadPromise) return w.__rtTurnstileLoadPromise as Promise<boolean>;
+
+  w.__rtTurnstileLoadPromise = new Promise<boolean>((resolve) => {
+    const finish = async (scriptLoaded: boolean) => {
+      if (!scriptLoaded && !window.turnstile?.render) {
+        w.__rtTurnstileLoadPromise = null;
+        resolve(false);
+        return;
+      }
+      const ready = await waitForTurnstileReady();
+      if (!ready) w.__rtTurnstileLoadPromise = null;
+      try { if (ready) window.dispatchEvent(new Event('turnstile-ready')); } catch {}
+      resolve(ready);
+    };
+
+    const existing = findExistingTurnstileScript();
+    if (existing) {
+      existing.id = existing.id || TURNSTILE_SCRIPT_ID;
+      existing.setAttribute('data-cfasync', 'false');
+      existing.setAttribute('data-rt-turnstile-singleton', '1');
+      finish(true);
+      return;
     }
 
     const script = document.createElement('script');
     script.id = TURNSTILE_SCRIPT_ID;
-    script.src = TURNSTILE_SRC;
+    script.src = TURNSTILE_SCRIPT_SRC;
     script.async = true;
     script.defer = true;
-    script.crossOrigin = 'anonymous';
-    script.referrerPolicy = 'strict-origin-when-cross-origin';
-    // Prevent Cloudflare Rocket Loader from delaying/mutating the Turnstile API script.
     script.setAttribute('data-cfasync', 'false');
-    script.onload = () => finish(Boolean(window.turnstile?.render));
+    script.setAttribute('data-rt-turnstile-singleton', '1');
+    script.onload = () => finish(true);
     script.onerror = () => finish(false);
     document.head.appendChild(script);
-    window.setTimeout(() => finish(Boolean(window.turnstile?.render)), 12000);
   });
+
+  return w.__rtTurnstileLoadPromise as Promise<boolean>;
 }
 
 const loginStyles = `
@@ -103,9 +126,9 @@ const loginStyles = `
         .rtx-turnstile{display:flex;justify-content:center;padding:2px 0 0;min-height:70px;overflow:visible;}
         .rtx-turnstile>div{max-width:100%;}
         .rtx-turnstile iframe{max-width:100%;border-radius:14px;}
-        .rtx-turnstile-help{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:-6px;padding:10px 12px;border-radius:15px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.045);color:rgba(238,246,255,0.72);font-size:12px;font-weight:800;line-height:1.45;}
-        .rtx-turnstile-help b{color:#08b84f;}
-        .rtx-turnstile-help button{border:1px solid rgba(8,184,79,0.35);background:rgba(8,184,79,0.12);color:#08b84f;border-radius:999px;padding:8px 11px;font:inherit;white-space:nowrap;cursor:pointer;}
+        .rtx-turnstile-note{margin-top:-8px;padding:10px 12px;border:1px solid rgba(255,191,87,0.24);border-radius:15px;background:rgba(255,191,87,0.10);color:#ffd28a;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+        .rtx-turnstile-note button{border:1px solid rgba(8,184,79,0.38);border-radius:12px;background:rgba(8,184,79,0.14);color:#20ee76;font-weight:900;padding:8px 10px;cursor:pointer;white-space:nowrap;}
+        .rtx-turnstile-note button:hover{border-color:rgba(8,184,79,0.68);}
         .rtx-submit{height:58px;border:0;border-radius:18px;background:linear-gradient(135deg,#08b84f,#08b84f 55%,#05b84f);color:#17130a;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 18px 44px rgba(8,184,79,0.28);transition:transform .2s,filter .2s;}
         .rtx-submit:hover{transform:translateY(-2px);filter:saturate(1.05);}
         .rtx-submit:disabled{opacity:.66;pointer-events:none;}
@@ -159,12 +182,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [turnstileCfg, setTurnstileCfg] = useState({ enabled: false, siteKey: '' });
   const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileStatus, setTurnstileStatus] = useState('idle');
   const [turnstileError, setTurnstileError] = useState('');
+  const [turnstileRetryKey, setTurnstileRetryKey] = useState(0);
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<any>(null);
-  const turnstileRetryRef = useRef(0);
-  const turnstileRetryTimerRef = useRef<number | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotBusy, setForgotBusy] = useState(false);
@@ -203,123 +224,86 @@ export default function LoginPage() {
     if (!turnstileCfg.enabled || !turnstileCfg.siteKey || !turnstileRef.current) return undefined;
 
     let cancelled = false;
+    setTurnstileToken('');
+    setTurnstileError('');
 
-    const clearRetryTimer = () => {
-      if (turnstileRetryTimerRef.current) {
-        window.clearTimeout(turnstileRetryTimerRef.current);
-        turnstileRetryTimerRef.current = null;
-      }
-    };
-
-    const removeWidget = () => {
+    const cleanupWidget = () => {
       try {
         if (window.turnstile && turnstileWidgetId.current !== null) {
           window.turnstile.remove(turnstileWidgetId.current);
         }
       } catch {}
       turnstileWidgetId.current = null;
-      setTurnstileToken('');
+      if (turnstileRef.current) turnstileRef.current.innerHTML = '';
     };
 
-    const scheduleRetry = (forceReload = false) => {
-      if (cancelled) return;
-      clearRetryTimer();
-      const attempt = Math.min(turnstileRetryRef.current + 1, 5);
-      turnstileRetryRef.current = attempt;
-      const delay = Math.min(1200 * attempt, 6500);
-      setTurnstileStatus('retrying');
-      turnstileRetryTimerRef.current = window.setTimeout(() => {
-        if (cancelled) return;
-        removeWidget();
-        loadTurnstileScript(forceReload).then((ok) => {
-          if (!cancelled && ok) renderTurnstile();
-          if (!cancelled && !ok) scheduleRetry(true);
-        });
-      }, delay);
-    };
-
-    const renderTurnstile = () => {
+    const renderTurnstile = async () => {
+      const loaded = await loadTurnstileScript();
       if (cancelled || !turnstileRef.current) return;
-      const api = window.turnstile;
-      if (!api || typeof api.render !== 'function') return;
-      if (turnstileWidgetId.current !== null) return;
+      if (!loaded || !window.turnstile?.render) {
+        setTurnstileError('Cloudflare Turnstile โหลดไม่สำเร็จ กรุณากดโหลดใหม่');
+        return;
+      }
+
+      cleanupWidget();
 
       try {
-        setTurnstileStatus('rendering');
-        setTurnstileError('');
-        turnstileWidgetId.current = api.render(turnstileRef.current, {
+        const widgetId = window.turnstile.render(turnstileRef.current, {
           sitekey: turnstileCfg.siteKey,
           theme: 'dark',
           language: 'th',
           appearance: 'always',
           size: 'normal',
           retry: 'auto',
-          'retry-interval': 8000,
           'refresh-expired': 'auto',
           callback: (token: string) => {
-            turnstileRetryRef.current = 0;
             setTurnstileToken(String(token || ''));
-            setTurnstileStatus('ready');
             setTurnstileError('');
           },
-          'expired-callback': () => {
-            setTurnstileToken('');
-            setTurnstileStatus('expired');
-          },
+          'expired-callback': () => setTurnstileToken(''),
           'timeout-callback': () => {
             setTurnstileToken('');
-            setTurnstileStatus('timeout');
-            scheduleRetry(false);
+            setTurnstileError('Cloudflare Turnstile หมดเวลา กรุณากดโหลดใหม่');
           },
-          'error-callback': (code?: string) => {
+          'error-callback': (code: string) => {
             setTurnstileToken('');
-            setTurnstileStatus('error');
-            const suffix = code ? ` (${code})` : '';
-            setTurnstileError(`Cloudflare Turnstile โหลดไม่สำเร็จ${suffix}`);
-            scheduleRetry(String(code || '').startsWith('6'));
+            setTurnstileError(`Cloudflare Turnstile โหลดไม่สำเร็จ (${code || 'error'})`);
           },
         });
+
+        if (widgetId === undefined || widgetId === null) {
+          setTurnstileError('Cloudflare Turnstile render ไม่สำเร็จ กรุณากดโหลดใหม่');
+          return;
+        }
+        turnstileWidgetId.current = widgetId;
       } catch (err) {
         console.warn('[turnstile] render failed', err);
-        setTurnstileStatus('error');
-        setTurnstileError('Cloudflare Turnstile โหลดไม่สำเร็จ');
-        scheduleRetry(true);
+        setTurnstileError('Cloudflare Turnstile render ไม่สำเร็จ กรุณากดโหลดใหม่');
       }
     };
 
-    loadTurnstileScript().then((ok) => {
-      if (cancelled) return;
-      if (ok) renderTurnstile();
-      else scheduleRetry(true);
-    });
-    window.addEventListener('turnstile-ready', renderTurnstile);
+    renderTurnstile();
 
     return () => {
       cancelled = true;
-      window.removeEventListener('turnstile-ready', renderTurnstile);
-      clearRetryTimer();
-      removeWidget();
-      setTurnstileStatus('idle');
-      setTurnstileError('');
+      cleanupWidget();
+      setTurnstileToken('');
     };
-  }, [turnstileCfg.enabled, turnstileCfg.siteKey]);
+  }, [turnstileCfg.enabled, turnstileCfg.siteKey, turnstileRetryKey]);
 
-  function resetTurnstile(forceReload = false) {
+  function resetTurnstile() {
     setTurnstileToken('');
-    setTurnstileError('');
     try {
       if (window.turnstile && turnstileWidgetId.current !== null) {
-        if (forceReload) {
-          window.turnstile.remove(turnstileWidgetId.current);
-          turnstileWidgetId.current = null;
-          loadTurnstileScript(true).then(() => window.dispatchEvent(new Event('turnstile-ready')));
-        } else {
-          window.turnstile.reset(turnstileWidgetId.current);
-        }
-      } else if (forceReload) {
-        loadTurnstileScript(true).then(() => window.dispatchEvent(new Event('turnstile-ready')));
+        window.turnstile.reset(turnstileWidgetId.current);
       }
     } catch {}
+  }
+
+  function reloadTurnstile() {
+    setTurnstileToken('');
+    setTurnstileError('');
+    setTurnstileRetryKey((v) => v + 1);
   }
 
   async function handleSubmit(e) {
@@ -467,10 +451,10 @@ export default function LoginPage() {
                   <div className="rtx-turnstile" aria-label="Cloudflare Turnstile">
                     <div ref={turnstileRef} />
                   </div>
-                  {(turnstileError || turnstileStatus === 'retrying') && (
-                    <div className="rtx-turnstile-help" role="status">
-                      <span>{turnstileError || 'กำลังโหลด Cloudflare Turnstile ใหม่...'}</span>
-                      <button type="button" onClick={() => resetTurnstile(true)}>โหลดใหม่</button>
+                  {turnstileError && (
+                    <div className="rtx-turnstile-note">
+                      <span>{turnstileError}</span>
+                      <button type="button" onClick={reloadTurnstile}>โหลดใหม่</button>
                     </div>
                   )}
                 </>

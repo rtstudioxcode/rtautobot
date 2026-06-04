@@ -167,9 +167,9 @@
 - Turnstile still loads only on `/login` when production Turnstile config is enabled; local development bypass behavior remains unchanged.
 - Reinforced the same no-translate protection client-side in `src/app/login/page.tsx` before lazy-loading Turnstile, and rendered Turnstile with `language: 'th'` instead of auto language detection to reduce Chrome/Google Translate interference inside the Turnstile iframe.
 
-## 2026-06-04 Turnstile Production Stability Fix
-- Updated `src/app/login/page.tsx` Turnstile loader to use a single explicit Cloudflare script URL with `data-cfasync="false"`, `crossOrigin="anonymous"`, and `referrerPolicy="strict-origin-when-cross-origin"` so Cloudflare Rocket Loader/proxy optimization is less likely to mutate or delay the challenge script.
-- Reworked the login Turnstile lifecycle to avoid rapid repeated render attempts. The widget now tracks status/error state, removes stale widgets before retrying, and retries with bounded backoff when Cloudflare returns client errors such as `600010`.
-- Added Turnstile render options `appearance: 'always'`, `size: 'normal'`, `retry: 'auto'`, `retry-interval`, and `refresh-expired: 'auto'` to keep the checkbox flow stable on production domains.
-- Added a compact inline helper UI under the Turnstile widget with a “โหลดใหม่” button when the challenge fails or is retrying.
-- Note: console messages from Google Translate/Chrome extension Trusted Types such as `goog#html` can still appear in DevTools when a browser extension injects into the Cloudflare challenge iframe; the application now avoids spamming Turnstile renders and lets users reload the widget cleanly.
+## 2026-06-04 — Turnstile singleton loader hardening
+- Rechecked the current `/login` Turnstile implementation and confirmed the project source only contains one explicit Turnstile script source, but the browser console can still show duplicate-load warnings when the page/runtime, cached old scripts, or extensions create another `api.js` instance.
+- Hardened `src/app/login/page.tsx` so Turnstile uses a browser-wide singleton load promise, detects any existing `challenges.cloudflare.com/turnstile/v0/api.js` script by `src` as well as by id, and no longer uses the `onload=onTurnstileLoad` query callback.
+- Removed the old 450ms render polling loop; the page now waits for `window.turnstile.render`, renders exactly once per retry cycle, and removes/clears the old widget before rerendering.
+- Added safer Turnstile options (`appearance: always`, `retry: auto`, `refresh-expired: auto`) plus visible retry UI when Cloudflare returns client-side errors such as `600010`.
+- Kept local bypass and production server verification behavior unchanged.
