@@ -159,3 +159,10 @@
 - Removed the global Cloudflare Turnstile script from `src/app/layout.tsx` so Turnstile is no longer loaded on every page.
 - `/login` now loads the Cloudflare Turnstile script dynamically only when `/api/public/turnstile` says it is enabled, which keeps localhost and non-login pages clean.
 - This removes the recurring Cloudflare preload / Trusted Types console noise on dashboard and other authenticated pages while preserving production Turnstile verification on login.
+
+
+## 2026-06-04 Turnstile / Google Translate console cleanup
+- Added `translate="no"`, `notranslate`, and `<meta name="google" content="notranslate" />` in `src/app/layout.tsx`.
+- This prevents Chrome/Google Translate (`bubble_compiled.js`) from injecting translation helpers into the app and Cloudflare Turnstile challenge frame, which can trigger Trusted Types console errors such as `goog#html` policy violations and contribute to Turnstile `600010` noise.
+- Turnstile still loads only on `/login` when production Turnstile config is enabled; local development bypass behavior remains unchanged.
+- Reinforced the same no-translate protection client-side in `src/app/login/page.tsx` before lazy-loading Turnstile, and rendered Turnstile with `language: 'th'` instead of auto language detection to reduce Chrome/Google Translate interference inside the Turnstile iframe.

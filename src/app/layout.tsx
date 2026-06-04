@@ -36,8 +36,10 @@ export default async function RootLayout({ children }) {
   const user = session?.user || null;
 
   return (
-    <html lang="th" className="dark" data-theme="dark" suppressHydrationWarning>
+    <html lang="th" className="dark notranslate" data-theme="dark" translate="no" suppressHydrationWarning>
       <head>
+        <meta name="google" content="notranslate" />
+        <meta httpEquiv="Content-Language" content="th" />
         <script
           id="theme-init"
           suppressHydrationWarning
@@ -81,7 +83,7 @@ export default async function RootLayout({ children }) {
           }}
         />
       </head>
-      <body>
+      <body translate="no" className="notranslate">
         <GlobalNotify />
         <GlobalConfirm />
         <GlobalNativeSelect />

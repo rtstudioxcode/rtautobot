@@ -140,6 +140,21 @@ export default function LoginPage() {
   const [forgotMsg, setForgotMsg] = useState(null);
 
   useEffect(() => {
+    try {
+      document.documentElement.setAttribute('translate', 'no');
+      document.body?.setAttribute('translate', 'no');
+      document.documentElement.classList.add('notranslate');
+      document.body?.classList.add('notranslate');
+      if (!document.querySelector('meta[name="google"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'google';
+        meta.content = 'notranslate';
+        document.head.appendChild(meta);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     let mounted = true;
     fetch('/api/public/turnstile', { cache: 'no-store' })
       .then((res) => res.json())
@@ -169,6 +184,7 @@ export default function LoginPage() {
         turnstileWidgetId.current = api.render(turnstileRef.current, {
           sitekey: turnstileCfg.siteKey,
           theme: 'dark',
+          language: 'th',
           callback: (token: string) => setTurnstileToken(String(token || '')),
           'expired-callback': () => setTurnstileToken(''),
           'error-callback': () => setTurnstileToken(''),
