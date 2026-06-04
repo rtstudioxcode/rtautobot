@@ -133,3 +133,11 @@
 - Added global guards to prevent duplicate workers during hot reload/runtime re-entry.
 - Added env escape hatch: `RTAUTOBOT_DISABLE_EMBEDDED_WORKER=1` or `DISABLE_EMBEDDED_WORKER=1` skips the embedded worker if a separate worker service is ever needed.
 - Kept `npm run worker` as an emergency/manual fallback and updated it to start the scheduler before the worker.
+
+## 2026-06-04 — Fix production Turnstile browser scripts
+- Removed TypeScript-only `catch (e: any)` syntax from inline browser scripts in `src/app/layout.tsx`; this fixed `Uncaught SyntaxError: Unexpected token ':'` and allowed `window.onTurnstileLoad` to be registered before Cloudflare Turnstile loads.
+- Removed TypeScript-only syntax from the generated `/sw.js` cleanup service worker payload.
+- Added `src/app/api/public/turnstile/route.ts` to expose only the public Turnstile site key to the client after loading `secure_config`.
+- Added `src/lib/turnstile.ts` for server-side Turnstile verification with graceful fallback when Turnstile is not configured.
+- Restored Turnstile rendering on `/login` using explicit Cloudflare render mode and now sends `turnstileToken` to `/api/auth/login`.
+- `/api/auth/login` now verifies Turnstile when configured before validating credentials.

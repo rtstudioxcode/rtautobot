@@ -48,7 +48,7 @@ export default async function RootLayout({ children }) {
     document.documentElement.setAttribute('data-theme', t);
     document.documentElement.classList.toggle('dark', t === 'dark');
     document.documentElement.classList.toggle('light', t === 'light');
-  } catch (e: any) {
+  } catch (e) {
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.classList.add('dark');
     document.documentElement.classList.remove('light');
@@ -65,18 +65,18 @@ export default async function RootLayout({ children }) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(regs){
         regs.forEach(function(reg){
-          try { reg.unregister(); } catch (e: any) {}
+          try { reg.unregister(); } catch (e) {}
         });
       }).catch(function(){});
     }
     if ('caches' in window) {
       caches.keys().then(function(keys){
         keys.forEach(function(key){
-          try { caches.delete(key); } catch (e: any) {}
+          try { caches.delete(key); } catch (e) {}
         });
       }).catch(function(){});
     }
-  } catch (e: any) {}
+  } catch (e) {}
 })();`,
           }}
         />
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }) {
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `window.onTurnstileLoad = window.onTurnstileLoad || function () {
-  try { window.dispatchEvent(new Event('turnstile-ready')); } catch (e: any) {}
+  try { window.dispatchEvent(new Event('turnstile-ready')); } catch (e) {}
 };`,
           }}
         />

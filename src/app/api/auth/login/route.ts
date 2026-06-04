@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '../../../../lib/session';
 import { ensureInit } from '../../../../lib/setup';
 import { User } from '../../../../models/User';
+import { verifyTurnstileToken } from '../../../../lib/turnstile';
 
 const RATE = new Map();
 
@@ -22,10 +23,15 @@ export async function POST(request) {
     if (!checkRate(ip)) return NextResponse.json({ ok: false, message: 'ลองอีกครั้งภายหลัง (rate limit)' }, { status: 429 });
 
     const body = await request.json().catch(() => ({}));
-    const { login, password } = body;
+    const { login, password, turnstileToken } = body;
     if (!login || !password) return NextResponse.json({ ok: false, message: 'กรุณากรอกข้อมูลให้ครบ' }, { status: 400 });
 
     await ensureInit();
+
+    const ts = await verifyTurnstileToken(turnstileToken, ip);
+    if (!ts.ok) {
+      return NextResponse.json({ ok: false, message: ts.message || 'ยืนยันความปลอดภัยไม่สำเร็จ' }, { status: 403 });
+    }
 
     const loginStr = String(login).trim();
     const query = loginStr.includes('@')
