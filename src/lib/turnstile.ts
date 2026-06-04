@@ -2,58 +2,17 @@ import { config } from '../config';
 
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
-function normalizeHost(hostnameOrHost?: unknown) {
-  const first = String(hostnameOrHost || '')
-    .split(',')[0]
-    .trim()
-    .toLowerCase();
-
-  if (!first) return '';
-  if (first.startsWith('[')) {
-    const end = first.indexOf(']');
-    return end >= 0 ? first.slice(1, end) : first.replace(/[\[\]]/g, '');
-  }
-  return first.split(':')[0];
-}
-
-export function isLocalTurnstileBypass(hostnameOrHost?: unknown) {
-  // RTAUTOBOT behavior:
-  // - local/localhost = no Turnstile widget and no server-side Turnstile block
-  // - production domain = Turnstile enabled when configured in secure_config
-  // Set RTAUTOBOT_ENABLE_TURNSTILE_ON_LOCAL=1 only if local Turnstile testing is needed.
-  if (process.env.RTAUTOBOT_ENABLE_TURNSTILE_ON_LOCAL === '1') return false;
-
-  const host = normalizeHost(hostnameOrHost);
-  if (!host) return process.env.NODE_ENV !== 'production';
-
-  return (
-    host === 'localhost' ||
-    host === '127.0.0.1' ||
-    host === '0.0.0.0' ||
-    host === '::1' ||
-    host.endsWith('.localhost') ||
-    host.endsWith('.local')
-  );
-}
-
-export function getTurnstilePublicConfig(hostnameOrHost?: unknown) {
+export function getTurnstilePublicConfig() {
   const siteKey = String(config?.turnstile?.siteKey || '').trim();
   const secretKey = String(config?.turnstile?.secretKey || '').trim();
-  const localBypass = isLocalTurnstileBypass(hostnameOrHost);
-
   return {
-    enabled: Boolean(siteKey) && !localBypass,
-    siteKey: localBypass ? '' : siteKey,
-    serverVerifyEnabled: Boolean(siteKey && secretKey) && !localBypass,
-    localBypass,
+    enabled: Boolean(siteKey),
+    siteKey,
+    serverVerifyEnabled: Boolean(siteKey && secretKey),
   };
 }
 
-export async function verifyTurnstileToken(token: unknown, remoteIp?: string, hostnameOrHost?: unknown) {
-  if (isLocalTurnstileBypass(hostnameOrHost)) {
-    return { ok: true, skipped: true, localBypass: true };
-  }
-
+export async function verifyTurnstileToken(token: unknown, remoteIp?: string) {
   const siteKey = String(config?.turnstile?.siteKey || '').trim();
   const secretKey = String(config?.turnstile?.secretKey || '').trim();
 

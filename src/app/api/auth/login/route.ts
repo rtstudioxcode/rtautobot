@@ -9,10 +9,6 @@ import { verifyTurnstileToken } from '../../../../lib/turnstile';
 
 const RATE = new Map();
 
-function requestHost(request) {
-  return request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
-}
-
 function checkRate(ip) {
   const now = Date.now();
   const e = RATE.get(ip);
@@ -32,7 +28,7 @@ export async function POST(request) {
 
     await ensureInit();
 
-    const ts = await verifyTurnstileToken(turnstileToken, ip, requestHost(request));
+    const ts = await verifyTurnstileToken(turnstileToken, ip);
     if (!ts.ok) {
       return NextResponse.json({ ok: false, message: ts.message || 'ยืนยันความปลอดภัยไม่สำเร็จ' }, { status: 403 });
     }

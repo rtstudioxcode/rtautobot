@@ -1,144 +1,69 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Script from 'next/script';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
 
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next') || '/dashboard';
 
-type TurnstileConfig = {
-  enabled: boolean;
-  siteKey: string;
-};
+  const [form, setForm] = useState({ login: '', password: '' });
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState(null);
 
-type TurnstileStatus = 'idle' | 'loading' | 'ready' | 'solved' | 'expired' | 'error';
-
-function CloudflareTurnstile({
-  config,
-  onToken,
-}: {
-  config: TurnstileConfig;
-  onToken: (token: string) => void;
-}) {
-  const [callbacksReady, setCallbacksReady] = useState(false);
-  const [scriptReady, setScriptReady] = useState(false);
-  const [status, setStatus] = useState<TurnstileStatus>('idle');
-  const [renderKey, setRenderKey] = useState(0);
-  const boxIdRef = useRef(`rt-turnstile-${Math.random().toString(36).slice(2)}`);
-
-  useEffect(() => {
-    if (!config.enabled || !config.siteKey) return undefined;
-
-    setStatus('loading');
-    onToken('');
-
-    window.rtTurnstileSuccess = (token: string) => {
-      const value = String(token || '').trim();
-      onToken(value);
-      setStatus(value ? 'solved' : 'ready');
-    };
-    window.rtTurnstileExpired = () => {
-      onToken('');
-      setStatus('expired');
-    };
-    window.rtTurnstileError = () => {
-      onToken('');
-      setStatus('error');
-    };
-
-    setCallbacksReady(true);
-
-    return () => {
-      onToken('');
-      setCallbacksReady(false);
-      setScriptReady(false);
-      setStatus('idle');
-      try {
-        if (window.turnstile?.remove) {
-          const el = document.getElementById(boxIdRef.current);
-          const widgetId = el?.getAttribute('data-widget-id');
-          if (widgetId) window.turnstile.remove(widgetId);
-        }
-      } catch {}
-    };
-  }, [config.enabled, config.siteKey, onToken]);
-
-  useEffect(() => {
-    if (!config.enabled || !config.siteKey || !callbacksReady) return;
-    if (window.turnstile?.render) setScriptReady(true);
-  }, [callbacksReady, config.enabled, config.siteKey]);
-
-  if (!config.enabled || !config.siteKey) return null;
-
-  const reloadWidget = () => {
-    onToken('');
-    setStatus('loading');
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      if (window.turnstile?.reset) {
-        window.turnstile.reset();
-        return;
-      }
-    } catch {}
-    setRenderKey((value) => value + 1);
-  };
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
+      router.push(nextPath);
+      router.refresh();
+    } catch {
+      setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const helperText = (() => {
-    if (status === 'loading') return 'กำลังโหลด Cloudflare Turnstile...';
-    if (status === 'solved') return 'ยืนยันความปลอดภัยเรียบร้อย';
-    if (status === 'expired') return 'การยืนยันหมดอายุ กรุณายืนยันอีกครั้ง';
-    if (status === 'error') return 'Cloudflare Turnstile โหลดไม่สำเร็จ (600010)';
-    return 'กรุณายืนยันความปลอดภัยก่อนเข้าสู่ระบบ';
-  })();
+  async function handleForgot(e) {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setForgotBusy(true);
+    setForgotMsg(null);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const d = await res.json();
+      if (d.ok) setForgotMsg({ ok: true, text: 'ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว' });
+      else setForgotMsg({ ok: false, text: d.message || 'ไม่พบอีเมลนี้ในระบบ' });
+    } catch {
+      setForgotMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
+    } finally {
+      setForgotBusy(false);
+    }
+  }
 
   return (
-    <div className={`rtx-turnstile-wrap ${status === 'error' ? 'is-error' : ''}`}>
-      {callbacksReady && (
-        <Script
-          id="cf-turnstile-api"
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="afterInteractive"
-          data-cfasync="false"
-          onLoad={() => setScriptReady(true)}
-          onError={() => {
-            onToken('');
-            setStatus('error');
-          }}
-        />
-      )}
-
-      <div className="rtx-turnstile" aria-label="Cloudflare Turnstile">
-        {callbacksReady && (
-          <div
-            key={`${config.siteKey}-${renderKey}`}
-            id={boxIdRef.current}
-            className="cf-turnstile"
-            data-sitekey={config.siteKey}
-            data-theme="dark"
-            data-language="th"
-            data-appearance="always"
-            data-size="normal"
-            data-retry="auto"
-            data-refresh-expired="auto"
-            data-callback="rtTurnstileSuccess"
-            data-expired-callback="rtTurnstileExpired"
-            data-timeout-callback="rtTurnstileExpired"
-            data-error-callback="rtTurnstileError"
-          />
-        )}
-      </div>
-
-      <div className={`rtx-turnstile-note ${status === 'solved' ? 'ok' : status === 'error' ? 'err' : ''}`}>
-        <span>{helperText}</span>
-        {(status === 'error' || status === 'expired' || scriptReady) && (
-          <button type="button" onClick={reloadWidget}>โหลดใหม่</button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const loginStyles = `
+    <>
+      <style>{`
         .rtx-login{position:relative;min-height:100vh;display:grid;place-items:center;padding:clamp(22px,4vw,54px);overflow:hidden;isolation:isolate;color:#eef6ff;}
         .rtx-bg{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 15% 28%,rgba(8,184,79,0.32),transparent 31%),radial-gradient(circle at 92% 78%,rgba(61,137,255,0.20),transparent 34%),linear-gradient(135deg,rgba(7,8,11,0.92),#07080c);}
         .rtx-grid{position:absolute;inset:-1px;background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:54px 54px;mask-image:radial-gradient(circle at 50% 50%,#000 0 45%,transparent 72%);opacity:.36;z-index:-2;}
@@ -180,15 +105,6 @@ const loginStyles = `
         .rtx-inputbox input::placeholder{color:rgba(255,255,255,0.28);}
         .rtx-pass{width:42px;height:42px;margin-right:6px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.07);color:#eef6ff;cursor:pointer;display:grid;place-items:center;transition:transform .18s,border-color .18s;font-size:17px;}
         .rtx-pass:hover{transform:translateY(-1px);border-color:rgba(8,184,79,0.55);}
-        .rtx-turnstile-wrap{display:grid;gap:10px;}
-        .rtx-turnstile{display:flex;justify-content:center;padding:2px 0 0;min-height:70px;overflow:visible;}
-        .rtx-turnstile>div{max-width:100%;}
-        .rtx-turnstile iframe{max-width:100%;border-radius:14px;}
-        .rtx-turnstile-note{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,0.10);border-radius:16px;background:rgba(255,255,255,0.055);color:rgba(238,246,255,.74);font-size:12px;font-weight:800;line-height:1.35;}
-        .rtx-turnstile-note.ok{border-color:rgba(8,184,79,.32);background:rgba(8,184,79,.10);color:#38e986;}
-        .rtx-turnstile-note.err{border-color:rgba(255,177,74,.38);background:rgba(255,177,74,.12);color:#ffd28a;}
-        .rtx-turnstile-note button{height:34px;padding:0 13px;border:1px solid rgba(8,184,79,.42);border-radius:999px;background:rgba(8,184,79,.16);color:#38e986;font:inherit;font-size:12px;white-space:nowrap;cursor:pointer;}
-        .rtx-turnstile-note button:hover{background:rgba(8,184,79,.24);}
         .rtx-submit{height:58px;border:0;border-radius:18px;background:linear-gradient(135deg,#08b84f,#08b84f 55%,#05b84f);color:#17130a;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 18px 44px rgba(8,184,79,0.28);transition:transform .2s,filter .2s;}
         .rtx-submit:hover{transform:translateY(-2px);filter:saturate(1.05);}
         .rtx-submit:disabled{opacity:.66;pointer-events:none;}
@@ -229,113 +145,7 @@ const loginStyles = `
         .rtx-forgot-msg{padding:11px 14px;border-radius:14px;font-size:13px;font-weight:700;margin-bottom:12px;}
         .rtx-forgot-msg.ok{background:rgba(8,184,79,0.12);border:1px solid rgba(8,184,79,0.28);color:#38e986;}
         .rtx-forgot-msg.err{background:rgba(255,95,115,0.12);border:1px solid rgba(255,95,115,0.28);color:#ffb6bf;}
-      `;
-
-export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/dashboard';
-
-  const [form, setForm] = useState({ login: '', password: '' });
-  const [showPass, setShowPass] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [turnstileCfg, setTurnstileCfg] = useState<TurnstileConfig>({ enabled: false, siteKey: '' });
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotBusy, setForgotBusy] = useState(false);
-  const [forgotMsg, setForgotMsg] = useState(null);
-
-  useEffect(() => {
-    try {
-      document.documentElement.setAttribute('translate', 'no');
-      document.body?.setAttribute('translate', 'no');
-      document.documentElement.classList.add('notranslate');
-      document.body?.classList.add('notranslate');
-      if (!document.querySelector('meta[name="google"]')) {
-        const meta = document.createElement('meta');
-        meta.name = 'google';
-        meta.content = 'notranslate';
-        document.head.appendChild(meta);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    fetch('/api/public/turnstile', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!mounted) return;
-        setTurnstileCfg({ enabled: !!data?.enabled, siteKey: String(data?.siteKey || '') });
-      })
-      .catch(() => {
-        if (mounted) setTurnstileCfg({ enabled: false, siteKey: '' });
-      });
-    return () => { mounted = false; };
-  }, []);
-
-  function resetTurnstile() {
-    setTurnstileToken('');
-    try {
-      if (window.turnstile?.reset) window.turnstile.reset();
-    } catch {}
-  }
-
-
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    if (turnstileCfg.enabled && !turnstileToken) {
-      const msg = 'กรุณายืนยัน Cloudflare Turnstile ก่อนเข้าสู่ระบบ';
-      setError(msg);
-      notifyFromPayload({ variant: 'warn', title: 'ยืนยันความปลอดภัย', text: msg });
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, turnstileToken }),
-      });
-      const data = await res.json();
-      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); resetTurnstile(); return; }
-      router.push(nextPath);
-      router.refresh();
-    } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleForgot(e) {
-    e.preventDefault();
-    if (!forgotEmail) return;
-    setForgotBusy(true);
-    setForgotMsg(null);
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
-      });
-      const d = await res.json();
-      if (d.ok) setForgotMsg({ ok: true, text: 'ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว' });
-      else setForgotMsg({ ok: false, text: d.message || 'ไม่พบอีเมลนี้ในระบบ' });
-    } catch {
-      setForgotMsg({ ok: false, text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
-    } finally {
-      setForgotBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: loginStyles }} />
+      `}</style>
 
       <section className="rtx-login">
         {/* Background */}
@@ -424,11 +234,6 @@ export default function LoginPage() {
                   </button>
                 </div>
               </label>
-
-              <CloudflareTurnstile
-                config={turnstileCfg}
-                onToken={setTurnstileToken}
-              />
 
               <button className="rtx-submit" type="submit" disabled={loading}>
                 <span>{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</span>
