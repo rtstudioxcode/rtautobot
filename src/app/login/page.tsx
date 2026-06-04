@@ -5,6 +5,35 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
 
+const TURNSTILE_SCRIPT_ID = 'cf-turnstile-api';
+
+function loadTurnstileScript() {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (window.turnstile?.render) return Promise.resolve(true);
+
+  return new Promise<boolean>((resolve) => {
+    window.onTurnstileLoad = window.onTurnstileLoad || function () {
+      try { window.dispatchEvent(new Event('turnstile-ready')); } catch {}
+      resolve(true);
+    };
+
+    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      if (window.turnstile?.render) resolve(true);
+      else existing.addEventListener('load', () => resolve(true), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = TURNSTILE_SCRIPT_ID;
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad';
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
+
 const loginStyles = `
         .rtx-login{position:relative;min-height:100vh;display:grid;place-items:center;padding:clamp(22px,4vw,54px);overflow:hidden;isolation:isolate;color:#eef6ff;}
         .rtx-bg{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 15% 28%,rgba(8,184,79,0.32),transparent 31%),radial-gradient(circle at 92% 78%,rgba(61,137,255,0.20),transparent 34%),linear-gradient(135deg,rgba(7,8,11,0.92),#07080c);}
@@ -149,9 +178,11 @@ export default function LoginPage() {
       }
     };
 
-    renderTurnstile();
+    loadTurnstileScript().then(() => {
+      if (!cancelled) renderTurnstile();
+    });
     window.addEventListener('turnstile-ready', renderTurnstile);
-    timer = window.setInterval(renderTurnstile, 350);
+    timer = window.setInterval(renderTurnstile, 450);
 
     return () => {
       cancelled = true;

@@ -153,3 +153,9 @@
 - Fixed `/login` React hydration error where the page-level CSS inside `<style>{`...`}</style>` was rendered as text content mismatch between server and client.
 - Moved the login CSS template into a `loginStyles` constant and rendered it with `<style dangerouslySetInnerHTML={{ __html: loginStyles }} />`, preventing React from comparing escaped style text during hydration.
 - This keeps the same visual design and Turnstile local/production behavior while removing the Next.js hydration overlay on `localhost:3000/login?next=...`.
+
+
+## 2026-06-04 Console cleanup
+- Removed the global Cloudflare Turnstile script from `src/app/layout.tsx` so Turnstile is no longer loaded on every page.
+- `/login` now loads the Cloudflare Turnstile script dynamically only when `/api/public/turnstile` says it is enabled, which keeps localhost and non-login pages clean.
+- This removes the recurring Cloudflare preload / Trusted Types console noise on dashboard and other authenticated pages while preserving production Turnstile verification on login.

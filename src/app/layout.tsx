@@ -80,22 +80,6 @@ export default async function RootLayout({ children }) {
 })();`,
           }}
         />
-        <script
-          id="turnstile-callback"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `window.onTurnstileLoad = window.onTurnstileLoad || function () {
-  try { window.dispatchEvent(new Event('turnstile-ready')); } catch (e) {}
-};`,
-          }}
-        />
-        <script
-          id="cf-turnstile-api"
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad"
-          async
-          defer
-          suppressHydrationWarning
-        />
       </head>
       <body>
         <GlobalNotify />
