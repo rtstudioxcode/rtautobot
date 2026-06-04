@@ -5,7 +5,7 @@ declare global {
       reset: (widgetId?: any) => void;
       remove: (widgetId?: any) => void;
     };
-    onTurnstileLoad?: () => void;
+    __rtautobotTurnstileLoader?: Promise<boolean>;
   }
 }
 

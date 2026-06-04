@@ -167,9 +167,9 @@
 - Turnstile still loads only on `/login` when production Turnstile config is enabled; local development bypass behavior remains unchanged.
 - Reinforced the same no-translate protection client-side in `src/app/login/page.tsx` before lazy-loading Turnstile, and rendered Turnstile with `language: 'th'` instead of auto language detection to reduce Chrome/Google Translate interference inside the Turnstile iframe.
 
-## 2026-06-04 — Turnstile singleton loader hardening
-- Rechecked the current `/login` Turnstile implementation and confirmed the project source only contains one explicit Turnstile script source, but the browser console can still show duplicate-load warnings when the page/runtime, cached old scripts, or extensions create another `api.js` instance.
-- Hardened `src/app/login/page.tsx` so Turnstile uses a browser-wide singleton load promise, detects any existing `challenges.cloudflare.com/turnstile/v0/api.js` script by `src` as well as by id, and no longer uses the `onload=onTurnstileLoad` query callback.
-- Removed the old 450ms render polling loop; the page now waits for `window.turnstile.render`, renders exactly once per retry cycle, and removes/clears the old widget before rerendering.
-- Added safer Turnstile options (`appearance: always`, `retry: auto`, `refresh-expired: auto`) plus visible retry UI when Cloudflare returns client-side errors such as `600010`.
-- Kept local bypass and production server verification behavior unchanged.
+
+## 2026-06-04 — Turnstile production/local regression deep fix
+- Rechecked the current `rtautobot(14).zip` source after the login Turnstile regression appeared when local bypass / production-only Turnstile logic was added.
+- Root issue in the uploaded source was still in `src/app/login/page.tsx`: the login page loaded Cloudflare Turnstile with a global `onload=onTurnstileLoad` callback and also retried `renderTurnstile` every 450ms. In production this can re-enter rendering during React remounts or extension interference and causes Turnstile challenge failures such as `600010`.
+- Replaced the login Turnstile loader with a browser-level singleton promise, detects any existing Turnstile script by both `id` and `src`, removes the global onload callback/event path, removes the render interval, and only renders once per config/retry cycle.
+- Added safe widget cleanup, retry UI, `data-cfasync="false"`, and Turnstile auto refresh/retry options while keeping localhost/local bypass and production verification behavior unchanged.
