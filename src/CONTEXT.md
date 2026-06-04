@@ -141,3 +141,15 @@
 - Added `src/lib/turnstile.ts` for server-side Turnstile verification with graceful fallback when Turnstile is not configured.
 - Restored Turnstile rendering on `/login` using explicit Cloudflare render mode and now sends `turnstileToken` to `/api/auth/login`.
 - `/api/auth/login` now verifies Turnstile when configured before validating credentials.
+
+
+## 2026-06-04 — Turnstile local/prod behavior
+- Updated Turnstile behavior so localhost/local development does not render or require Cloudflare Turnstile, even when `secure_config.turnstile.siteKey` exists.
+- Production domains still render and verify Turnstile normally when `secure_config.turnstile.siteKey`/`secretKey` are configured.
+- Added local bypass detection in `src/lib/turnstile.ts`, used by both `/api/public/turnstile` and `/api/auth/login` so local UI and server verification stay consistent.
+- Added optional env override `RTAUTOBOT_ENABLE_TURNSTILE_ON_LOCAL=1` for cases where local Turnstile testing is explicitly needed.
+
+## 2026-06-04 — Fix login hydration mismatch
+- Fixed `/login` React hydration error where the page-level CSS inside `<style>{`...`}</style>` was rendered as text content mismatch between server and client.
+- Moved the login CSS template into a `loginStyles` constant and rendered it with `<style dangerouslySetInnerHTML={{ __html: loginStyles }} />`, preventing React from comparing escaped style text during hydration.
+- This keeps the same visual design and Turnstile local/production behavior while removing the Next.js hydration overlay on `localhost:3000/login?next=...`.
