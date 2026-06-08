@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .flash-msg {
@@ -68,15 +69,17 @@ export default function FlashMessage({ flash }) {
   const isError = flash.type === 'error' || flash.type === 'danger';
   const isSuccess = flash.type === 'success';
   const typeClass = isError ? 'error' : isSuccess ? 'success' : 'info';
-  const icon = isError ? '❌' : isSuccess ? '✅' : 'ℹ️';
+  const iconName = isError ? 'error' : isSuccess ? 'check' : 'info';
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className={`flash-msg ${typeClass}`} role="alert">
-        <span>{icon}</span>
+        <SvgIcon name={iconName} size={18} />
         <p className="flash-msg-body">{flash.message || flash}</p>
-        <button className="flash-msg-close" onClick={() => setVisible(false)} aria-label="ปิด">✕</button>
+        <button className="flash-msg-close" type="button" onClick={() => setVisible(false)} aria-label="ปิดข้อความแจ้งเตือน">
+          <SvgIcon name="error" size={15} />
+        </button>
       </div>
     </>
   );

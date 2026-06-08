@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { notifyMsg, confirmAction } from '../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .rt-admin-settings {
@@ -561,9 +562,9 @@ export default function AdminSettingsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.message || 'บันทึกบัญชีไม่สำเร็จ');
       if (data.wallets) setWallets(data.wallets);
-      notifyMsg(setMsg, { type: 'ok', text: '✅ บันทึกบัญชีรับเงินสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
+      notifyMsg(setMsg, { type: 'ok', text: 'บันทึกบัญชีรับเงินสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
     } catch (err: any) {
-      notifyMsg(setMsg, { type: 'err', text: '❌ ' + (err.message || 'บันทึกบัญชีไม่สำเร็จ') });
+      notifyMsg(setMsg, { type: 'err', text: '' + (err.message || 'บันทึกบัญชีไม่สำเร็จ') });
       await loadWallets();
     } finally {
       setSavingWalletId(null);
@@ -598,9 +599,9 @@ export default function AdminSettingsPage() {
       if (!res.ok || !data.ok) throw new Error(data.message || 'บันทึกไม่สำเร็จ');
       if (data.wallets) setWallets(data.wallets);
       setNewWallet({ ...EMPTY_NEW });
-      notifyMsg(setMsg, { type: 'ok', text: '✅ บันทึกข้อมูลสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
+      notifyMsg(setMsg, { type: 'ok', text: 'บันทึกข้อมูลสำเร็จ และหน้าเติมเงินอัปเดตแล้ว' });
     } catch (err: any) {
-      notifyMsg(setMsg, { type: 'err', text: '❌ ' + (err.message || 'บันทึกไม่สำเร็จ') });
+      notifyMsg(setMsg, { type: 'err', text: '' + (err.message || 'บันทึกไม่สำเร็จ') });
     } finally {
       setBusy(false);
     }
@@ -618,7 +619,7 @@ export default function AdminSettingsPage() {
         {/* ── Hero ── */}
         <header className="as-hero">
           <div className="as-hero__copy">
-            <span className="as-kicker">✦ System Control Center</span>
+            <span className="as-kicker"><SvgIcon name="spark" size={18} /> System Control Center</span>
             <h1>ตั้งค่าเว็บไซต์</h1>
             <p>จัดการบัญชีรับเงินของ สำหรับระบบเติมเครดิตอัตโนมัติ</p>
           </div>
@@ -663,10 +664,10 @@ export default function AdminSettingsPage() {
               </div>
 
               {loading ? (
-                <div className="empty-wallet-state">⏳ กำลังโหลด...</div>
+                <div className="empty-wallet-state"><SvgIcon name="hourglass" size={18} /> กำลังโหลด...</div>
               ) : wallets.length === 0 ? (
                 <div className="empty-wallet-state">
-                  <div className="empty-wallet-state__icon">🏦</div>
+                  <div className="empty-wallet-state__icon"><SvgIcon name="bank" size={18} /></div>
                   <strong>ยังไม่เพิ่มบัญชีรับเงิน</strong>
                   <p>เพิ่มบัญชีแรกจากฟอร์มด้านล่างเพื่อเริ่มใช้งานระบบเติมเครดิต</p>
                 </div>
@@ -879,7 +880,7 @@ export default function AdminSettingsPage() {
               >
                 <span className="settings-save-btn__glow" />
                 <span className="settings-save-btn__label">
-                  {busy ? '⏳ กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {busy ? <><SvgIcon name="hourglass" size={15} /> กำลังบันทึก...</> : 'บันทึกข้อมูล'}
                 </span>
               </button>
             </div>

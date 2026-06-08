@@ -10,6 +10,7 @@ import { User } from '../../../../models/User';
 import { OtpToken } from '../../../../models/OtpToken';
 import { sendEmail } from '../../../../lib/mailer';
 import { config } from '../../../../config';
+import { verifyTurnstileToken } from '../../../../lib/turnstile';
 
 function genToken(bytes = 32) {
   return crypto.randomBytes(bytes).toString('base64url');
@@ -49,6 +50,14 @@ function getPublicBaseUrl(request) {
   return `${proto}://${host}`;
 }
 
+function requestHost(request) {
+  return request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
+}
+
+function requestIp(request) {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
+}
+
 function emailTemplateVerifyLink(verifyUrl) {
   return `<!doctype html><html lang="th"><head><meta charset="utf-8">
   <style>html,body{margin:0;padding:0;background:#f4f6f8}img{border:0;display:block}table,td{border-collapse:collapse}
@@ -76,6 +85,7 @@ export async function POST(request) {
     const email = emailRaw.toLowerCase();
     const password = body.password || '';
     const affKey = String(body.aff || body.affiliateKey || '').trim();
+    const turnstileToken = body.turnstileToken;
 
     if (!username || !name || !email || !password)
       return NextResponse.json({ ok: false, message: 'กรุณากรอกข้อมูลให้ครบ' }, { status: 400 });
@@ -85,6 +95,9 @@ export async function POST(request) {
 
     if (password.length < 6)
       return NextResponse.json({ ok: false, message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' }, { status: 400 });
+
+    const turnstile = await verifyTurnstileToken(turnstileToken, requestIp(request), requestHost(request));
+    if (!turnstile.ok) return NextResponse.json({ ok: false, message: turnstile.message || 'ยืนยันความปลอดภัยไม่สำเร็จ' }, { status: 403 });
 
     const dupUser = await User.findOne({ $or: [{ username }, { email }] }).lean();
     if (dupUser)

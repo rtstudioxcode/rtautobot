@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { notifyMsg, copyTextWithNotify, confirmAction } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
   .account-container {
@@ -859,7 +860,7 @@ export default function AccountPage() {
                         <input className="acc-input" name={name} type={showPw[key] ? 'text' : 'password'} minLength={minLength} required />
                         <button type="button" className="pw-toggle"
                           onClick={() => setShowPw((p) => ({ ...p, [key]: !p[key] }))}>
-                          {showPw[key] ? '🙈' : '👁'}
+                          <SvgIcon name={showPw[key] ? "eyeOff" : "eye"} size={18} />
                         </button>
                       </div>
                     </label>
@@ -895,7 +896,7 @@ export default function AccountPage() {
                         <div><span className="badge balance">≈ ฿{Number(user?.pointValueTHB || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
                       </div>
                       <div className="kv" style={{ color: '#05b84f' }}>
-                        <div>⚠️ คำเตือน: เมื่อแลกแต้มเป็นเงินระดับบัญชีของคุณจะลดลงตามไปด้วย</div>
+                        <div><SvgIcon name="alert" size={18} /> คำเตือน: เมื่อแลกแต้มเป็นเงินระดับบัญชีของคุณจะลดลงตามไปด้วย</div>
                       </div>
                       <div className="card-actions" style={{ textAlign: 'right', padding: '12px 0 0' }}>
                         <button

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import ManualTopupModal from '../ManualTopupModal';
 import { notifyFromPayload, confirmAction } from '../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const AVATAR_FALLBACK = '/assets/img/user-blue.png';
 
@@ -93,7 +94,7 @@ body:has(.topup-report-page){
   pointer-events:none;
 }
 .topup-report-page .page-title::before{
-  content:"✦ TOPUP REPORT";
+  content:"TOPUP REPORT";
   display:inline-flex;
   align-items:center;
   width:max-content;
@@ -998,7 +999,7 @@ export default function ReportClient({ mode, monthStr, selectedYear, selectedLab
 
         <div className="period-control-head">
           <div className="period-title-wrap">
-            <span className="period-icon" aria-hidden="true">📅</span>
+            <span className="period-icon" aria-hidden="true"><SvgIcon name="calendar" size={18} /></span>
             <div className="period-copy">
               <span className="period-kicker">Report Period</span>
               <h2>เลือกเดือน/ปี</h2>
@@ -1030,18 +1031,18 @@ export default function ReportClient({ mode, monthStr, selectedYear, selectedLab
                 if (isYearMode) { goYear(selectedYear - 1); return; }
                 const d = new Date(yy, mm - 2, 1);
                 goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
-              }}>◀︎</button>
+              }}><SvgIcon name="chevronLeft" size={16} /></button>
             <label className="month-ctrl">
               <input id="monthInput" type="text" value={inputValue} readOnly
                 aria-label="เลือกช่วงเวลา" onClick={openPicker} />
-              <button className="icon-btn" type="button" aria-label="เปิดตัวเลือกช่วงเวลา" onClick={openPicker}>📅</button>
+              <button className="icon-btn" type="button" aria-label="เปิดตัวเลือกช่วงเวลา" onClick={openPicker}><SvgIcon name="calendar" size={18} /></button>
             </label>
             <button className="btn ghost" type="button" aria-label="ถัดไป"
               onClick={() => {
                 if (isYearMode) { goYear(selectedYear + 1); return; }
                 const d = new Date(yy, mm, 1);
                 goMonth(toYYYYMM(d.getFullYear(), d.getMonth()));
-              }}>▶︎</button>
+              }}><SvgIcon name="chevronRight" size={16} /></button>
             <button className="btn" type="button"
               onClick={() => isYearMode ? goYear(nowYear) : goMonth(toYYYYMM(nowYear, nowMonth))}>
               {isYearMode ? 'ปีนี้' : 'เดือนนี้'}

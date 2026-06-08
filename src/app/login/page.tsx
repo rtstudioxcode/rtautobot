@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 
 
@@ -53,6 +55,11 @@ const loginStyles = `
         .rtx-submit:hover{transform:translateY(-2px);filter:saturate(1.05);}
         .rtx-submit:disabled{opacity:.66;pointer-events:none;}
         .rtx-submit b{font-size:22px;}
+        .rt-turnstile{display:grid;gap:8px;justify-items:center;padding:2px 0 0;}
+        .rt-turnstile-box{min-height:65px;display:grid;place-items:center;}
+        .rt-turnstile-hint,.rt-turnstile-error{width:100%;text-align:center;font-size:12px;font-weight:800;line-height:1.45;}
+        .rt-turnstile-hint{color:rgba(8,184,79,0.8);}
+        .rt-turnstile-error{color:#ffb6bf;}
         .rtx-links{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#08b84f;font-size:13px;font-weight:800;}
         .rtx-links a,.rtx-links button{color:#08b84f;font:inherit;font-weight:800;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;transition:opacity .15s;}
         .rtx-links a:hover,.rtx-links button:hover{opacity:.7;}
@@ -100,6 +107,9 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotBusy, setForgotBusy] = useState(false);
@@ -128,18 +138,25 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (turnstileEnabled && !turnstileToken) {
+      const msg = 'กรุณายืนยันความปลอดภัยก่อนเข้าสู่ระบบ';
+      setError(msg);
+      notifyFromPayload({ variant: 'error', title: 'ยืนยันความปลอดภัย', text: msg });
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, turnstileToken }),
       });
       const data = await res.json();
-      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
+      if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); setTurnstileResetKey(v => v + 1); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
       router.push(nextPath);
       router.refresh();
     } catch {
+      setTurnstileResetKey(v => v + 1);
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
     } finally {
       setLoading(false);
@@ -183,26 +200,26 @@ export default function LoginPage() {
         <div className="rtx-shell">
           {/* Left — Hero panel */}
           <section className="rtx-panel rtx-hero anim-rise" aria-label="ข้อมูล RTAUTOBOT">
-            <div className="rtx-pill"><span>✦</span> RTAUTOBOT LOGIN ACCESS</div>
+            <div className="rtx-pill"><span><SvgIcon name="spark" size={18} /></span> RTAUTOBOT LOGIN ACCESS</div>
             <h1>เข้าสู่ระบบจัดการ Bonustime Automation</h1>
             <p className="rtx-lead">
               ระบบจัดการบอท LINE และแพ็กเกจ Bonustime สำหรับดูแลลูกค้า ติดตามออเดอร์ เติมเครดิต และใช้งานบริการอัตโนมัติในที่เดียว
             </p>
             <div className="rtx-feature-row" aria-label="จุดเด่นระบบ">
               {[
-                { icon: '⚡', title: 'ทำงานรวดเร็ว', sub: 'อยู่ที่ไหนก็ใช้งานได้' },
-                { icon: '🛡️', title: 'ปลอดภัย', sub: 'ความปลอดภัยระดับสูงสุด' },
-                { icon: '📊', title: 'ครบในที่เดียว', sub: 'เติมเครดิตออโต้ สั่งซื้อ Bonustime ติดตามสถานะ และจัดการข้อมูลบัญชี' },
+                { icon: 'zap', title: 'ทำงานรวดเร็ว', sub: 'อยู่ที่ไหนก็ใช้งานได้' },
+                { icon: 'shield', title: 'ปลอดภัย', sub: 'ความปลอดภัยระดับสูงสุด' },
+                { icon: 'chart', title: 'ครบในที่เดียว', sub: 'เติมเครดิตออโต้ สั่งซื้อ Bonustime ติดตามสถานะ และจัดการข้อมูลบัญชี' },
               ].map(({ icon, title, sub }) => (
                 <div key={title} className="rtx-feature">
-                  <div className="rtx-feature-icon">{icon}</div>
+                  <div className="rtx-feature-icon"><SvgIcon name={icon} size={21} /></div>
                   <strong>{title}</strong>
                   <small>{sub}</small>
                 </div>
               ))}
             </div>
             <div className="rtx-meta">
-              <span>All Right Reserved</span><i /><span>© 2026</span><i /><span>RTAUTOBOT</span>
+              <span>All Right Reserved</span><i /><span>&copy; 2026</span><i /><span>RTAUTOBOT</span>
             </div>
           </section>
 
@@ -210,7 +227,7 @@ export default function LoginPage() {
           <section className="rtx-panel rtx-card anim-rise-2" aria-label="แบบฟอร์มเข้าสู่ระบบ">
             <div className="rtx-card-glow" aria-hidden="true" />
             <div className="rtx-card-head">
-              <div className="rtx-lock">🔐</div>
+              <div className="rtx-lock"><SvgIcon name="lock" size={18} /></div>
               <div>
                 <h2>เข้าสู่ระบบ</h2>
                 <p>ระบบพร้อมให้บริการ 24 ชั่วโมง</p>
@@ -223,7 +240,7 @@ export default function LoginPage() {
               <label className="rtx-field">
                 <span className="rtx-label">ชื่อผู้ใช้หรืออีเมล</span>
                 <div className="rtx-inputbox">
-                  <span className="rtx-input-icon">👤</span>
+                  <span className="rtx-input-icon"><SvgIcon name="user" size={18} /></span>
                   <input
                     name="username"
                     required
@@ -254,15 +271,21 @@ export default function LoginPage() {
                     onClick={() => setShowPass(!showPass)}
                     aria-label="แสดงหรือซ่อนรหัสผ่าน"
                   >
-                    {showPass ? '🙈' : '👁'}
+                    <SvgIcon name={showPass ? "eyeOff" : "eye"} size={18} />
                   </button>
                 </div>
               </label>
 
+              <TurnstileWidget
+                action="login"
+                resetKey={turnstileResetKey}
+                onEnabledChange={setTurnstileEnabled}
+                onTokenChange={setTurnstileToken}
+              />
 
               <button className="rtx-submit" type="submit" disabled={loading}>
                 <span>{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</span>
-                {!loading && <b>→</b>}
+                {!loading && <SvgIcon name="arrowRight" size={20} />}
               </button>
 
               <div className="rtx-links">
@@ -280,7 +303,7 @@ export default function LoginPage() {
           <div className="rtx-forgot-bg" onClick={() => setForgotOpen(false)} />
           <div className="rtx-forgot-card">
             <div className="rtx-forgot-head">
-              <span className="rtx-forgot-badge">🔐</span>
+              <span className="rtx-forgot-badge"><SvgIcon name="lock" size={18} /></span>
               <div>
                 <span className="rtx-forgot-kicker">PASSWORD RECOVERY</span>
                 <span className="rtx-forgot-heading">รีเซ็ตรหัสผ่าน</span>
@@ -309,7 +332,7 @@ export default function LoginPage() {
               <label className="rtx-forgot-email">
                 <span>อีเมลที่ผูกกับบัญชี</span>
                 <div className="rtx-forgot-inputwrap">
-                  <span>✉️</span>
+                  <span><SvgIcon name="mail" size={18} /></span>
                   <input
                     type="email"
                     autoComplete="email"
@@ -323,7 +346,7 @@ export default function LoginPage() {
                 <button type="button" className="rtx-forgot-btn ghost" onClick={() => { setForgotOpen(false); setForgotMsg(null); }}>ยกเลิก</button>
                 <button type="submit" className="rtx-forgot-btn primary" disabled={forgotBusy}>
                   <span>{forgotBusy ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ต'}</span>
-                  {!forgotBusy && <b>→</b>}
+                  {!forgotBusy && <SvgIcon name="arrowRight" size={18} />}
                 </button>
               </div>
             </form>

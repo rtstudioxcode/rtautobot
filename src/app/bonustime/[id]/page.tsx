@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { notifyMsg, copyTextWithNotify, confirmAction } from '../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const DAY_MS = 86400000;
 
@@ -406,7 +407,7 @@ export default function BonustimeDetailPage() {
             </div>
             <div className="btd-badges">
               <span className={`btd-badge ${statusCls}`}>{statusLabel}</span>
-              <span className="btd-tag">{record.LOTTO_ENABLED ? '🎰 รวมหวย' : '🎮 สล็อต+บาคาร่า'}</span>
+              <span className="btd-tag">{record.LOTTO_ENABLED ? <><SvgIcon name="ticket" size={18} /> รวมหวย</> : <><SvgIcon name="gamepad" size={18} /> สล็อต+บาคาร่า</>}</span>
             </div>
           </div>
           <div className="btd-info-grid">
@@ -451,7 +452,7 @@ export default function BonustimeDetailPage() {
           <div className="btd-card-head">
             <h2 className="btd-card-title">ตั้งค่า LINE Bot</h2>
             <button className="btd-btn ghost sm" onClick={() => { setEditMode(!editMode); setMsg(null); }}>
-              {editMode ? 'ยกเลิก' : '✎ แก้ไข'}
+              {editMode ? 'ยกเลิก' : <><SvgIcon name="edit" size={18} /> แก้ไข</>}
             </button>
           </div>
 
@@ -506,15 +507,15 @@ export default function BonustimeDetailPage() {
         <div className="btd-action-row">
           {!isPermanent && (
             <button className="btd-btn ghost" style={{ flex: 1, minHeight: 48 }} onClick={() => { setShowExtend(true); setMsg(null); }}>
-              🔄 ต่ออายุ
+              <SvgIcon name="rotate" size={17} /> ต่ออายุ
             </button>
           )}
           {!record.LOTTO_ENABLED ? (
             <button className="btd-btn warn" style={{ flex: 1, minHeight: 48 }} onClick={handleUpgradeLotto} disabled={busy}>
-              ⬆ อัปเกรด + หวย (฿1,000)
+              <SvgIcon name="arrowUp" size={17} /> อัปเกรด + หวย (฿1,000)
             </button>
           ) : (
-            <div className="btd-btn lotto-done" style={{ flex: 1, minHeight: 48 }}>✓ เปิดใช้หวยแล้ว</div>
+            <div className="btd-btn lotto-done" style={{ flex: 1, minHeight: 48 }}><SvgIcon name="check" size={17} /> เปิดใช้หวยแล้ว</div>
           )}
         </div>
 
@@ -542,7 +543,7 @@ export default function BonustimeDetailPage() {
                 <code style={{ fontSize: 11, color: 'rgba(238,246,255,.55)', wordBreak: 'break-all' }}>{railwayInfo.deploymentId || '—'}</code>
               </div> */}
               <button className="btd-btn danger full" style={{ marginTop: 12 }} onClick={handleRestart} disabled={busy}>
-                🔄 Restart Service
+                <SvgIcon name="rotate" size={17} /> Restart Service
               </button>
             </>
           ) : (
@@ -557,7 +558,7 @@ export default function BonustimeDetailPage() {
             <div className="btd-modal-dialog">
               <div className="btd-modal-head">
                 <div>
-                  <div className="btd-modal-kicker"><span>✦</span> BONUSTIME</div>
+                  <div className="btd-modal-kicker"><span><SvgIcon name="spark" size={18} /></span> BONUSTIME</div>
                   <h2>ต่ออายุ Bonustime</h2>
                 </div>
                 <button className="btd-modal-close" onClick={() => setShowExtend(false)}>×</button>

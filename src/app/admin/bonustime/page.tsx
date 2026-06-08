@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { notifyMsg, copyTextWithNotify, confirmAction } from '../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 /* ===== BASE ===== */
@@ -354,7 +355,7 @@ export default function AdminBonustimePage() {
         <div className="btx-hero-glow btx-hero-glow-a" aria-hidden="true" />
         <div className="btx-hero-glow btx-hero-glow-b" aria-hidden="true" />
         <div className="btx-hero-content">
-          <span className="btx-kicker">✦ BONUSTIME CONTROL CENTER</span>
+          <span className="btx-kicker"><SvgIcon name="spark" size={18} /> BONUSTIME CONTROL CENTER</span>
           <h1>Bonustime Panel</h1>
           <p>จัดการ Service, Serial Key, รายการเช่า และสรุปยอดขายแบบมืออาชีพในหน้าเดียว — เร็ว ลื่น และอ่านสถานะได้ชัดเจนทุกออเดอร์</p>
         </div>
@@ -387,7 +388,7 @@ export default function AdminBonustimePage() {
           <div className="bt-head-left"><h1>รายการออเดอร์</h1></div>
           <div className="bt-add-wrapper">
             <button className="bt-add-btn" type="button" onClick={() => setShowAdd(true)}>
-              <span className="bt-add-icon">＋</span>
+              <span className="bt-add-icon"><SvgIcon name="plus" size={18} /></span>
               <span>เพิ่ม Service ใหม่</span>
             </button>
           </div>
@@ -493,7 +494,7 @@ function ServiceCard({ rec, editData, expanded, saving, saved, railwayBusy, busy
         </div>
         <div className="status-right">
           {saving && <span style={{ fontSize: '11px', color: '#facc15' }}>บันทึก...</span>}
-          {saved && !saving && <span style={{ fontSize: '11px', color: '#4ade80' }}>✓</span>}
+          {saved && !saving && <span style={{ fontSize: '11px', color: '#4ade80' }}><SvgIcon name="check" size={12} /></span>}
           <div className={`status-pill${hasSold ? ' sold' : ' free'}`}>{hasSold ? 'ขายไปแล้ว' : 'ยังไม่ขาย'}</div>
           {expiryLabel()}
           <button type="button" className="bt-delete-btn" onClick={e => { e.stopPropagation(); onDelete(); }} title="ลบ Service นี้">ลบ</button>
@@ -557,7 +558,7 @@ function ServiceCard({ rec, editData, expanded, saving, saved, railwayBusy, busy
 
           <div className="bt-admin-actions">
             <button type="button" className="bt-action-btn restart" onClick={onRestart} disabled={railwayBusy} style={{ opacity: railwayBusy ? .4 : 1 }}>
-              {railwayBusy ? '...' : '🔄 รีสตาร์ท Server'}
+              {railwayBusy ? '...' : <><SvgIcon name="rotate" size={16} /> รีสตาร์ท Server</>}
             </button>
             <div className="bt-flex-spacer" />
             {hasSold && !resetEligible && (

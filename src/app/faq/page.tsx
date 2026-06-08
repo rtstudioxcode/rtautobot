@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
   :root {
@@ -175,7 +176,7 @@ export default function FaqPage() {
         <section className="faq-hero" aria-label="Bonustime FAQ hero">
           <div className="faq-hero-grid">
             <div>
-              <div className="faq-kicker">✦ FAQ</div>
+              <div className="faq-kicker"><SvgIcon name="spark" size={18} /> FAQ</div>
               <h1 className="faq-title">คำถามที่พบบ่อย <span>Bonustime</span></h1>
               <p className="faq-subtitle">รวมคำตอบสำคัญสำหรับการใช้งาน Bonustime ตั้งแต่เลือกแพ็กเกจ เติมเครดิต สั่งซื้อ ต่ออายุ อัปเกรด ไปจนถึงตรวจสอบสถานะรายการ อ่านง่าย ตรงประเด็น และพร้อมใช้งานจริง</p>
               <div className="faq-actions">
@@ -195,16 +196,16 @@ export default function FaqPage() {
 
         {/* Stats */}
         <section className="faq-stats" aria-label="Bonustime FAQ highlights">
-          <div className="faq-stat"><div className="ico">⚡</div><strong>รวดเร็ว</strong><span>เลือกแพ็กเกจและยืนยันรายการได้ทันที</span></div>
-          <div className="faq-stat"><div className="ico">💳</div><strong>เครดิต</strong><span>เติมเครดิตแล้วใช้สั่งซื้อ Bonustime ได้สะดวก</span></div>
-          <div className="faq-stat"><div className="ico">📦</div><strong>แพ็กเกจ</strong><span>รองรับการเลือกแพ็กเกจตามรูปแบบที่เปิดให้บริการ</span></div>
-          <div className="faq-stat"><div className="ico">🛡️</div><strong>ติดตามได้</strong><span>ตรวจสอบสถานะและประวัติรายการในระบบ</span></div>
+          <div className="faq-stat"><div className="ico"><SvgIcon name="zap" size={18} /></div><strong>รวดเร็ว</strong><span>เลือกแพ็กเกจและยืนยันรายการได้ทันที</span></div>
+          <div className="faq-stat"><div className="ico"><SvgIcon name="card" size={18} /></div><strong>เครดิต</strong><span>เติมเครดิตแล้วใช้สั่งซื้อ Bonustime ได้สะดวก</span></div>
+          <div className="faq-stat"><div className="ico"><SvgIcon name="package" size={18} /></div><strong>แพ็กเกจ</strong><span>รองรับการเลือกแพ็กเกจตามรูปแบบที่เปิดให้บริการ</span></div>
+          <div className="faq-stat"><div className="ico"><SvgIcon name="shield" size={18} /></div><strong>ติดตามได้</strong><span>ตรวจสอบสถานะและประวัติรายการในระบบ</span></div>
         </section>
 
         {/* Control */}
         <section className="faq-control" aria-label="FAQ controls">
           <label className="faq-search" htmlFor="faqSearch">
-            <span>🔍</span>
+            <span><SvgIcon name="search" size={18} /></span>
             <input
               id="faqSearch"
               type="search"
@@ -275,10 +276,10 @@ export default function FaqPage() {
               <h3>ทางลัด Bonustime</h3>
               <p>เมนูสำคัญสำหรับเริ่มใช้งานและตรวจสอบรายการได้เร็วขึ้น</p>
               <div className="faq-side-list">
-                <a className="faq-side-row" href="/bonustime"><span>🛒</span>สั่งซื้อ Bonustime</a>
-                <a className="faq-side-row" href="/bonustime"><span>📦</span>ประวัติ Bonustime</a>
-                <a className="faq-side-row" href="/topup"><span>💳</span>เติมเครดิต</a>
-                <a className="faq-side-row" href="/account"><span>👤</span>บัญชีของฉัน</a>
+                <a className="faq-side-row" href="/bonustime"><span><SvgIcon name="cart" size={18} /></span>สั่งซื้อ Bonustime</a>
+                <a className="faq-side-row" href="/bonustime"><span><SvgIcon name="package" size={18} /></span>ประวัติ Bonustime</a>
+                <a className="faq-side-row" href="/topup"><span><SvgIcon name="card" size={18} /></span>เติมเครดิต</a>
+                <a className="faq-side-row" href="/account"><span><SvgIcon name="user" size={18} /></span>บัญชีของฉัน</a>
               </div>
             </div>
             <div className="faq-side-card">

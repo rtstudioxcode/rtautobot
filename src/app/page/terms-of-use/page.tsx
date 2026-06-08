@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
   :root {
@@ -138,27 +139,27 @@ export default function TermsPage() {
           <section className="tos-hero" aria-label="Terms hero">
             <div className="tos-hero-grid">
               <div>
-                <span className="tos-kicker">🛡 RTAUTOBOT TRUST CENTER</span>
+                <span className="tos-kicker"><SvgIcon name="shield" size={18} /> RTAUTOBOT TRUST CENTER</span>
                 <h1>เงื่อนไขและข้อตกลงการใช้งาน</h1>
                 <p>อ่านข้อตกลงสำคัญก่อนเริ่มใช้ Bonustime เพื่อให้การสั่งซื้อ เติมเครดิต คืนเครดิต และการใช้งานระบบทั้งหมดชัดเจน โปร่งใส และปลอดภัยระดับมืออาชีพ</p>
                 <div className="tos-actions">
-                  <a className="tos-btn primary" href="/bonustime">🛒 เริ่มใช้ Bonustime</a>
-                  <a className="tos-btn" href="/faq">❓ อ่าน FAQ</a>
+                  <a className="tos-btn primary" href="/bonustime"><SvgIcon name="cart" size={18} /> เริ่มใช้ Bonustime</a>
+                  <a className="tos-btn" href="/faq"><SvgIcon name="info" size={18} /> อ่าน FAQ</a>
                 </div>
               </div>
               <aside className="tos-hero-card" aria-label="Trust summary">
                 <div className="tos-metric">
-                  <div className="icon">📄</div>
+                  <div className="icon"><SvgIcon name="file" size={18} /></div>
                   <div><strong>13 หมวดหลัก</strong><span>สรุปครบทุกเงื่อนไขสำคัญ</span></div>
                   <em>Clear</em>
                 </div>
                 <div className="tos-metric">
-                  <div className="icon">💳</div>
+                  <div className="icon"><SvgIcon name="card" size={18} /></div>
                   <div><strong>เครดิต / คืนเงิน</strong><span>ระบุเงื่อนไขการชำระและคืนเครดิต</span></div>
                   <em>Safe</em>
                 </div>
                 <div className="tos-metric">
-                  <div className="icon">⚖</div>
+                  <div className="icon"><SvgIcon name="scale" size={18} /></div>
                   <div><strong>ใช้งานถูกต้อง</strong><span>คุมความเสี่ยงและสิทธิของผู้ใช้</span></div>
                   <em>Pro</em>
                 </div>
@@ -168,7 +169,7 @@ export default function TermsPage() {
 
           {/* Breadcrumb */}
           <nav className="tos-breadcrumb" aria-label="breadcrumb">
-            <a href="/">🏠 หน้าแรก</a>
+            <a href="/"><SvgIcon name="home" size={18} /> หน้าแรก</a>
             <span>/</span>
             <span>เงื่อนไขและข้อตกลง</span>
           </nav>
@@ -195,12 +196,12 @@ export default function TermsPage() {
                   <h2>Terms of Use</h2>
                   <p style={{ margin: '8px 0 0', color: 'var(--tos-muted)', fontWeight: 800, lineHeight: 1.7 }}>RTAUTOBOT — ข้อตกลงสำหรับผู้ใช้ Bonustime</p>
                 </div>
-                <span className="tos-updated">📅 อัปเดตล่าสุด: ตุลาคม 2568</span>
+                <span className="tos-updated"><SvgIcon name="calendar" size={18} /> อัปเดตล่าสุด: ตุลาคม 2568</span>
               </header>
 
               <div className="tos-article">
                 <div className="tos-alert">
-                  <span className="ai">ℹ</span>
+                  <span className="ai"><SvgIcon name="info" size={18} /></span>
                   <div>การเข้าใช้งานเว็บไซต์ บัญชีผู้ใช้ หรือบริการใด ๆ ถือว่าผู้ใช้ยอมรับข้อกำหนดนี้แล้ว กรุณาอ่านให้ครบก่อนเติมเครดิตหรือส่งคำสั่งซื้อ เพื่อไม่ให้เกิดดราม่าแบบซีรีส์ 12 ตอน</div>
                 </div>
 
@@ -344,10 +345,10 @@ export default function TermsPage() {
             <div>
               <h4>เกี่ยวกับเรา</h4>
               <ul>
-                <li><a href="mailto:rtssm.th@gmail.com">📧 Email: rtssm.th@gmail.com</a></li>
-                <li><a href="https://line.me/R/ti/p/@507vkplq">💬 Line: @rtssm-th</a></li>
-                <li><a href="/support">🐛 แจ้งปัญหาคำสั่งซื้อ</a></li>
-                <li><a href="/page/terms-of-use">⚖ เงื่อนไขและข้อตกลง</a></li>
+                <li><a href="mailto:rtssm.th@gmail.com"><SvgIcon name="mail" size={18} /> Email: rtssm.th@gmail.com</a></li>
+                <li><a href="https://line.me/R/ti/p/@507vkplq"><SvgIcon name="message" size={18} /> Line: @rtssm-th</a></li>
+                <li><a href="/support"><SvgIcon name="bug" size={18} /> แจ้งปัญหาคำสั่งซื้อ</a></li>
+                <li><a href="/page/terms-of-use"><SvgIcon name="scale" size={18} /> เงื่อนไขและข้อตกลง</a></li>
               </ul>
             </div>
           </div>

@@ -1,3 +1,5 @@
+import SvgIcon from '@/components/SvgIcon';
+
 export const metadata = { title: 'ติดต่อเรา | RTAUTOBOT Support' };
 
 const CSS = `
@@ -195,7 +197,7 @@ export default function SupportPage() {
         </div>
 
         <header className="support-hero reveal-ready">
-          <div className="support-kicker">🎧 RTAUTOBOT SUPPORT CENTER</div>
+          <div className="support-kicker"><SvgIcon name="message" size={18} /> RTAUTOBOT SUPPORT CENTER</div>
           <h1 id="supportTitle">ติดต่อทีมงาน <span>RTAUTOBOT</span></h1>
           <p>ศูนย์ช่วยเหลือสำหรับผู้ใช้บริการ Bonustime ติดต่อได้รวดเร็ว ตรวจสอบง่าย และมีช่องทางสำรองพร้อมใช้งาน เพื่อให้ทุกปัญหาถูกดูแลอย่างเป็นระบบ</p>
           <div className="support-quickbar" role="list" aria-label="ข้อมูลสรุปบริการ Support">
@@ -220,13 +222,13 @@ export default function SupportPage() {
               </div>
             </div>
             <ul className="support-points">
-              <li><span className="sp-check">✔</span> ติดต่อแอดมินได้สะดวกที่สุด</li>
-              <li><span className="sp-check">✔</span> ส่งหลักฐานสลิป / เลขออเดอร์ / ภาพหน้าจอได้ทันที</li>
-              <li><span className="sp-check">✔</span> เหมาะกับเคสเร่งด่วนที่ต้องการตรวจสอบเป็นรายบัญชี</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> ติดต่อแอดมินได้สะดวกที่สุด</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> ส่งหลักฐานสลิป / เลขออเดอร์ / ภาพหน้าจอได้ทันที</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> เหมาะกับเคสเร่งด่วนที่ต้องการตรวจสอบเป็นรายบัญชี</li>
             </ul>
             <a className="support-btn main" href="https://line.me/R/ti/p/@507vkplq?ts=10301611&oat_content=url" target="_blank" rel="noopener noreferrer">
-              <span>💬 ติดต่อผ่าน Line OA</span>
-              <span className="support-arrow">↗</span>
+              <span><SvgIcon name="message" size={18} /> ติดต่อผ่าน Line OA</span>
+              <span className="support-arrow"><SvgIcon name="externalLink" size={18} /></span>
             </a>
           </article>
 
@@ -244,13 +246,13 @@ export default function SupportPage() {
               </div>
             </div>
             <ul className="support-points">
-              <li><span className="sp-check">✔</span> ติดต่อทีมงานผ่าน Line OA ไม่สะดวกหรือมีปัญหาในการใช้งาน</li>
-              <li><span className="sp-check">✔</span> ติดต่อสำรองได้เมื่อช่องทางหลักไม่พร้อม</li>
-              <li><span className="sp-check">✔</span> ส่งรายละเอียดงานและ Log ให้ตรวจสอบได้ง่าย</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> ติดต่อทีมงานผ่าน Line OA ไม่สะดวกหรือมีปัญหาในการใช้งาน</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> ติดต่อสำรองได้เมื่อช่องทางหลักไม่พร้อม</li>
+              <li><span className="sp-check"><SvgIcon name="check" size={18} /></span> ส่งรายละเอียดงานและ Log ให้ตรวจสอบได้ง่าย</li>
             </ul>
             <a className="support-btn secondary" href="https://t.me/rtstudioxcode168" target="_blank" rel="noopener noreferrer">
-              <span>✈ ติดต่อผ่าน Telegram</span>
-              <span className="support-arrow">↗</span>
+              <span><SvgIcon name="paperPlane" size={18} /> ติดต่อผ่าน Telegram</span>
+              <span className="support-arrow"><SvgIcon name="externalLink" size={18} /></span>
             </a>
           </article>
 
@@ -273,8 +275,8 @@ export default function SupportPage() {
               <div><b>Announcement</b><small>ประกาศสำคัญที่ผู้ใช้ควรทราบ</small></div>
             </div>
             <a className="support-btn channel" href="https://t.me/rtautobot168" target="_blank" rel="noopener noreferrer">
-              <span>✈ ติดตาม Telegram Channel</span>
-              <span className="support-arrow">↗</span>
+              <span><SvgIcon name="paperPlane" size={18} /> ติดตาม Telegram Channel</span>
+              <span className="support-arrow"><SvgIcon name="externalLink" size={18} /></span>
             </a>
           </article>
         </div>
@@ -286,10 +288,10 @@ export default function SupportPage() {
             <p>เพื่อให้แก้ปัญหาได้ไวที่สุด กรุณาแนบข้อมูลที่เกี่ยวข้อง เช่น ชื่อผู้ใช้ เลขออเดอร์ หลักฐานการเติมเงิน หรือภาพหน้าจอปัญหา</p>
           </div>
           <div className="support-checklist">
-            <span><span className="sp-ico">👤</span> ชื่อผู้ใช้ / อีเมลบัญชี</span>
-            <span><span className="sp-ico">🧾</span> เลขออเดอร์หรือรายการเติมเงิน</span>
-            <span><span className="sp-ico">🖼</span> รูปภาพหรือหลักฐานที่เกี่ยวข้อง</span>
-            <span><span className="sp-ico">⏱</span> วันเวลาโดยประมาณที่พบปัญหา</span>
+            <span><span className="sp-ico"><SvgIcon name="user" size={18} /></span> ชื่อผู้ใช้ / อีเมลบัญชี</span>
+            <span><span className="sp-ico"><SvgIcon name="file" size={18} /></span> เลขออเดอร์หรือรายการเติมเงิน</span>
+            <span><span className="sp-ico"><SvgIcon name="image" size={18} /></span> รูปภาพหรือหลักฐานที่เกี่ยวข้อง</span>
+            <span><span className="sp-ico"><SvgIcon name="clock" size={18} /></span> วันเวลาโดยประมาณที่พบปัญหา</span>
           </div>
         </section>
       </section>

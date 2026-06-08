@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyFromPayload } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 const CSS = `
 .rtx-auth{
@@ -109,6 +111,11 @@ const CSS = `
   box-shadow:0 26px 48px color-mix(in srgb,var(--rtx-accent) 32%,transparent)}
 .rtx-submit:disabled{opacity:.65;cursor:wait;transform:none}
 .rtx-submit b{font-size:20px}
+.rt-turnstile{display:grid;gap:8px;justify-items:center;padding:2px 0 0}
+.rt-turnstile-box{min-height:65px;display:grid;place-items:center}
+.rt-turnstile-hint,.rt-turnstile-error{width:100%;text-align:center;font-size:12px;font-weight:800;line-height:1.45}
+.rt-turnstile-hint{color:color-mix(in srgb,var(--rtx-muted) 82%,transparent)}
+.rt-turnstile-error{color:#ffd4dc}
 .rtx-form-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;
   color:var(--rtx-muted);font-weight:550;flex-wrap:wrap}
 .rtx-form-foot a{color:var(--rtx-accent);text-decoration:none;font-weight:650}
@@ -260,9 +267,12 @@ export default function RegisterPage() {
   const affKey = searchParams.get('aff') || '';
 
   const [form, setForm] = useState({ username: '', email: '', name: '', password: '', affiliateKey: affKey });
-  const [error, setError] = useState('');
+  const [error, setError] = useState('info');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeClosing, setNoticeClosing] = useState(false);
   const [otpOpen, setOtpOpen] = useState(false);
@@ -273,7 +283,7 @@ export default function RegisterPage() {
   const [otpHelpText, setOtpHelpText] = useState('เราได้ส่งรหัส 6 หลักไปที่อีเมลของคุณแล้ว');
   const [msgOpen, setMsgOpen] = useState(false);
   const [msgVariant, setMsgVariant] = useState('info');
-  const [msgIcon, setMsgIcon] = useState('❔');
+  const [msgIcon, setMsgIcon] = useState('info');
   const [msgTitle, setMsgTitle] = useState('');
   const [msgText, setMsgText] = useState('');
   const timerRef = useRef(null);
@@ -291,9 +301,9 @@ export default function RegisterPage() {
 
   const showMsg = ({ variant = 'info', icon = null, title = '', text = '' }: any) => {
     notifyFromPayload({ variant, title, text });
-    const imap = { info: '❔', success: '✅', warn: '⚠️', error: '✖' };
+    const imap = { info: 'info', success: 'check', warn: 'alert', error: 'error' };
     setMsgVariant(variant);
-    setMsgIcon(icon || imap[variant] || '❔');
+    setMsgIcon(icon || imap[variant] || 'info');
     setMsgTitle(title);
     setMsgText(text);
     setMsgOpen(true);
@@ -329,18 +339,24 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (turnstileEnabled && !turnstileToken) {
+      const msg = 'กรุณายืนยันความปลอดภัยก่อนสมัครสมาชิก';
+      setError(msg);
+      notifyFromPayload({ variant: 'error', title: 'ยืนยันความปลอดภัย', text: msg });
+      return;
+    }
     setLoading(true);
     try {
       const r = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, email: form.email, name: form.name, password: form.password, affiliateKey: form.affiliateKey, aff: form.affiliateKey }),
+        body: JSON.stringify({ username: form.username, email: form.email, name: form.name, password: form.password, affiliateKey: form.affiliateKey, aff: form.affiliateKey, turnstileToken }),
       });
       const d = await r.json();
-      if (!d.ok) { const msg = d.message || 'สมัครสมาชิกไม่สำเร็จ'; setError(msg); notifyFromPayload({ variant: 'error', title: 'สมัครสมาชิกไม่สำเร็จ', text: msg }); return; }
+      if (!d.ok) { const msg = d.message || 'สมัครสมาชิกไม่สำเร็จ'; setError(msg); setTurnstileResetKey(v => v + 1); notifyFromPayload({ variant: 'error', title: 'สมัครสมาชิกไม่สำเร็จ', text: msg }); return; }
       if (d.needOtp) { openOtp(form.email, 60); return; }
       showMsg({ variant: 'success', title: 'ส่งอีเมลยืนยันแล้ว', text: 'โปรดตรวจกล่องจดหมายของคุณ แล้วคลิกลิงก์เพื่อเปิดใช้งานบัญชี' });
-    } catch { setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }); }
+    } catch { setTurnstileResetKey(v => v + 1); setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }); }
     finally { setLoading(false); }
   };
 
@@ -387,36 +403,36 @@ export default function RegisterPage() {
 
         <div className="rtx-auth-grid">
           <aside className="rtx-hero-panel">
-            <div className="rtx-kicker"><span>✦</span> RTAUTOBOT REGISTER MEMBER</div>
+            <div className="rtx-kicker"><span><SvgIcon name="spark" size={18} /></span> RTAUTOBOT REGISTER MEMBER</div>
             <h1>สมัครสมาชิกเพื่อเริ่มใช้ Bonustime Automation</h1>
             <p>เปิดบัญชีเดียวเพื่อสั่งซื้อบริการ เพิ่มผู้ติดตาม ไลค์ วิว เอนเกจเมนต์ เติมเครดิต และติดตามงานทั้งหมดได้แบบปลอดภัย</p>
 
             <div className="rtx-benefits">
               <div className="rtx-benefit">
-                <span className="rtx-benefit-icon">⚡</span>
+                <span className="rtx-benefit-icon"><SvgIcon name="zap" size={18} /></span>
                 <strong>เริ่มใช้งานไว</strong>
                 <small>สมัครง่ายไม่กี่ขั้นตอน พร้อมใช้งานได้ทันทีทุกเวลา</small>
               </div>
               <div className="rtx-benefit">
-                <span className="rtx-benefit-icon">🛡️</span>
+                <span className="rtx-benefit-icon"><SvgIcon name="shield" size={18} /></span>
                 <strong>ปลอดภัยกว่า</strong>
                 <small>ยืนยันอีเมล รองรับระบบ OTP และ Session</small>
               </div>
               <div className="rtx-benefit">
-                <span className="rtx-benefit-icon">📈</span>
+                <span className="rtx-benefit-icon"><SvgIcon name="chart" size={18} /></span>
                 <strong>ครบในที่เดียว</strong>
                 <small>เติมเครดิตออโต้ สั่งออเดอร์ รายงานสถานะ และบริการหลากหลายแพลตฟอร์ม</small>
               </div>
             </div>
 
             <div className="rtx-meta">
-              <span>All Right Reserved</span><i /><span>© 2026</span><i /><span>RTAUTOBOT</span>
+              <span>All Right Reserved</span><i /><span>&copy; 2026</span><i /><span>RTAUTOBOT</span>
             </div>
           </aside>
 
           <main className="rtx-form-panel">
             <div className="rtx-form-head">
-              <span className="rtx-lock">✨</span>
+              <span className="rtx-lock"><SvgIcon name="spark" size={18} /></span>
               <div>
                 <h2>สร้างบัญชีใหม่</h2>
                 <p>กรอกข้อมูลให้ครบ เพื่อเปิดใช้งานบัญชี RTAUTOBOT</p>
@@ -429,7 +445,7 @@ export default function RegisterPage() {
               <label className="rtx-field">
                 <span className="rtx-label">ชื่อผู้ใช้</span>
                 <div className="rtx-input-wrap">
-                  <span className="rtx-input-icon">👤</span>
+                  <span className="rtx-input-icon"><SvgIcon name="user" size={18} /></span>
                   <input className="rtx-input" name="username" required autoComplete="username" placeholder="เช่น rtssm-th" value={form.username} onChange={set('username')} />
                 </div>
                 <small>ใช้อักษร a–z, 0–9 และขีดกลางได้</small>
@@ -438,7 +454,7 @@ export default function RegisterPage() {
               <label className="rtx-field">
                 <span className="rtx-label">อีเมล</span>
                 <div className="rtx-input-wrap">
-                  <span className="rtx-input-icon">✉️</span>
+                  <span className="rtx-input-icon"><SvgIcon name="mail" size={18} /></span>
                   <input className="rtx-input" type="email" name="email" required placeholder="you@email.com" autoComplete="email" value={form.email} onChange={set('email')} />
                 </div>
                 <small>ใช้สำหรับยืนยันตัวตนและกู้รหัสผ่าน</small>
@@ -447,7 +463,7 @@ export default function RegisterPage() {
               <label className="rtx-field">
                 <span className="rtx-label">ชื่อ–นามสกุล</span>
                 <div className="rtx-input-wrap">
-                  <span className="rtx-input-icon">🪪</span>
+                  <span className="rtx-input-icon"><SvgIcon name="id" size={18} /></span>
                   <input className="rtx-input" name="name" required autoComplete="name" placeholder="ชื่อจริง นามสกุล" value={form.name} onChange={set('name')} />
                 </div>
                 <small>แนะนำให้ใช้ชื่อจริงเพื่อความปลอดภัยของบัญชี</small>
@@ -488,9 +504,16 @@ export default function RegisterPage() {
                 <small>ตั้งรหัสอย่างน้อย 6 ตัวอักษร ยิ่งยาวยิ่งปลอดภัย</small>
               </label>
 
+              <TurnstileWidget
+                action="register"
+                resetKey={turnstileResetKey}
+                onEnabledChange={setTurnstileEnabled}
+                onTokenChange={setTurnstileToken}
+              />
+
               <button className="rtx-submit" type="submit" disabled={loading}>
                 <span>{loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}</span>
-                {!loading && <b>→</b>}
+                {!loading && <SvgIcon name="arrowRight" size={20} />}
               </button>
 
               <div className="rtx-form-foot">
@@ -509,7 +532,7 @@ export default function RegisterPage() {
             <div className="rtx-notice-aura" aria-hidden="true" />
             <div className="rtx-notice-head">
               <span className="rtx-notice-badge" aria-hidden="true">
-                <span>⚠️</span>
+                <span><SvgIcon name="alert" size={18} /></span>
               </span>
               <span className="rtx-notice-titlebox">
                 <span className="rtx-notice-kicker">REGISTER SECURITY NOTICE</span>
@@ -542,7 +565,7 @@ export default function RegisterPage() {
                 </div>
               </div>
               <div className="rtx-notice-warning">
-                <span>✦</span>
+                <span><SvgIcon name="spark" size={18} /></span>
                 <p>Notice นี้จะแสดงทุกครั้งที่เข้าหน้าสมัคร เพื่อให้ผู้ใช้ตรวจสอบข้อมูลก่อนสมัครสมาชิกเสมอ</p>
               </div>
             </div>
@@ -550,7 +573,7 @@ export default function RegisterPage() {
               <button className="rtx-notice-accept" type="button" onClick={closeNotice}>
                 <span className="shine" aria-hidden="true" />
                 <span>ปิดและยอมรับ</span>
-                <b>→</b>
+                <SvgIcon name="arrowRight" size={18} />
               </button>
             </div>
           </div>
@@ -562,7 +585,7 @@ export default function RegisterPage() {
         <div className="rg-overlay">
           <div className="rtx-dialog-card">
             <div className="rtx-dialog-head">
-              <div className="rtx-dialog-badge">🔐</div>
+              <div className="rtx-dialog-badge"><SvgIcon name="lock" size={18} /></div>
               <div>
                 <h3>ยืนยันอีเมล</h3>
                 <p className="dlg-sub">{otpHelpText}</p>

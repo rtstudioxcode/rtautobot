@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { notifyFromPayload } from '../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .fpw-page {
@@ -121,7 +122,7 @@ export default function ForgotPasswordPage() {
       <div className="fpw-page">
         <div className="fpw-card">
           <div className="fpw-head">
-            <span className="fpw-badge">🔐</span>
+            <span className="fpw-badge"><SvgIcon name="lock" size={18} /></span>
             <div>
               <span className="fpw-kicker">PASSWORD RECOVERY</span>
               <span className="fpw-heading">รีเซ็ตรหัสผ่าน</span>
@@ -131,7 +132,7 @@ export default function ForgotPasswordPage() {
 
           {sent ? (
             <div className="fpw-success">
-              <div className="fpw-success-icon">📧</div>
+              <div className="fpw-success-icon"><SvgIcon name="mail" size={18} /></div>
               <h2>ส่งอีเมลแล้ว</h2>
               <p>ตรวจสอบอีเมลของคุณและคลิกลิงก์รีเซ็ตรหัสผ่าน<br/>ลิงก์จะหมดอายุใน 1 ชั่วโมง</p>
               <div className="fpw-actions">
@@ -159,7 +160,7 @@ export default function ForgotPasswordPage() {
                 <label className="fpw-field">
                   <span className="fpw-label">อีเมลที่ผูกกับบัญชี</span>
                   <div className="fpw-inputwrap">
-                    <span>✉️</span>
+                    <span><SvgIcon name="mail" size={18} /></span>
                     <input
                       type="email"
                       autoComplete="email"

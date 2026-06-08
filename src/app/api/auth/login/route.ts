@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { getSession } from '../../../../lib/session';
 import { ensureInit } from '../../../../lib/setup';
+import { verifyTurnstileToken } from '../../../../lib/turnstile';
 import { User } from '../../../../models/User';
 
 const RATE = new Map();
@@ -17,17 +18,23 @@ function checkRate(ip) {
   return e.count <= 10;
 }
 
+function requestHost(request) {
+  return request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
+}
+
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
     if (!checkRate(ip)) return NextResponse.json({ ok: false, message: 'ลองอีกครั้งภายหลัง (rate limit)' }, { status: 429 });
 
     const body = await request.json().catch(() => ({}));
-    const { login, password } = body;
+    const { login, password, turnstileToken } = body;
     if (!login || !password) return NextResponse.json({ ok: false, message: 'กรุณากรอกข้อมูลให้ครบ' }, { status: 400 });
 
     await ensureInit();
 
+    const turnstile = await verifyTurnstileToken(turnstileToken, ip, requestHost(request));
+    if (!turnstile.ok) return NextResponse.json({ ok: false, message: turnstile.message || 'ยืนยันความปลอดภัยไม่สำเร็จ' }, { status: 403 });
 
     const loginStr = String(login).trim();
     const query = loginStr.includes('@')

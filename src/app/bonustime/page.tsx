@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { notifyMsg, copyTextWithNotify } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const DAY_MS = 86400000;
 
@@ -44,26 +45,26 @@ const PLANS_LOTTO = [
 ];
 
 const PKG1_FEATURES = [
-  '🔥 BOT LINE ช่วยส่งโบนัสไทม์-ตอบลูกค้าแทนคุณ ใช้ง่าย ประหยัดเวลา คุ้มสุด ๆ',
-  '✅ อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
-  '✅ รองรับเกมสล็อตจากค่ายดังมากมาย',
-  '✅ ระบบตอบคำถามลูกค้าอัตโนมัติ',
-  '✅ ระบบอัปเดตเกมให้ทุก 5 นาทีสำหรับสล็อต',
-  '✅ ระบบอัปเดตห้องให้ทุก 20 วินาทีสำหรับบาคาร่า',
-  '✅ ระบบอัปเดตอัตราการชนะให้ทุกครั้งที่เปลี่ยนเกม & ห้อง',
+  'BOT LINE ช่วยส่งโบนัสไทม์-ตอบลูกค้าแทนคุณ ใช้ง่าย ประหยัดเวลา คุ้มสุด ๆ',
+  'อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
+  'รองรับเกมสล็อตจากค่ายดังมากมาย',
+  'ระบบตอบคำถามลูกค้าอัตโนมัติ',
+  'ระบบอัปเดตเกมให้ทุก 5 นาทีสำหรับสล็อต',
+  'ระบบอัปเดตห้องให้ทุก 20 วินาทีสำหรับบาคาร่า',
+  'ระบบอัปเดตอัตราการชนะให้ทุกครั้งที่เปลี่ยนเกม & ห้อง',
 ];
 
 const PKG2_FEATURES = [
-  '🔥 รวมสล็อต บาคาร่า และหวยในระบบเดียว จัดเต็มฟีเจอร์สายเกม & สายหวย',
-  '✅ อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
-  '✅ อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
-  '✅ รองรับเกมสล็อตจากค่ายดังมากมาย',
-  '✅ ระบบตอบคำถามลูกค้าอัตโนมัติ',
-  '✅ ระบบอัปเดตเกมให้ทุก 5 นาทีสำหรับสล็อต',
-  '✅ ระบบอัปเดตห้องให้ทุก 20 วินาทีสำหรับบาคาร่า',
-  '✅ ระบบอัปเดตอัตราการชนะให้ทุกครั้งที่เปลี่ยนเกม & ห้อง',
-  '✅ ฟีเจอร์ครบครันสำหรับสายหวย',
-  '✅ หวยจะอัปเดตก่อนเวลาหวยออก 20 ชั่วโมง',
+  'รวมสล็อต บาคาร่า และหวยในระบบเดียว จัดเต็มฟีเจอร์สายเกม & สายหวย',
+  'อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
+  'อัปเดตรูปเกมให้ฟรีตลอดระยะเวลาการใช้งาน',
+  'รองรับเกมสล็อตจากค่ายดังมากมาย',
+  'ระบบตอบคำถามลูกค้าอัตโนมัติ',
+  'ระบบอัปเดตเกมให้ทุก 5 นาทีสำหรับสล็อต',
+  'ระบบอัปเดตห้องให้ทุก 20 วินาทีสำหรับบาคาร่า',
+  'ระบบอัปเดตอัตราการชนะให้ทุกครั้งที่เปลี่ยนเกม & ห้อง',
+  'ฟีเจอร์ครบครันสำหรับสายหวย',
+  'หวยจะอัปเดตก่อนเวลาหวยออก 20 ชั่วโมง',
 ];
 
 const CSS = `
@@ -520,7 +521,7 @@ const CSS = `
 .bt-notice-check { display: inline-flex; align-items: center; gap: 10px; margin-top: 18px; color: rgba(238,246,255,.78); font-size: 13px; font-weight: 800; cursor: pointer; user-select: none; }
 .bt-notice-check input { position: absolute; opacity: 0; pointer-events: none; }
 .bt-check-ui { width: 22px; height: 22px; border-radius: 7px; border: 1px solid rgba(124,255,178,.32); background: rgba(255,255,255,.055); box-shadow: 0 0 0 3px rgba(124,255,178,.05); display: grid; place-items: center; transition: .22s ease; flex-shrink: 0; }
-.bt-check-ui::after { content: "✓"; color: #16120a; font-weight: 1000; font-size: 14px; transform: scale(.3); opacity: 0; transition: .22s ease; }
+.bt-check-ui::after { content: ""; width: 14px; height: 14px; border-right: 2px solid #16120a; border-bottom: 2px solid #16120a; transform: rotate(45deg) scale(.3); opacity: 0; transition: .22s ease; }
 .bt-notice-check input:checked + .bt-check-ui { background: linear-gradient(145deg,#08b84f,#05b84f); border-color: rgba(255,255,255,.35); box-shadow: 0 0 26px rgba(124,255,178,.24); }
 .bt-notice-check input:checked + .bt-check-ui::after { transform: scale(1); opacity: 1; }
 .bt-notice-actions { position:relative; z-index:2; display: flex; justify-content: flex-end; gap: 12px; padding: 14px 28px 24px; background:linear-gradient(180deg,rgba(17,18,22,.78),rgba(17,18,22,.98)); border-top:1px solid rgba(255,255,255,.07); box-shadow:0 -18px 38px rgba(0,0,0,.28); }
@@ -712,7 +713,7 @@ export default function BonustimePage() {
             <div className="bt-hero-glow one" />
             <div className="bt-hero-glow two" />
             <div className="bt-hero-copy">
-              <div className="bt-kicker"><span>✦</span> BONUSTIME AUTOMATION</div>
+              <div className="bt-kicker"><span><SvgIcon name="spark" size={18} /></span> BONUSTIME AUTOMATION</div>
               <h1>Bonustime — เช่าบอท</h1>
               <p>เปิดใช้งานระบบบอท LINE โบนัสไทม์ระดับมืออาชีพ จัดการโปรโมชันอัตโนมัติ เลือกแพ็กเกจที่เหมาะกับธุรกิจ พร้อมติดตามออเดอร์และตั้งค่าได้ครบในหน้าเดียว</p>
             </div>
@@ -804,7 +805,7 @@ export default function BonustimePage() {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                           <span className={`rec-badge ${statusCls}`}>{statusLabel}</span>
-                          <span style={{ fontSize: 11, color: 'rgba(238,246,255,.5)' }}>{rec.LOTTO_ENABLED ? '🎰 รวมหวย' : '🎮 สล็อต+บาคาร่า'}</span>
+                          <span style={{ fontSize: 11, color: 'rgba(238,246,255,.5)' }}>{rec.LOTTO_ENABLED ? 'รวมหวย' : 'สล็อต+บาคาร่า'}</span>
                         </div>
                       </div>
                       <div style={{ fontSize: 12, color: 'rgba(238,246,255,.5)', marginBottom: 12 }}>
@@ -872,7 +873,7 @@ export default function BonustimePage() {
                 <div className="faq-card">
                   <div className="accordion-clean">
                     <ul>
-                      <HelpAccordionItem title="🎥 วิธีขอ Channel Access Token และ Channel Secret" defaultOpen>
+                      <HelpAccordionItem title={<><SvgIcon name="video" size={18} /> วิธีขอ Channel Access Token และ Channel Secret</>} defaultOpen>
                         <p className="small muted mb-sm">
                           วิดีโอตัวอย่างตั้งแต่สร้าง LINE OA, เปิด Messaging API, จนถึงคัดลอก Channel Access Token และ Channel Secret เพื่อนำมาใส่ในฟอร์มสั่งซื้อ Bonustime
                         </p>
@@ -896,7 +897,7 @@ export default function BonustimePage() {
                         </ul>
                       </HelpAccordionItem>
 
-                      <HelpAccordionItem title="✏️ ต้องกรอกอะไรบ้างในฟอร์มสั่งซื้อแพ็กเกจ?">
+                      <HelpAccordionItem title={<><SvgIcon name="edit" size={18} /> ต้องกรอกอะไรบ้างในฟอร์มสั่งซื้อแพ็กเกจ?</>}>
                         <p className="mb-sm">ฟอร์มสั่งซื้อจะแสดงเมื่อกดปุ่ม <strong>สั่งซื้อแพ็กเกจนี้</strong> โดยแต่ละช่องมีความหมายดังนี้</p>
                         <ul className="help-steps">
                           <li><strong>ชื่อเว็บ</strong> — ชื่อหน้าร้าน/เว็บหรือเพจของคุณ ใช้แสดงในประวัติ Bonustime</li>
@@ -909,7 +910,7 @@ export default function BonustimePage() {
                         </ul>
                       </HelpAccordionItem>
 
-                      <HelpAccordionItem title="🔗 ลิงก์เชื่อมต่อ (LINK) คืออะไร ใช้ยังไง?">
+                      <HelpAccordionItem title={<><SvgIcon name="link" size={18} /> ลิงก์เชื่อมต่อ (LINK) คืออะไร ใช้ยังไง?</>}>
                         <p>ลิงก์เชื่อมต่อคือ URL ที่ใช้เชื่อมระหว่าง <strong>เซิร์ฟเวอร์ Bonustime</strong> กับ <strong>Webhook ของคุณ</strong> ซึ่งระบบจะสร้างให้อัตโนมัติหลังสั่งซื้อ</p>
                         <ul className="help-steps">
                           <li>สามารถดูได้ในแท็บ <strong>ประวัติการสั่งซื้อ</strong> แถวของเซิร์ฟเวอร์ที่ต้องการ</li>
@@ -918,13 +919,13 @@ export default function BonustimePage() {
                           <li>เมื่อขึ้นสถานะ Success แสดงว่า BOT สามารถรับข้อความจากลูกค้าได้แล้ว</li>
                         </ul>
                         <div className="bt-help-pdf mt-sm">
-                          <p className="muted small mb-xs">▶ ตัวอย่างหน้าจอจากคู่มือการใส่ลิงก์ Webhook</p>
+                          <p className="muted small mb-xs"><SvgIcon name="play" size={14} /> ตัวอย่างหน้าจอจากคู่มือการใส่ลิงก์ Webhook</p>
                           <div className="pdf-frame">
                             <iframe src="/bonustime/webhook.pdf#page=1&view=FitH&zoom=130&toolbar=0&navpanes=0" title="Webhook PDF preview" />
                           </div>
                           <a href="/bonustime/webhook.pdf" target="_blank" rel="noopener">เปิดคู่มือแบบเต็มหน้าจอ</a>
                         </div>
-                        <h4 className="mt-sm">🧩 ขั้นตอนตั้งค่า Rich Menu ให้เรียกคำสั่ง Bonustime</h4>
+                        <h4 className="mt-sm"><SvgIcon name="puzzle" size={18} /> ขั้นตอนตั้งค่า Rich Menu ให้เรียกคำสั่ง Bonustime</h4>
                         <ul className="help-steps">
                           <li>เข้าสู่ระบบ <strong>LINE Official Admin</strong> ของบัญชีที่ใช้กับ BOT</li>
                           <li>ไปที่เมนู <strong>ริชเมนู</strong> แล้วสร้างริชเมนูใหม่</li>
@@ -935,7 +936,7 @@ export default function BonustimePage() {
                           <li>หากซื้อ Packgage2 ใส่ทั้ง <strong>โบนัสไทม์</strong> และ <strong>แนวทางหวย</strong></li>
                         </ul>
                         <div className="bt-help-pdf mt-sm">
-                          <p className="muted small mb-xs">▶ ตัวอย่างหน้าจอจากคู่มือการตั้งค่า Rich Menu</p>
+                          <p className="muted small mb-xs"><SvgIcon name="play" size={14} /> ตัวอย่างหน้าจอจากคู่มือการตั้งค่า Rich Menu</p>
                           <div className="pdf-frame">
                             <iframe src="/bonustime/rich.pdf#page=1&view=FitH&zoom=130&toolbar=0&navpanes=0" title="Rich Menu PDF preview" />
                           </div>
@@ -943,7 +944,7 @@ export default function BonustimePage() {
                         </div>
                       </HelpAccordionItem>
 
-                      <HelpAccordionItem title="🔄 วิธีต่ออายุ / อัปเกรดแพ็กเกจ">
+                      <HelpAccordionItem title={<><SvgIcon name="rotate" size={18} /> วิธีต่ออายุ / อัปเกรดแพ็กเกจ</>}>
                         <ul className="help-steps">
                           <li>ไปที่แท็บ <strong>ประวัติการสั่งซื้อ</strong> และเลือกเซิร์ฟเวอร์ที่ต้องการต่ออายุ</li>
                           <li>กดปุ่ม <strong>ต่ออายุการใช้งาน</strong> ระบบจะแสดงตัวเลือกแพ็กเกจตามเวลาที่ต้องการ</li>
@@ -953,7 +954,7 @@ export default function BonustimePage() {
                         <p className="muted small">หลังต่ออายุสำเร็จ หาก BOT ไม่ตอบ ให้ลองปิด–เปิด Webhook ใน LINE อีกครั้ง หรือส่งข้อความใหม่เพื่อเริ่มใช้งาน</p>
                       </HelpAccordionItem>
 
-                      <HelpAccordionItem title="🤝 วิธีการแนะนำเพื่อน">
+                      <HelpAccordionItem title={<><SvgIcon name="users" size={18} /> วิธีการแนะนำเพื่อน</>}>
                         <p>ระบบแนะนำเพื่อนของ <strong>Bonustime</strong> จะให้คุณสร้างลิงก์ส่วนตัว เพื่อส่งให้เพื่อนหรือคนรู้จักสมัครใช้งาน และรับค่าตอบแทนเมื่อมีการซื้อแพ็กเกจหรือต่ออายุ</p>
                         <ul className="help-steps">
                           <li>ไปที่เมนู <strong>ข้อมูลผู้ใช้งาน</strong> จากนั้นเลือก <strong>ข้อมูลส่วนตัว</strong></li>
@@ -1053,7 +1054,7 @@ function PackageCard({ pkgNum, title, image, price, count, features, onBuy, busy
   const stockLabel = count === undefined
     ? 'กำลังโหลด…'
     : soldOut ? 'หมดแล้ว'
-    : nearEnd ? `⚠ เหลือ ${count} ชุด`
+    : nearEnd ? `เหลือ ${count} ชุด`
     : `เหลือ ${count} ชุด`;
 
   const stockCls = soldOut ? 'sold' : nearEnd ? 'near' : '';
@@ -1117,7 +1118,7 @@ function BtModal({ title, children, onClose }) {
       <div className="bt-modal-dialog">
         <div className="bt-modal-head">
           <div>
-            <div className="bt-modal-kicker"><span>✦</span> BONUSTIME</div>
+            <div className="bt-modal-kicker"><span><SvgIcon name="spark" size={18} /></span> BONUSTIME</div>
             <h2>{title}</h2>
           </div>
           <button className="bt-modal-close" onClick={onClose}>×</button>
@@ -1144,9 +1145,9 @@ function BtNoticeModal({ onClose, onHelp }) {
         <div className="bt-notice-aurora" aria-hidden="true" />
         <div className="bt-notice-grid" aria-hidden="true" />
         <div className="bt-notice-head">
-          <span className="bt-notice-icon" aria-hidden="true"><span className="bt-notice-icon-core">⚠️</span></span>
+          <span className="bt-notice-icon" aria-hidden="true"><span className="bt-notice-icon-core"><SvgIcon name="alert" size={18} /></span></span>
           <span className="bt-notice-titlebox">
-            <span className="bt-notice-kicker"><span>✦</span> BONUSTIME NOTICE</span>
+            <span className="bt-notice-kicker"><span><SvgIcon name="spark" size={18} /></span> BONUSTIME NOTICE</span>
             <span className="bt-notice-title">แจ้งเตือนก่อนใช้บริการ</span>
             <span className="bt-notice-copy">โปรดอ่านข้อมูลสำคัญก่อนเริ่มสั่งซื้อ Bonustime เพื่อให้ระบบเชื่อมต่อ LINE Bot ได้ถูกต้อง</span>
           </span>

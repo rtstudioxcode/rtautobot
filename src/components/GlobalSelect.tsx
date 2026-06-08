@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .rt-select-wrap{position:relative;width:100%;font-family:inherit;}
@@ -201,7 +202,7 @@ export default function GlobalSelect({
                 onClick={() => selectOption(opt)}
               >
                 <span className="rt-select-option-label">{opt.label}</span>
-                {String(opt.value) === String(value) ? <span className="rt-select-check">✓</span> : null}
+                {String(opt.value) === String(value) ? <span className="rt-select-check"><SvgIcon name="check" size={14} /></span> : null}
               </button>
             )) : <div className="rt-select-empty">ไม่มีตัวเลือก</div>}
           </div>

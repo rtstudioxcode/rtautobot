@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { ensureInit } from '../../lib/setup';
 import { User } from '../../models/User';
 import Link from 'next/link';
+import SvgIcon from '@/components/SvgIcon';
 
 export const metadata = { title: 'แดชบอร์ด' };
 export const dynamic = 'force-dynamic';
@@ -187,12 +188,12 @@ export default async function DashboardPage() {
 
         <section className="dashx-hero card-lux reveal-up">
           <div className="dashx-hero__copy">
-            <div className="dashx-kicker"><span>✦</span> Account Center</div>
+            <div className="dashx-kicker"><span><SvgIcon name="spark" size={18} /></span> Account Center</div>
             <h1>Dashboard</h1>
             <p>ศูนย์ควบคุมบัญชีของคุณ ดูระดับ ยอดใช้งาน และภาพรวมคำสั่งซื้อ</p>
             <div className="dashx-actions">
-              <Link className="dashx-btn dashx-btn-primary" href="/bonustime"><span>🚀</span> สั่งซื้อบริการ</Link>
-              <Link className="dashx-btn dashx-btn-soft" href="/account"><span>👤</span> จัดการบัญชี</Link>
+              <Link className="dashx-btn dashx-btn-primary" href="/bonustime"><span><SvgIcon name="rocket" size={18} /></span> สั่งซื้อบริการ</Link>
+              <Link className="dashx-btn dashx-btn-soft" href="/account"><span><SvgIcon name="user" size={18} /></span> จัดการบัญชี</Link>
             </div>
           </div>
 
@@ -209,7 +210,7 @@ export default async function DashboardPage() {
 
         <section className="dashx-grid dashx-grid-stats" aria-label="สรุปบัญชี">
           <article className="dashx-stat card-lux reveal-up" style={{ '--delay': '.04s' }}>
-            <div className="dashx-stat__icon warn">🏆</div>
+            <div className="dashx-stat__icon warn"><SvgIcon name="trophy" size={18} /></div>
             <div className="dashx-stat__body">
               <span className="dashx-label">ระดับผู้ใช้</span>
               <strong className="dashx-value">{LEVEL}</strong>
@@ -218,7 +219,7 @@ export default async function DashboardPage() {
           </article>
 
           <article className="dashx-stat card-lux reveal-up" style={{ '--delay': '.10s' }}>
-            <div className="dashx-stat__icon success">💎</div>
+            <div className="dashx-stat__icon success"><SvgIcon name="gem" size={18} /></div>
             <div className="dashx-stat__body">
               <span className="dashx-label">ใช้งานไปแล้ว</span>
               <strong className="dashx-value">฿{TOTAL_SPENT.toFixed(2)}</strong>
@@ -227,7 +228,7 @@ export default async function DashboardPage() {
           </article>
 
           <article className="dashx-stat card-lux reveal-up" style={{ '--delay': '.16s' }}>
-            <div className="dashx-stat__icon danger">🛒</div>
+            <div className="dashx-stat__icon danger"><SvgIcon name="cart" size={18} /></div>
             <div className="dashx-stat__body">
               <span className="dashx-label">สั่งไปแล้ว</span>
               <strong className="dashx-value">{TOTAL_ORDERS.toLocaleString('th-TH')} ออเดอร์</strong>
@@ -273,10 +274,10 @@ export default async function DashboardPage() {
             </div>
 
             <div className="dashx-quick-actions">
-              <Link href="/bonustime"><span>⚡</span><strong>เริ่มสั่งซื้อ</strong><small>เลือกบริการและส่งงาน</small></Link>
-              <Link href="/bonustime"><span>📜</span><strong>ประวัติคำสั่งซื้อ</strong><small>ติดตามสถานะทั้งหมด</small></Link>
-              <Link href="/topup"><span>💰</span><strong>เติมเครดิต</strong><small>เพิ่มยอดคงเหลือ</small></Link>
-              <Link href="/account"><span>🛡️</span><strong>ข้อมูลบัญชี</strong><small>โปรไฟล์และระดับบัญชี</small></Link>
+              <Link href="/bonustime"><span><SvgIcon name="zap" size={18} /></span><strong>เริ่มสั่งซื้อ</strong><small>เลือกบริการและส่งงาน</small></Link>
+              <Link href="/bonustime"><span><SvgIcon name="file" size={18} /></span><strong>ประวัติคำสั่งซื้อ</strong><small>ติดตามสถานะทั้งหมด</small></Link>
+              <Link href="/topup"><span><SvgIcon name="money" size={18} /></span><strong>เติมเครดิต</strong><small>เพิ่มยอดคงเหลือ</small></Link>
+              <Link href="/account"><span><SvgIcon name="shield" size={18} /></span><strong>ข้อมูลบัญชี</strong><small>โปรไฟล์และระดับบัญชี</small></Link>
             </div>
           </aside>
         </section>

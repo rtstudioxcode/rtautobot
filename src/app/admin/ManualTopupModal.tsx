@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const METHODS = [
   { value: 'admin', label: 'Admin' },
@@ -25,6 +26,7 @@ const CSS = `
 .rt-mtu-input:focus{border-color:rgba(124,255,178,.64);box-shadow:0 0 0 4px rgba(124,255,178,.11)}
 .rt-mtu-input[readonly]{opacity:.72}
 .rt-mtu-note,.rt-mtu-status{border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.045);padding:13px 15px;color:#08b84f;font-weight:760}
+.rt-mtu-status{display:flex;align-items:center;gap:8px}
 .rt-mtu-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:4px}
 .rt-mtu-btn{border:0;border-radius:14px;padding:11px 13px;font-weight:1000;cursor:pointer;color:#16120b;background:linear-gradient(135deg,#21b95c,#05b84f);font-family:inherit;font-size:13px}
 .rt-mtu-btn.success{background:linear-gradient(135deg,#8dffc0,#23ba6a)}
@@ -37,6 +39,7 @@ export default function ManualTopupModal({ open, onClose, prefill }) {
   const [txId, setTxId] = useState('');
   const [amountLocked, setAmountLocked] = useState(false);
   const [status, setStatus] = useState('');
+  const [statusIcon, setStatusIcon] = useState('');
   const [users, setUsers] = useState([]);
   const usernameRef = useRef(null);
 
@@ -51,6 +54,7 @@ export default function ManualTopupModal({ open, onClose, prefill }) {
     const m = p.method ? (p.method === 'truewallet' ? 'tw' : p.method.toLowerCase()) : 'admin';
     setMethod(METHODS.some(o => o.value === m) ? m : 'admin');
     setStatus('');
+    setStatusIcon('');
     searchUsers(p.username || '');
     setTimeout(() => usernameRef.current?.focus(), 50);
   }, [open, prefill]);
@@ -69,8 +73,9 @@ export default function ManualTopupModal({ open, onClose, prefill }) {
   async function handleSubmit(e) {
     e.preventDefault();
     const amt = Number(amount || 0);
-    if (!username || !(amt > 0)) { setStatus('❌ กรุณากรอกชื่อผู้ใช้และจำนวนเงินให้ครบถ้วน'); return; }
-    setStatus('⏳ กำลังทำรายการ...');
+    if (!username || !(amt > 0)) { setStatusIcon(''); setStatus('กรุณากรอกชื่อผู้ใช้และจำนวนเงินให้ครบถ้วน'); return; }
+    setStatusIcon('hourglass');
+    setStatus('กำลังทำรายการ...');
     try {
       const r = await fetch('/api/admin/manual-topup', {
         method: 'POST',
@@ -79,10 +84,12 @@ export default function ManualTopupModal({ open, onClose, prefill }) {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j?.error || 'เติมเงินไม่สำเร็จ');
-      setStatus(`✅ เติมเงินสำเร็จให้ ${username} จำนวน ${amt.toLocaleString()} บาท`);
+      setStatusIcon('');
+      setStatus(`เติมเงินสำเร็จให้ ${username} จำนวน ${amt.toLocaleString()} บาท`);
       setTimeout(() => { onClose(); location.reload(); }, 900);
     } catch (err: any) {
-      setStatus('❌ ' + (err?.message || 'ทำรายการไม่สำเร็จ'));
+      setStatusIcon('');
+      setStatus('' + (err?.message || 'ทำรายการไม่สำเร็จ'));
     }
   }
 
@@ -150,7 +157,7 @@ export default function ManualTopupModal({ open, onClose, prefill }) {
               ระบบจะเพิ่มเครดิตเข้ากระเป๋าผู้ใช้ทันที และบันทึกประวัติเป็นรายการของ RTAUTOBOT
             </div>
 
-            {status && <div className="rt-mtu-status">{status}</div>}
+            {status && <div className="rt-mtu-status">{statusIcon ? <SvgIcon name={statusIcon} size={16} /> : null}{status}</div>}
 
             <div className="rt-mtu-actions">
               <button type="button" onClick={onClose} className="rt-mtu-btn">ยกเลิก</button>

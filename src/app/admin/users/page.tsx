@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 @keyframes auRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -199,10 +200,10 @@ export default function AdminUsersPage() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
-      setSaveNote('บันทึกสำเร็จ ✓');
+      setSaveNote('บันทึกสำเร็จ');
       setTimeout(() => { closeModal(); loadUsers(); }, 600);
     } catch (err: any) {
-      setSaveNote('❌ ' + (err?.message || 'บันทึกไม่สำเร็จ'));
+      setSaveNote('' + (err?.message || 'บันทึกไม่สำเร็จ'));
     }
   }
 
@@ -224,23 +225,23 @@ export default function AdminUsersPage() {
           <div className="au-hero-orb au-hero-orb-a" aria-hidden="true" />
           <div className="au-hero-orb au-hero-orb-b" aria-hidden="true" />
           <div className="au-hero-copy">
-            <div className="au-kicker"><span>✦</span> User Control Center</div>
+            <div className="au-kicker"><span><SvgIcon name="spark" size={18} /></span> User Control Center</div>
             <h1>Admin | ข้อมูลยูสเซอร์</h1>
             <p>จัดการข้อมูลสมาชิก ตรวจยอดเครดิต สถานะอีเมล ระดับผู้ใช้ และสิทธิ์การใช้งานได้ครบในหน้าจอเดียว</p>
           </div>
           <div className="au-hero-stats" aria-label="สรุปผู้ใช้">
             <article className="au-stat-card">
-              <span className="au-stat-icon">👥</span>
+              <span className="au-stat-icon"><SvgIcon name="users" size={18} /></span>
               <span className="au-stat-label">ผู้ใช้ทั้งหมด</span>
               <strong>{totalUsers.toLocaleString('th-TH')}</strong>
             </article>
             <article className="au-stat-card">
-              <span className="au-stat-icon">🛡️</span>
+              <span className="au-stat-icon"><SvgIcon name="shield" size={18} /></span>
               <span className="au-stat-label">Admin</span>
               <strong>{adminCount.toLocaleString('th-TH')}</strong>
             </article>
             <article className="au-stat-card">
-              <span className="au-stat-icon">✅</span>
+              <span className="au-stat-icon"><SvgIcon name="check" size={18} /></span>
               <span className="au-stat-label">ยืนยันอีเมล</span>
               <strong>{verifiedCount.toLocaleString('th-TH')}</strong>
             </article>
@@ -279,7 +280,7 @@ export default function AdminUsersPage() {
         ) : users.length === 0 ? (
           <section className="au-empty-state">
             <div className="au-empty-card">
-              <div className="au-empty-icon">{search ? '🔎' : '🧑‍💼'}</div>
+              <div className="au-empty-icon"><SvgIcon name={search ? "search" : "briefcase"} size={30} /></div>
               <h2>{search ? 'ไม่พบผู้ใช้ที่ค้นหา' : 'ยังไม่มีผู้ใช้ในระบบ'}</h2>
               <p>{search ? 'ลองเปลี่ยนคำค้นหา หรือกดล้างช่องค้นหาเพื่อดูรายการทั้งหมด' : 'เมื่อมีผู้ใช้ใหม่ ระบบจะแสดงรายการและข้อมูลสำคัญที่นี่ทันที'}</p>
             </div>
@@ -360,7 +361,7 @@ export default function AdminUsersPage() {
                 <section className="au-edit-panel" aria-label="แก้ไขข้อมูลหลัก">
                   <div className="au-section-head">
                     <h3>ข้อมูลหลัก</h3>
-                    <span className={`au-save-note${saveNote.includes('สำเร็จ') ? ' ok' : saveNote.includes('❌') ? ' err' : ''}`}>{saveNote}</span>
+                    <span className={`au-save-note${saveNote.includes('สำเร็จ') ? ' ok' : false ? ' err' : ''}`}>{saveNote}</span>
                   </div>
                   <div className="au-form-grid">
                     <label className="au-field full">

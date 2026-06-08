@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { notifyMsg } from '../../../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .rpw-page {
@@ -106,7 +107,7 @@ export default function ResetPasswordPage() {
       <div className="rpw-page">
         <div className="rpw-card">
           <div className="rpw-head">
-            <span className="rpw-badge">🔑</span>
+            <span className="rpw-badge"><SvgIcon name="key" size={18} /></span>
             <div>
               <span className="rpw-kicker">PASSWORD RESET</span>
               <span className="rpw-heading">ตั้งรหัสผ่านใหม่</span>

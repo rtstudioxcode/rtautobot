@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ManualTopupModal from './ManualTopupModal';
 import { notifyFromPayload, confirmAction } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .rt-admin-v2{--line-green:#08b84f;--line-green2:#05b84f;--ink:#08090c;--panel:rgba(255,255,255,.055);--line:rgba(255,255,255,.09);--soft:#08b84f;max-width:2000px;margin:0 auto;padding:28px 18px 70px;color:var(--text,#21b95c)}
@@ -164,12 +165,12 @@ export default function AdminDashboardClient({ stats, pendingList }) {
         {/* Hero */}
         <section className="admin-hero-v2" aria-label="ภาพรวมผู้ดูแลระบบ">
           <div className="hero-copy">
-            <span className="adm-eyebrow"><i>✦</i> RTAUTOBOT CONTROL</span>
+            <span className="adm-eyebrow"><SvgIcon name="spark" size={15} /> RTAUTOBOT CONTROL</span>
             <h1>ศูนย์จัดการ Bonustime</h1>
             <p>ดูแลแพ็กเกจ บัญชีรับเงิน รายการเติมเครดิต และงานตรวจสอบจากหน้าเดียว พร้อมเข้าสู่แผงควบคุมบริการได้ทันที</p>
             <div className="hero-actions">
-              <a className="adm-btn-green" href="/admin/bonustime"><span>⚡</span> เปิด Bonustime Panel</a>
-              <button className="adm-btn-glass" type="button" onClick={() => openManual(null)}><span>＋</span> เติมเงินด้วยตนเอง</button>
+              <a className="adm-btn-green" href="/admin/bonustime"><span><SvgIcon name="zap" size={18} /></span> เปิด Bonustime Panel</a>
+              <button className="adm-btn-glass" type="button" onClick={() => openManual(null)}><span><SvgIcon name="plus" size={18} /></span> เติมเงินด้วยตนเอง</button>
             </div>
           </div>
           <div className="hero-command-card" aria-label="สถานะระบบ">
@@ -213,7 +214,7 @@ export default function AdminDashboardClient({ stats, pendingList }) {
         {/* Quick panel grid */}
         <section className="quick-panel-grid" aria-label="เมนูลัดหลังบ้าน">
           <a className="adm-quick-panel primary" href="/admin/bonustime">
-            <span className="qp-icon">⚡</span>
+            <span className="qp-icon"><SvgIcon name="zap" size={18} /></span>
             <div>
               <small>Service Control</small>
               <h2>Bonustime Panel</h2>
@@ -222,7 +223,7 @@ export default function AdminDashboardClient({ stats, pendingList }) {
             <i>→</i>
           </a>
           <a className="adm-quick-panel" href="/admin/settings">
-            <span className="qp-icon">🏦</span>
+            <span className="qp-icon"><SvgIcon name="bank" size={18} /></span>
             <div>
               <small>Payment Settings</small>
               <h2>ตั้งค่าบัญชีรับเงิน</h2>
@@ -231,7 +232,7 @@ export default function AdminDashboardClient({ stats, pendingList }) {
             <i>→</i>
           </a>
           <a className="adm-quick-panel" href="/admin/topup">
-            <span className="qp-icon">💳</span>
+            <span className="qp-icon"><SvgIcon name="card" size={18} /></span>
             <div>
               <small>Topup Report</small>
               <h2>ประวัติการเติมเงิน</h2>
@@ -290,7 +291,7 @@ export default function AdminDashboardClient({ stats, pendingList }) {
             </div>
           ) : (
             <div className="empty-state-v2">
-              <div className="empty-icon">✓</div>
+              <div className="empty-icon"><SvgIcon name="check" size={32} /></div>
               <strong>ไม่มีรายการที่ต้องตรวจสอบ</strong>
               <span>เมื่อมีรายการเติมเครดิตรอดำเนินการ ระบบจะแสดงที่ส่วนนี้ทันที</span>
             </div>

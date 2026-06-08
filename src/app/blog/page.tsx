@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import SvgIcon from '@/components/SvgIcon';
 
 const POSTS = [
   {
@@ -651,29 +652,29 @@ export default function BlogPage() {
           {/* Hero */}
           <section className="blog-hero">
             <div className="hero-copy">
-              <div className="blog-kicker">✨ RTAUTOBOT Growth Journal</div>
+              <div className="blog-kicker"><SvgIcon name="spark" size={18} /> RTAUTOBOT Growth Journal</div>
               <h1 className="blog-title">บทความ <span className="shine">การตลาดออนไลน์</span></h1>
               <p className="blog-subtitle">รวมเทคนิคเพิ่มยอดมองเห็น ปั้มไลค์ ปั้มผู้ติดตาม วางแผนคอนเทนต์ และเลือกบริการให้เหมาะกับแพลตฟอร์ม อ่านจบแล้วเอาไปใช้ต่อได้ทันที ไม่ต้องเปิดตำราเหมือนสอบปลายภาค</p>
               <div className="blog-actions">
-                <Link className="blog-btn primary" href="/orders/new">🚀 เริ่มสั่งบริการ</Link>
-                <Link className="blog-btn ghost" href="/services">📂 ดูบริการทั้งหมด</Link>
+                <Link className="blog-btn primary" href="/orders/new"><SvgIcon name="rocket" size={18} /> เริ่มสั่งบริการ</Link>
+                <Link className="blog-btn ghost" href="/services"><SvgIcon name="folder" size={18} /> ดูบริการทั้งหมด</Link>
               </div>
             </div>
             <div className="hero-metrics" aria-label="Blog highlights">
               <div className="metric-card">
-                <span className="ico">📈</span>
+                <span className="ico"><SvgIcon name="chart" size={18} /></span>
                 <div><strong>Growth</strong><small>เทคนิคเพิ่มการมองเห็น</small></div>
               </div>
               <div className="metric-card">
-                <span className="ico">⚡</span>
+                <span className="ico"><SvgIcon name="zap" size={18} /></span>
                 <div><strong>Fast</strong><small>แนวทางใช้งานไว</small></div>
               </div>
               <div className="metric-card">
-                <span className="ico">💎</span>
+                <span className="ico"><SvgIcon name="gem" size={18} /></span>
                 <div><strong>Pro</strong><small>เลือกบริการแบบมืออาชีพ</small></div>
               </div>
               <div className="metric-card">
-                <span className="ico">🧠</span>
+                <span className="ico"><SvgIcon name="brain" size={18} /></span>
                 <div><strong>Tips</strong><small>อัปเดตไอเดียใหม่</small></div>
               </div>
             </div>
@@ -682,7 +683,7 @@ export default function BlogPage() {
           {/* Toolbar */}
           <section className="blog-toolbar" aria-label="เครื่องมือค้นหาบทความ">
             <label className="search-box" htmlFor="blogSearch">
-              <span className="search-ico">🔍</span>
+              <span className="search-ico"><SvgIcon name="search" size={18} /></span>
               <input
                 id="blogSearch"
                 type="search"
@@ -693,7 +694,7 @@ export default function BlogPage() {
               />
             </label>
             <div className="toolbar-pill">
-              📰 ทั้งหมด <strong>{filtered.length.toLocaleString('th-TH')}</strong> บทความ
+              <SvgIcon name="newspaper" size={18} /> ทั้งหมด <strong>{filtered.length.toLocaleString('th-TH')}</strong> บทความ
             </div>
           </section>
 
@@ -704,11 +705,11 @@ export default function BlogPage() {
                 <Link className="featured-img" href={`/blog/${featuredPost.slug}`}>
                   {featuredPost.thumbnail
                     ? <img src={featuredPost.thumbnail} alt={featuredPost.title} />
-                    : <div className="post-thumb-placeholder">🚀</div>
+                    : <div className="post-thumb-placeholder"><SvgIcon name="rocket" size={18} /></div>
                   }
                 </Link>
                 <div className="featured-content">
-                  <span className="post-badge">⭐ Featured Article</span>
+                  <span className="post-badge"><SvgIcon name="star" size={14} /> Featured Article</span>
                   <h2 className="featured-title">
                     <Link href={`/blog/${featuredPost.slug}`}>{featuredPost.title}</Link>
                   </h2>
@@ -716,8 +717,8 @@ export default function BlogPage() {
                     <p className="featured-excerpt">{featuredPost.excerpt}</p>
                   )}
                   <div className="featured-meta">
-                    <span>📅 {featuredPost.dateText || 'อัปเดตล่าสุด'}</span>
-                    <span>👤 {featuredPost.author || 'RTAUTOBOT'}</span>
+                    <span><SvgIcon name="calendar" size={18} /> {featuredPost.dateText || 'อัปเดตล่าสุด'}</span>
+                    <span><SvgIcon name="user" size={18} /> {featuredPost.author || 'RTAUTOBOT'}</span>
                   </div>
                   <Link className="blog-btn primary" href={`/blog/${featuredPost.slug}`}>
                     อ่านบทความแนะนำ →
@@ -728,19 +729,19 @@ export default function BlogPage() {
                 <div className="insight-title">ทำไมต้องอ่าน Blog นี้?</div>
                 <div className="insight-list">
                   <div className="insight-item">
-                    <span className="mini">🎯</span>
+                    <span className="mini"><SvgIcon name="target" size={18} /></span>
                     <div><strong>เลือกบริการตรงเป้าหมาย</strong><span>ลดการลองผิดลองถูกก่อนสั่งงานจริง</span></div>
                   </div>
                   <div className="insight-item">
-                    <span className="mini">📊</span>
+                    <span className="mini"><SvgIcon name="chart" size={18} /></span>
                     <div><strong>เข้าใจแพลตฟอร์มมากขึ้น</strong><span>เหมาะกับสายขายของ ครีเอเตอร์ และแบรนด์</span></div>
                   </div>
                   <div className="insight-item">
-                    <span className="mini">🔥</span>
+                    <span className="mini"><SvgIcon name="fire" size={18} /></span>
                     <div><strong>ต่อยอดยอดขายและเอนเกจเมนต์</strong><span>ไอเดียพร้อมใช้กับ TikTok, IG, YouTube, Facebook</span></div>
                   </div>
                   <div className="insight-item">
-                    <span className="mini">🛡️</span>
+                    <span className="mini"><SvgIcon name="shield" size={18} /></span>
                     <div><strong>ใช้งานอย่างปลอดภัยกว่าเดิม</strong><span>รู้เงื่อนไขก่อนเลือกบริการแต่ละประเภท</span></div>
                   </div>
                 </div>
@@ -764,13 +765,13 @@ export default function BlogPage() {
                 <Link className="post-thumb-link" href={`/blog/${p.slug}`}>
                   {p.thumbnail
                     ? <img className="post-thumb" src={p.thumbnail} alt={p.title} />
-                    : <div className="post-thumb-placeholder">📝</div>
+                    : <div className="post-thumb-placeholder"><SvgIcon name="edit" size={18} /></div>
                   }
                 </Link>
                 <div className="post-body">
                   <div className="post-meta">
-                    <span>📅 {p.dateText || 'อัปเดตล่าสุด'}</span>
-                    <span>👤 {p.author || 'RTAUTOBOT'}</span>
+                    <span><SvgIcon name="calendar" size={18} /> {p.dateText || 'อัปเดตล่าสุด'}</span>
+                    <span><SvgIcon name="user" size={18} /> {p.author || 'RTAUTOBOT'}</span>
                   </div>
                   <h3 className="post-title">
                     <Link href={`/blog/${p.slug}`}>{p.title}</Link>
@@ -783,7 +784,7 @@ export default function BlogPage() {
               </article>
             )) : (
               <div className="empty-state">
-                <div className="ico">📝</div>
+                <div className="ico"><SvgIcon name="edit" size={18} /></div>
                 <h3>ไม่พบบทความ</h3>
                 <p>ลองค้นหาด้วยคำอื่น หรือดูบทความทั้งหมดได้เลย</p>
               </div>
@@ -833,9 +834,9 @@ export default function BlogPage() {
             <div>
               <h6>ติดต่อเรา</h6>
               <ul>
-                <li><a href="mailto:rtssm.th@gmail.com">📧 Email: rtssm.th@gmail.com</a></li>
-                <li><a href="https://line.me/R/ti/p/@507vkplq">💬 Line: @rtssm-th</a></li>
-                <li><a href="https://line.me/R/ti/p/@507vkplq">🐛 แจ้งปัญหาคำสั่งซื้อ</a></li>
+                <li><a href="mailto:rtssm.th@gmail.com"><SvgIcon name="mail" size={18} /> Email: rtssm.th@gmail.com</a></li>
+                <li><a href="https://line.me/R/ti/p/@507vkplq"><SvgIcon name="message" size={18} /> Line: @rtssm-th</a></li>
+                <li><a href="https://line.me/R/ti/p/@507vkplq"><SvgIcon name="bug" size={18} /> แจ้งปัญหาคำสั่งซื้อ</a></li>
               </ul>
             </div>
           </div>

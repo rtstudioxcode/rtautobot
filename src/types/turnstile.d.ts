@@ -5,9 +5,6 @@ declare global {
       reset: (widgetId?: any) => void;
       remove: (widgetId?: any) => void;
     };
-    rtTurnstileSuccess?: (token: string) => void;
-    rtTurnstileExpired?: () => void;
-    rtTurnstileError?: () => void;
   }
 }
 

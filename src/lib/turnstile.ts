@@ -57,12 +57,15 @@ export async function verifyTurnstileToken(token: unknown, remoteIp?: string, ho
   const siteKey = String(config?.turnstile?.siteKey || '').trim();
   const secretKey = String(config?.turnstile?.secretKey || '').trim();
 
-  // If Turnstile is not configured, keep the old login/register behavior.
-  if (!siteKey && !secretKey) return { ok: true, skipped: true };
-
-  if (!secretKey) {
-    console.warn('[turnstile] siteKey is configured but secretKey is missing; server verification skipped.');
-    return { ok: true, skipped: true, missingSecret: true };
+  // If Turnstile is not fully configured, keep the old login/register behavior.
+  if (!siteKey || !secretKey) {
+    if (siteKey && !secretKey) {
+      console.warn('[turnstile] siteKey is configured but secretKey is missing; server verification skipped.');
+    }
+    if (!siteKey && secretKey) {
+      console.warn('[turnstile] secretKey is configured but siteKey is missing; server verification skipped.');
+    }
+    return { ok: true, skipped: true, incompleteConfig: true };
   }
 
   const response = String(token || '').trim();

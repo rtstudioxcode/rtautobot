@@ -118,7 +118,7 @@ export default function GlobalNativeSelect() {
         label.textContent = optionText(opt) || ' ';
         const check = document.createElement('span');
         check.className = 'rt-select__check';
-        check.textContent = '✓';
+        check.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>';
         item.append(label, check);
         if (opt.disabled) {
           item.classList.add('is-disabled');

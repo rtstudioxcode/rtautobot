@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
   :root {
@@ -349,7 +350,7 @@ export default function HomePage() {
       <nav className="rt-landing-nav" aria-label="RTAUTOBOT Landing Navigation">
         <div className="rt-nav-inner">
           <a className="rt-brand" href="/" aria-label="RTAUTOBOT Home">
-            <span className="rt-brand-mark">⚡</span>
+            <span className="rt-brand-mark"><SvgIcon name="zap" size={18} /></span>
             <span>RTAUTOBOT <small>Bonustime Automation</small></span>
           </a>
           <div className="rt-nav-links" aria-label="Landing links">
@@ -371,16 +372,16 @@ export default function HomePage() {
               <div className="rt-panel rt-hero-main reveal">
                 <div className="rt-hero-shell">
                   <div className="rt-hero-copy">
-                    <div className="rt-kicker">✦ RTAUTOBOT · BONUSTIME AUTOMATION</div>
+                    <div className="rt-kicker"><SvgIcon name="spark" size={18} /> RTAUTOBOT · BONUSTIME AUTOMATION</div>
                     <h1>ระบบเช่า <span>Bonustime</span><br />ครบ จบ พร้อมใช้งาน</h1>
                     <p className="rt-lead">RTAUTOBOT คือระบบบริการ Bonustime สำหรับผู้ประกอบการที่ต้องการเปิดใช้งานแพ็กเกจได้รวดเร็ว ดูแลง่าย ชำระด้วยเครดิตในบัญชีเดียว และติดตามสถานะบริการได้ในเว็บเดียวแบบมืออาชีพ</p>
                     <ul className="rt-bullets">
-                      <li><span className="chk">✔</span><span>สั่งซื้อ ต่ออายุ และอัปเกรดแพ็กเกจ Bonustime ได้ในขั้นตอนที่ชัดเจน</span></li>
-                      <li><span className="chk">✔</span><span>ชำระด้วยเครดิตในบัญชีเดียว เติมเงินง่าย ใช้งานต่อเนื่องได้ทันที</span></li>
-                      <li><span className="chk">✔</span><span>ติดตามสถานะบริการและอายุใช้งานได้สะดวก เหมาะกับงานที่ต้องการความต่อเนื่อง</span></li>
+                      <li><span className="chk"><SvgIcon name="check" size={18} /></span><span>สั่งซื้อ ต่ออายุ และอัปเกรดแพ็กเกจ Bonustime ได้ในขั้นตอนที่ชัดเจน</span></li>
+                      <li><span className="chk"><SvgIcon name="check" size={18} /></span><span>ชำระด้วยเครดิตในบัญชีเดียว เติมเงินง่าย ใช้งานต่อเนื่องได้ทันที</span></li>
+                      <li><span className="chk"><SvgIcon name="check" size={18} /></span><span>ติดตามสถานะบริการและอายุใช้งานได้สะดวก เหมาะกับงานที่ต้องการความต่อเนื่อง</span></li>
                     </ul>
                     <div className="rt-hero-actions">
-                      <a className="rt-btn rt-btn-primary" href="/bonustime">🛒 สั่งซื้อ Bonustime</a>
+                      <a className="rt-btn rt-btn-primary" href="/bonustime"><SvgIcon name="cart" size={18} /> สั่งซื้อ Bonustime</a>
                       <a className="rt-btn rt-btn-ghost" href="/login">→ เข้าสู่ระบบ</a>
                     </div>
                     <div className="rt-trust">
@@ -394,11 +395,11 @@ export default function HomePage() {
                     <span className="rt-art-orbit one"></span>
                     <span className="rt-art-orbit two"></span>
                     <span className="rt-art-orbit three"></span>
-                    <span className="rt-float-icon hero-a">🎮</span>
-                    <span className="rt-float-icon hero-b small">💎</span>
-                    <span className="rt-float-icon hero-c small">💳</span>
-                    <span className="rt-float-icon hero-d">🛡</span>
-                    <span className="rt-float-icon hero-e">⏱</span>
+                    <span className="rt-float-icon hero-a"><SvgIcon name="gamepad" size={18} /></span>
+                    <span className="rt-float-icon hero-b small"><SvgIcon name="gem" size={18} /></span>
+                    <span className="rt-float-icon hero-c small"><SvgIcon name="card" size={18} /></span>
+                    <span className="rt-float-icon hero-d"><SvgIcon name="shield" size={18} /></span>
+                    <span className="rt-float-icon hero-e"><SvgIcon name="clock" size={18} /></span>
                     <span className="rt-float-icon hero-f">BT</span>
                     <div className="rt-art-phone">
                       <div className="rt-phone-screen">
@@ -415,7 +416,7 @@ export default function HomePage() {
                           <span><b>Package 2</b><em>Upgrade</em></span>
                           <span><b>Shared Wallet</b><em>Active</em></span>
                         </div>
-                        <div className="rt-verified-pill">✔ Bonustime Service</div>
+                        <div className="rt-verified-pill"><SvgIcon name="check" size={18} /> Bonustime Service</div>
                       </div>
                     </div>
                   </div>
@@ -433,15 +434,15 @@ export default function HomePage() {
                 <h2>บริการ Bonustime สำหรับธุรกิจของคุณ</h2>
                 <p>เลือกแพ็กเกจให้เหมาะกับรูปแบบการใช้งาน ทั้งสล็อต บาคาร่า หวย การต่ออายุ และการดูแลบริการต่อเนื่องในที่เดียว</p>
               </div>
-              <a className="rt-link" href="/bonustime">ไปหน้าสั่งซื้อ ↗</a>
+              <a className="rt-link" href="/bonustime">ไปหน้าสั่งซื้อ <SvgIcon name="externalLink" size={16} /></a>
             </div>
             <div className="rt-platform-grid">
-              <div className="rt-platform"><div className="ico">🎲</div><strong>สล็อต</strong><span>แพ็กเกจ Bonustime สำหรับสายสล็อต</span></div>
-              <div className="rt-platform"><div className="ico">♣</div><strong>บาคาร่า</strong><span>พร้อมใช้งานในแพ็กเกจหลัก</span></div>
-              <div className="rt-platform"><div className="ico">🎟</div><strong>หวย</strong><span>อัปเกรดตามแพ็กเกจที่รองรับ</span></div>
-              <div className="rt-platform"><div className="ico">🔄</div><strong>ต่ออายุ</strong><span>จัดการอายุใช้งานต่อเนื่อง</span></div>
-              <div className="rt-platform"><div className="ico">💳</div><strong>เครดิตพร้อมใช้</strong><span>ชำระด้วยเครดิตในบัญชีเดียว</span></div>
-              <div className="rt-platform"><div className="ico">⚡</div><strong>จัดการง่าย</strong><span>ระบบเรียบง่าย ใช้งานคล่อง</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="dice" size={18} /></div><strong>สล็อต</strong><span>แพ็กเกจ Bonustime สำหรับสายสล็อต</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="club" size={18} /></div><strong>บาคาร่า</strong><span>พร้อมใช้งานในแพ็กเกจหลัก</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="ticket" size={18} /></div><strong>หวย</strong><span>อัปเกรดตามแพ็กเกจที่รองรับ</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="rotate" size={18} /></div><strong>ต่ออายุ</strong><span>จัดการอายุใช้งานต่อเนื่อง</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="card" size={18} /></div><strong>เครดิตพร้อมใช้</strong><span>ชำระด้วยเครดิตในบัญชีเดียว</span></div>
+              <div className="rt-platform"><div className="ico"><SvgIcon name="zap" size={18} /></div><strong>จัดการง่าย</strong><span>ระบบเรียบง่าย ใช้งานคล่อง</span></div>
             </div>
           </div>
         </section>
@@ -461,16 +462,16 @@ export default function HomePage() {
                   <div className="rt-service-copy">
                     <div>
                       <div className="rt-service-top">
-                        <div className="rt-service-badge">⚡</div>
+                        <div className="rt-service-badge"><SvgIcon name="zap" size={18} /></div>
                         <span className="rt-service-status"><span className="dot"></span> Bonustime Service</span>
                       </div>
                       <h3>เช่าแพ็กเกจ <span>Bonustime</span><br />จบในเว็บเดียว</h3>
                       <p className="rt-service-lead">RTAUTOBOT รวมขั้นตอนสำคัญของ Bonustime ไว้ในเว็บเดียว ตั้งแต่สั่งซื้อแพ็กเกจ ต่ออายุบริการ อัปเกรดฟีเจอร์ ไปจนถึงการชำระด้วยเครดิตในบัญชีอย่างต่อเนื่อง</p>
                       <div className="rt-tag-row">
-                        <span className="rt-tag">✔ Bonustime</span>
-                        <span className="rt-tag">🗄 บัญชีเดียว</span>
-                        <span className="rt-tag">💳 เครดิตพร้อมใช้</span>
-                        <span className="rt-tag">💻 จัดการอัตโนมัติ</span>
+                        <span className="rt-tag"><SvgIcon name="check" size={18} /> Bonustime</span>
+                        <span className="rt-tag"><SvgIcon name="database" size={18} /> บัญชีเดียว</span>
+                        <span className="rt-tag"><SvgIcon name="card" size={18} /> เครดิตพร้อมใช้</span>
+                        <span className="rt-tag"><SvgIcon name="laptop" size={18} /> จัดการอัตโนมัติ</span>
                       </div>
                       <div className="rt-service-points">
                         <div className="rt-service-point"><span className="n">01</span><div><b>สั่งซื้อแพ็กเกจ Bonustime</b><small>เลือกแพ็กเกจที่ต้องการ กดยืนยัน และเริ่มจัดการบริการได้จากหน้า Bonustime โดยตรง</small></div></div>
@@ -485,8 +486,8 @@ export default function HomePage() {
                         <div><strong>Wallet</strong><span>เครดิตบัญชีเดียว</span></div>
                       </div>
                       <div className="rt-service-actions">
-                        <a className="rt-btn rt-btn-primary" href="/bonustime">🛒 สั่งซื้อ Bonustime</a>
-                        <a className="rt-btn rt-btn-ghost" href="/dashboard">⚡ ไปแดชบอร์ด</a>
+                        <a className="rt-btn rt-btn-primary" href="/bonustime"><SvgIcon name="cart" size={18} /> สั่งซื้อ Bonustime</a>
+                        <a className="rt-btn rt-btn-ghost" href="/dashboard"><SvgIcon name="zap" size={18} /> ไปแดชบอร์ด</a>
                       </div>
                       <div className="rt-service-note">ระบบถูกออกแบบให้ลูกค้าเริ่มจากหน้า Bonustime โดยตรง เลือกแพ็กเกจได้ง่าย และชำระเครดิตได้อย่างมั่นใจ</div>
                     </div>
@@ -500,26 +501,26 @@ export default function HomePage() {
                           <div className="rt-app-screen-title">RTAUTOBOT</div>
                           <div className="rt-app-screen-sub">Bonustime Package</div>
                           <div className="rt-app-grid">
-                            <span className="rt-app-dot">🎲</span>
-                            <span className="rt-app-dot">♣</span>
-                            <span className="rt-app-dot">🎟</span>
-                            <span className="rt-app-dot">🔄</span>
-                            <span className="rt-app-dot">💳</span>
-                            <span className="rt-app-dot">🛡</span>
+                            <span className="rt-app-dot"><SvgIcon name="dice" size={18} /></span>
+                            <span className="rt-app-dot"><SvgIcon name="club" size={18} /></span>
+                            <span className="rt-app-dot"><SvgIcon name="ticket" size={18} /></span>
+                            <span className="rt-app-dot"><SvgIcon name="rotate" size={18} /></span>
+                            <span className="rt-app-dot"><SvgIcon name="card" size={18} /></span>
+                            <span className="rt-app-dot"><SvgIcon name="shield" size={18} /></span>
                           </div>
                           <div className="rt-app-screen-card"><b>Package Active</b><span>จัดการสถานะและอายุใช้งานแบบต่อเนื่อง</span></div>
                         </div>
                       </div>
-                      <span className="rt-floating-app fb">🎮</span>
-                      <span className="rt-floating-app tk">⚡</span>
-                      <span className="rt-floating-app ig">💎</span>
-                      <span className="rt-floating-app yt">⏱</span>
+                      <span className="rt-floating-app fb"><SvgIcon name="gamepad" size={18} /></span>
+                      <span className="rt-floating-app tk"><SvgIcon name="zap" size={18} /></span>
+                      <span className="rt-floating-app ig"><SvgIcon name="gem" size={18} /></span>
+                      <span className="rt-floating-app yt"><SvgIcon name="clock" size={18} /></span>
                       <span className="rt-floating-app gm"><b>BT</b></span>
-                      <span className="rt-floating-app tg">💳</span>
-                      <span className="rt-floating-app sp">✔</span>
+                      <span className="rt-floating-app tg"><SvgIcon name="card" size={18} /></span>
+                      <span className="rt-floating-app sp"><SvgIcon name="check" size={18} /></span>
                       <div className="rt-app-benefit-card">
                         <div><strong>Bonustime Pro</strong><span>บริการชัดเจน ใช้งานง่าย พร้อมดูแลต่อเนื่อง</span></div>
-                        <span className="star-ico">✦</span>
+                        <span className="star-ico"><SvgIcon name="spark" size={18} /></span>
                       </div>
                     </div>
                   </div>
@@ -540,17 +541,17 @@ export default function HomePage() {
             </div>
             <div className="rt-feature-grid">
               <article className="rt-feature reveal">
-                <div className="ico">✂</div>
+                <div className="ico"><SvgIcon name="scissors" size={18} /></div>
                 <h3>Bonustime โดยเฉพาะ</h3>
                 <p>ทุกปุ่มและทุกเส้นทางสำคัญพาลูกค้าไปยังบริการ Bonustime อย่างชัดเจน ลดความสับสนระหว่างการใช้งาน</p>
               </article>
               <article className="rt-feature reveal">
-                <div className="ico">💾</div>
+                <div className="ico"><SvgIcon name="database" size={18} /></div>
                 <h3>เครดิตบัญชีเดียว</h3>
                 <p>ลูกค้าเติมเครดิตครั้งเดียว แล้วนำไปใช้สั่งซื้อ ต่ออายุ และจัดการแพ็กเกจ Bonustime ได้ทันที</p>
               </article>
               <article className="rt-feature reveal">
-                <div className="ico">⚙</div>
+                <div className="ico"><SvgIcon name="settings" size={18} /></div>
                 <h3>พร้อมดูแลหลังบ้าน</h3>
                 <p>ระบบหลังบ้านรองรับการตรวจสอบคำสั่งซื้อและดูแลบริการ เพื่อให้ทีมทำงานได้คล่องขึ้น</p>
               </article>

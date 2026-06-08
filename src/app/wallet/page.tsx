@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import SvgIcon from '@/components/SvgIcon';
 
 const CSS = `
 .wallet-page {
@@ -82,7 +83,7 @@ export default function WalletPage() {
       <div className="wallet-page">
         <div className="wallet-wrap">
           <div className="wallet-hero">
-            <div className="wallet-kicker"><span>✦</span> RTAUTOBOT WALLET</div>
+            <div className="wallet-kicker"><span><SvgIcon name="spark" size={18} /></span> RTAUTOBOT WALLET</div>
             <p className="wallet-balance-label">ยอดเงินคงเหลือ</p>
             {loading ? (
               <div className="wallet-balance-skeleton" />

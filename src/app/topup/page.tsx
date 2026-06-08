@@ -4,12 +4,23 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { notifyMsg } from '../../lib/clientNotify';
+import SvgIcon from '@/components/SvgIcon';
 
 const BANK_LABELS = {
   bbl:'ธนาคารกรุงเทพ', kbank:'ธนาคารกสิกรไทย', ktb:'ธนาคารกรุงไทย',
   bay:'ธนาคารกรุงศรีอยุธยา', scb:'ธนาคารไทยพาณิชย์', tmb:'ทหารไทยธนชาต (TTB)',
   tw:'TrueMoney Wallet', truewallet:'TrueMoney Wallet', qr:'PromptPay QR',
 };
+
+const TOPUP_METHOD_LABELS = {
+  manual: 'เติมมือ',
+  admin: 'แอดมิน',
+};
+
+function getTopupMethodLabel(code) {
+  const key = String(code || '').toLowerCase();
+  return TOPUP_METHOD_LABELS[key] || BANK_LABELS[key] || key.toUpperCase() || 'ไม่ระบุ';
+}
 
 const QUICK_AMOUNTS = [50, 100, 300, 500, 1000, 3000];
 
@@ -79,7 +90,6 @@ const CSS = `
 .tp-section-head h2{margin:0;font-size:clamp(20px,2vw,26px);letter-spacing:-.03em;}
 .tp-section-head.compact{margin-bottom:12px;}
 .tp-history-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
-.tp-history-filter{min-height:42px;border-radius:14px;border:1px solid var(--tp-border);background:var(--tp-soft);color:var(--tp-text);padding:0 12px;font-weight:800;outline:none;}
 .tp-history-count{padding:8px 12px;border-radius:999px;background:var(--tp-soft);color:var(--tp-muted);border:1px solid var(--tp-border);}
 .tp-wallet-rail{display:grid;gap:10px;border:0;margin:0;padding:0;overflow:visible;}
 .tp-wallet-tab{width:100%;border:1px solid transparent;border-radius:20px;background:transparent;padding:12px;display:grid;grid-template-columns:48px 1fr 22px;gap:12px;align-items:center;color:var(--tp-text);cursor:pointer;text-align:left;transition:transform .22s ease,border .22s ease,background .22s ease,box-shadow .22s ease;}
@@ -148,9 +158,9 @@ const CSS = `
 .tp-method{display:flex;align-items:center;gap:10px;}
 .method-ico{width:24px;height:24px;object-fit:contain;border-radius:7px;}
 .money{color:var(--tp-accent-2);font-weight:600;}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;color:#f8fafc;border:1px solid rgba(255,255,255,.10);background:#30343a;box-shadow:inset 1px 1px 2px rgba(255,255,255,.12),inset -2px -2px 4px rgba(0,0,0,.42),0 4px 12px rgba(0,0,0,.18);font-weight:800;}
-.pill.sm{padding:7px 10px;font-size:13px;}
-.pill .st-ico{width:16px;height:16px;border-radius:50%;background:center/contain no-repeat;flex:0 0 16px;}
+.pill{display:inline-flex;align-items:center;justify-content:center;text-align:center;gap:8px;padding:8px 12px;border-radius:999px;color:#f8fafc;border:1px solid rgba(255,255,255,.10);background:#30343a;box-shadow:inset 1px 1px 2px rgba(255,255,255,.12),inset -2px -2px 4px rgba(0,0,0,.42),0 4px 12px rgba(0,0,0,.18);font-weight:800;}
+.pill.sm{padding:7px 10px;font-size:13px;min-width:74px;}
+.pill .txt{display:block;width:100%;text-align:center;}
 .pill.st-completed{background:linear-gradient(145deg,#0b3d2e,#144f3d);}
 .pill.st-pending,.pill.st-processing{background:linear-gradient(145deg,#2e3136,#383c42);}
 .pill.st-failed,.pill.st-reject,.pill.st-canceled,.pill.st-cancelled{background:linear-gradient(145deg,#6f1f1f,#4d0f10);}
@@ -324,7 +334,6 @@ export default function TopupPage() {
   const [amount, setAmount] = useState('');
   const [activeChip, setActiveChip] = useState('');
   const [tab, setTab] = useState('topup');
-  const [historyFilter, setHistoryFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -471,13 +480,12 @@ export default function TopupPage() {
 
   const completedCount = transactions.filter(t => t.status === 'completed').length;
   const pendingCount = transactions.filter(t => t.status === 'pending').length;
-  const filteredTx = historyFilter === 'all' ? transactions : transactions.filter(t => String(t.status).toLowerCase() === historyFilter);
-  const historyMethods = Array.from(new Set(transactions.map(t => String(t.method || '').toLowerCase()).filter(Boolean)));
+  const filteredTx = transactions;
 
   if (loading) return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="topup-enterprise" style={{ minHeight: '40vh', display: 'grid', placeItems: 'center', color: 'var(--tp-muted)' }}>⏳ กำลังโหลด...</div>
+      <div className="topup-enterprise" style={{ minHeight: '40vh', display: 'grid', placeItems: 'center', color: 'var(--tp-muted)' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><SvgIcon name="hourglass" size={18} /> กำลังโหลด...</span></div>
     </>
   );
 
@@ -516,7 +524,7 @@ export default function TopupPage() {
         {/* Tab bar */}
         <div className="tabs tp-main-tabs" role="tablist">
           <button className={`tab${tab === 'topup' ? ' active' : ''}`} onClick={() => setTab('topup')} type="button">
-            <span className="tab-ico">✦</span><span>การเติมเครดิต</span>
+            <span className="tab-ico"><SvgIcon name="spark" size={18} /></span><span>การเติมเครดิต</span>
           </button>
           <button className={`tab${tab === 'history' ? ' active' : ''}`} onClick={() => setTab('history')} type="button">
             <span className="tab-ico">◷</span><span>ประวัติการเติมเงิน</span>
@@ -643,7 +651,7 @@ export default function TopupPage() {
                           </div>
                         </div>
                         <div className="tp-alert-card">
-                          <span>⚠</span>
+                          <span><SvgIcon name="alert" size={18} /></span>
                           <div>
                             <b>โปรดโอนยอดให้ตรงตามระบบ</b>
                             <p>{isTW ? 'ใช้แอป TrueMoney Wallet สแกน QR และรอระบบตรวจสอบอัตโนมัติ' : 'ระบบจะสุ่มเศษสตางค์เพื่อจับคู่รายการ กรุณาโอนครั้งเดียวตามยอดที่แสดง'}</p>
@@ -677,12 +685,6 @@ export default function TopupPage() {
                 <h2>ประวัติการเติมเงินล่าสุด</h2>
               </div>
               <div className="tp-history-actions">
-                <select className="tp-history-filter" value={historyFilter} onChange={e => setHistoryFilter(e.target.value)}>
-                  <option value="all">ทุกช่องทาง</option>
-                  {historyMethods.map(code => (
-                    <option key={code} value={code}>{BANK_LABELS[code] || code.toUpperCase()}</option>
-                  ))}
-                </select>
                 <div className="tp-history-count">{transactions.length.toLocaleString('th-TH')} รายการ</div>
               </div>
             </div>
@@ -718,12 +720,12 @@ export default function TopupPage() {
                             <span className="tp-method">
                               <img className="method-ico" src={`/assets/payment/${code}.webp`} alt={code} width="24" height="24" loading="lazy"
                                 onError={e => { e.target.style.display = 'none'; }} />
-                              <span>{BANK_LABELS[code] || code.toUpperCase() || 'ไม่ระบุ'}</span>
+                              <span>{getTopupMethodLabel(code)}</span>
                             </span>
                           </td>
                           <td className="right"><span className="money">฿{Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></td>
                           <td className="right" style={{ textAlign: 'right' }}>
-                            <span className={`pill sm st-${st}`}><span className="st-ico" /><span className="txt">{STATUS_LABELS[st] || st}</span></span>
+                            <span className={`pill sm st-${st}`}><span className="txt">{STATUS_LABELS[st] || st}</span></span>
                           </td>
                         </tr>
                       );
@@ -748,9 +750,9 @@ export default function TopupPage() {
                         </div>
                         {isOpen && (
                           <div className="hx-body">
-                            <div className="hx-row"><div className="hx-label">ช่องทาง</div><div className="hx-val tp-method"><img className="method-ico" src={`/assets/payment/${code}.webp`} alt={code} width="22" height="22" loading="lazy" onError={e => { e.target.style.display = 'none'; }} /><span>{BANK_LABELS[code] || code.toUpperCase()}</span></div></div>
+                            <div className="hx-row"><div className="hx-label">ช่องทาง</div><div className="hx-val tp-method"><img className="method-ico" src={`/assets/payment/${code}.webp`} alt={code} width="22" height="22" loading="lazy" onError={e => { e.target.style.display = 'none'; }} /><span>{getTopupMethodLabel(code)}</span></div></div>
                             <div className="hx-row"><div className="hx-label">จำนวนเงิน</div><div className="hx-val money">฿{Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></div>
-                            <div className="hx-row"><div className="hx-label">สถานะ</div><div className="hx-val"><span className={`pill sm st-${st}`}><span className="st-ico" /><span className="txt">{STATUS_LABELS[st] || st}</span></span></div></div>
+                            <div className="hx-row"><div className="hx-label">สถานะ</div><div className="hx-val"><span className={`pill sm st-${st}`}><span className="txt">{STATUS_LABELS[st] || st}</span></span></div></div>
                           </div>
                         )}
                       </div>
@@ -846,7 +848,7 @@ function NoticeModal({ onClose }) {
         <div className="notice-glow notice-glow-b" aria-hidden="true" />
         <div className="toast-headbar">
           <div className="toast-badge" aria-hidden="true">
-            <span className="notice-badge-core">⚠</span>
+            <span className="notice-badge-core"><SvgIcon name="alert" size={18} /></span>
             <span className="notice-badge-ring" />
           </div>
           <div className="toast-headtxt">
