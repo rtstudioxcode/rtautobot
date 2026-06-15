@@ -98,10 +98,16 @@ const loginStyles = `
         .rtx-forgot-msg.err{background:rgba(255,95,115,0.12);border:1px solid rgba(255,95,115,0.28);color:#ffb6bf;}
       `;
 
+function normalizeNextPath(value: string | null) {
+  const raw = String(value || '/dashboard').trim();
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/dashboard';
+  return raw || '/dashboard';
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/dashboard';
+  const nextPath = normalizeNextPath(searchParams.get('next'));
 
   const [form, setForm] = useState({ login: '', password: '' });
   const [showPass, setShowPass] = useState(false);
@@ -130,6 +136,25 @@ export default function LoginPage() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    const msg = searchParams.get('error');
+    if (msg) setError(msg);
+
+    const leakedLogin = searchParams.get('username') || searchParams.get('login') || '';
+    const hasLegacySubmitParams = Boolean(leakedLogin || searchParams.get('password'));
+    if (!hasLegacySubmitParams) return;
+
+    if (leakedLogin) {
+      setForm((prev) => prev.login ? prev : { ...prev, login: leakedLogin });
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('username');
+    params.delete('login');
+    params.delete('password');
+    const qs = params.toString();
+    router.replace(`/login${qs ? `?${qs}` : ''}`, { scroll: false });
+  }, [router, searchParams]);
 
 
 
@@ -153,8 +178,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!data.ok) { const msg = data.message || 'เข้าสู่ระบบไม่สำเร็จ'; setError(msg); setTurnstileResetKey(v => v + 1); notifyFromPayload({ variant: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: msg }); return; }
-      router.push(nextPath);
-      router.refresh();
+      window.location.assign(nextPath);
     } catch {
       setTurnstileResetKey(v => v + 1);
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่'); notifyFromPayload({ variant: 'error', title: 'เครือข่ายมีปัญหา', text: 'เกิดข้อผิดพลาด กรุณาลองใหม่' });
@@ -236,7 +260,9 @@ export default function LoginPage() {
 
             {error && <div className="rtx-alert">{error}</div>}
 
-            <form className="rtx-form" onSubmit={handleSubmit} noValidate>
+            <form className="rtx-form" onSubmit={handleSubmit} noValidate method="post" action="/api/auth/login">
+              <input type="hidden" name="next" value={nextPath} />
+              <input type="hidden" name="turnstileToken" value={turnstileToken} />
               <label className="rtx-field">
                 <span className="rtx-label">ชื่อผู้ใช้หรืออีเมล</span>
                 <div className="rtx-inputbox">

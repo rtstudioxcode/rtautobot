@@ -16,6 +16,15 @@ const nextConfig = {
       { protocol: 'https', hostname: 'rtautobot.com' },
     ],
   },
+  webpack(config, { isServer }) {
+    if (!isServer && config.optimization?.runtimeChunk && typeof config.optimization.runtimeChunk === 'object') {
+      config.optimization.runtimeChunk = {
+        ...config.optimization.runtimeChunk,
+        name: 'runtime',
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {

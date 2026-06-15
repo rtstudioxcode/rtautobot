@@ -22,19 +22,71 @@ function requestHost(request) {
   return request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
 }
 
+function safeNextPath(value) {
+  const raw = String(value || '/dashboard').trim();
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/dashboard';
+  return raw || '/dashboard';
+}
+
+async function readLoginRequest(request) {
+  const contentType = request.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    const body = await request.json().catch(() => ({}));
+    return { body, isForm: false };
+  }
+
+  if (
+    contentType.includes('application/x-www-form-urlencoded') ||
+    contentType.includes('multipart/form-data')
+  ) {
+    const form = await request.formData().catch(() => null);
+    const body = {};
+    if (form) {
+      for (const [key, value] of form.entries()) {
+        body[key] = typeof value === 'string' ? value : '';
+      }
+    }
+    return { body, isForm: true };
+  }
+
+  return { body: {}, isForm: false };
+}
+
+function formRedirect(request, nextPath, error) {
+  const url = new URL('/login', request.url);
+  url.searchParams.set('next', safeNextPath(nextPath));
+  if (error) url.searchParams.set('error', error);
+  return NextResponse.redirect(url, 303);
+}
+
+function loginError(request, isForm, nextPath, message, status) {
+  if (isForm) return formRedirect(request, nextPath, message);
+  return NextResponse.json({ ok: false, message }, { status });
+}
+
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
-    if (!checkRate(ip)) return NextResponse.json({ ok: false, message: 'ลองอีกครั้งภายหลัง (rate limit)' }, { status: 429 });
+    const { body, isForm } = await readLoginRequest(request);
+    const nextPath = safeNextPath(body.next);
 
-    const body = await request.json().catch(() => ({}));
-    const { login, password, turnstileToken } = body;
-    if (!login || !password) return NextResponse.json({ ok: false, message: 'กรุณากรอกข้อมูลให้ครบ' }, { status: 400 });
+    if (!checkRate(ip)) {
+      return loginError(request, isForm, nextPath, 'ลองอีกครั้งภายหลัง (rate limit)', 429);
+    }
+
+    const login = body.login || body.username || body.email;
+    const { password, turnstileToken } = body;
+    if (!login || !password) {
+      return loginError(request, isForm, nextPath, 'กรุณากรอกข้อมูลให้ครบ', 400);
+    }
 
     await ensureInit();
 
     const turnstile = await verifyTurnstileToken(turnstileToken, ip, requestHost(request));
-    if (!turnstile.ok) return NextResponse.json({ ok: false, message: turnstile.message || 'ยืนยันความปลอดภัยไม่สำเร็จ' }, { status: 403 });
+    if (!turnstile.ok) {
+      return loginError(request, isForm, nextPath, turnstile.message || 'ยืนยันความปลอดภัยไม่สำเร็จ', 403);
+    }
 
     const loginStr = String(login).trim();
     const query = loginStr.includes('@')
@@ -45,10 +97,14 @@ export async function POST(request) {
       .select('passwordHash role username email balance currency level levelName avatarUrl affiliateKey serial_key')
       .lean(false);
 
-    if (!user) return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' }, { status: 401 });
+    if (!user) {
+      return loginError(request, isForm, nextPath, 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 401);
+    }
 
     const valid = await user.validatePassword(password);
-    if (!valid) return NextResponse.json({ ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' }, { status: 401 });
+    if (!valid) {
+      return loginError(request, isForm, nextPath, 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 401);
+    }
 
     const session = await getSession();
     session.user = {
@@ -66,6 +122,7 @@ export async function POST(request) {
     };
     await session.save();
 
+    if (isForm) return NextResponse.redirect(new URL(nextPath, request.url), 303);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error('POST /api/auth/login', e);
